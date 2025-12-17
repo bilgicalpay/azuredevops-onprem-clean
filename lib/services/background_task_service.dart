@@ -36,24 +36,39 @@ class BackgroundTaskService {
 
   /// Start background task
   Future<void> start() async {
-    if (_isRunning) return;
+    if (_isRunning) {
+      print('🔄 [BackgroundTaskService] Already running, skipping start');
+      return;
+    }
     
+    print('🚀 [BackgroundTaskService] Starting background task service...');
     _isRunning = true;
-    print('Background task service started');
+    
+    // Initialize tracking first if not already done
+    if (_knownWorkItemIds.isEmpty) {
+      print('🔄 [BackgroundTaskService] Initializing tracking...');
+      await initializeTracking();
+    }
     
     // Initial check
+    print('🔄 [BackgroundTaskService] Performing initial check...');
     await _checkForChanges();
     
     // Start periodic checks - every 15 seconds for faster updates
     _backgroundTimer?.cancel();
+    print('⏰ [BackgroundTaskService] Setting up periodic timer (15 second intervals)...');
     _backgroundTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
       if (!_isRunning) {
+        print('⚠️ [BackgroundTaskService] Timer stopped: _isRunning = false');
         timer.cancel();
         return;
       }
       
+      print('🔄 [BackgroundTaskService] Periodic check at ${DateTime.now()}...');
       await _checkForChanges();
     });
+    
+    print('✅ [BackgroundTaskService] Background task service started successfully');
   }
 
   /// Stop background task
@@ -76,11 +91,11 @@ class BackgroundTaskService {
       final token = await secureStorage.read(key: 'auth_token');
       
       if (serverUrl == null || token == null) {
-        print('Background check: No auth data');
+        print('❌ [BackgroundTaskService] No auth data - serverUrl: ${serverUrl != null ? "✓" : "✗"}, token: ${token != null ? "✓" : "✗"}');
         return;
       }
 
-      print('Background check: Checking for work item changes...');
+      print('🔄 [BackgroundTaskService] Checking for work item changes... (tracking ${_knownWorkItemIds.length} items)');
       
       final workItems = await _workItemService.getWorkItems(
         serverUrl: serverUrl,
@@ -104,6 +119,7 @@ class BackgroundTaskService {
           _workItemChangedDates[workItem.id] = currentChangedDate;
           
           // Always notify for new work items
+          print('🆕 [BackgroundTaskService] New work item detected: #${workItem.id} - ${workItem.title}');
           await _notificationService.showWorkItemNotification(
             workItemId: workItem.id,
             title: workItem.title,
@@ -111,7 +127,7 @@ class BackgroundTaskService {
           );
           _notifiedWorkItemIds.add(workItem.id);
           await _saveLastNotifiedRevision(workItem.id, currentRev);
-          print('Background: New work item #${workItem.id} - notification sent');
+          print('✅ [BackgroundTaskService] Notification sent for work item #${workItem.id}');
         } else {
           // Check for changes
           bool shouldNotify = false;
@@ -126,7 +142,7 @@ class BackgroundTaskService {
               notificationBody = 'Work item ataması kaldırıldı';
             }
             _workItemAssignees[workItem.id] = currentAssignee;
-            print('Background: Work item #${workItem.id} assignee changed: $knownAssignee -> $currentAssignee');
+            print('👤 [BackgroundTaskService] Work item #${workItem.id} assignee changed: $knownAssignee -> $currentAssignee');
           }
           
           // Check revision change
@@ -139,7 +155,7 @@ class BackgroundTaskService {
                 notificationBody = 'Work item güncellendi: ${workItem.state}';
               }
               _workItemRevisions[workItem.id] = currentRev;
-              print('Background: Work item #${workItem.id} revision changed: $knownRev -> $currentRev');
+              print('📝 [BackgroundTaskService] Work item #${workItem.id} revision changed: $knownRev -> $currentRev');
             }
           }
           
@@ -156,7 +172,7 @@ class BackgroundTaskService {
                 }
               }
               _workItemChangedDates[workItem.id] = currentChangedDate;
-              print('Background: Work item #${workItem.id} changed date updated: $knownChangedDate -> $currentChangedDate');
+              print('📅 [BackgroundTaskService] Work item #${workItem.id} changed date updated: $knownChangedDate -> $currentChangedDate');
             }
           } else if (currentChangedDate != null) {
             _workItemChangedDates[workItem.id] = currentChangedDate;
@@ -171,7 +187,7 @@ class BackgroundTaskService {
             
             await _saveLastNotifiedRevision(workItem.id, currentRev);
             _notifiedWorkItemIds.add(workItem.id);
-            print('Background: Work item #${workItem.id} - notification sent: $notificationBody');
+            print('✅ [BackgroundTaskService] Notification sent for work item #${workItem.id}: $notificationBody');
           }
           
           // Update tracking even if no notification sent
@@ -188,6 +204,7 @@ class BackgroundTaskService {
       }
 
       // Update known IDs
+      final previousCount = _knownWorkItemIds.length;
       _knownWorkItemIds = workItems.map((item) => item.id).toSet();
       
       // Remove tracking data for items no longer assigned
@@ -195,8 +212,11 @@ class BackgroundTaskService {
       _workItemAssignees.removeWhere((id, _) => !_knownWorkItemIds.contains(id));
       _workItemChangedDates.removeWhere((id, _) => !_knownWorkItemIds.contains(id));
       
-    } catch (e) {
-      print('Background check error: $e');
+      print('✅ [BackgroundTaskService] Check completed - tracking ${_knownWorkItemIds.length} items (was $previousCount)');
+      
+    } catch (e, stackTrace) {
+      print('❌ [BackgroundTaskService] Check error: $e');
+      print('❌ [BackgroundTaskService] Stack trace: $stackTrace');
     }
   }
 

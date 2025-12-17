@@ -48,8 +48,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _loadWorkItems();
     _loadWikiContent();
     _startRealtimeService();
-    // Ensure background task service is running
-    BackgroundTaskService().start();
+    // Ensure background task service is running and initialized
+    _initializeBackgroundService();
   }
 
   Future<void> _loadAppVersion() async {
@@ -57,6 +57,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() {
       _appVersion = 'v${packageInfo.version}+${packageInfo.buildNumber}';
     });
+  }
+
+  Future<void> _initializeBackgroundService() async {
+    print('🚀 [HomeScreen] Initializing background service...');
+    // Initialize tracking first
+    await BackgroundTaskService().initializeTracking();
+    // Then start the service
+    await BackgroundTaskService().start();
+    print('✅ [HomeScreen] Background service initialized and started');
   }
 
   @override
