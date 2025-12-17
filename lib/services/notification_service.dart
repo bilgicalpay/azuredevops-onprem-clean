@@ -103,19 +103,32 @@ class NotificationService {
   }) async {
     try {
       if (!_initialized) {
-        await init();
+        try {
+          await init();
+        } catch (e) {
+          // If init fails (e.g., in background service without context), try to show anyway
+          print('⚠️ [NotificationService] Init failed, trying to show notification anyway: $e');
+        }
       }
 
-      // Ensure we have permission
+      // Don't request permission in background service - assume it's already granted
+      // Permission should be requested when app is in foreground
       final androidPlugin = _localNotifications
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
       
       if (androidPlugin != null) {
-        final permission = await androidPlugin.requestNotificationsPermission();
-        if (permission == false) {
-          print('Notification permission denied');
-          return;
+        // Skip permission request in background - assume already granted
+        // Only check if we're in app context (which we're not in background service)
+        try {
+          final permission = await androidPlugin.requestNotificationsPermission();
+          if (permission == false) {
+            print('⚠️ [NotificationService] Notification permission denied, but trying to show anyway');
+            // Continue anyway - permission might be granted but check failed
+          }
+        } catch (e) {
+          // Permission check failed (likely in background service), continue anyway
+          print('⚠️ [NotificationService] Permission check failed (likely background context), continuing: $e');
         }
       }
 

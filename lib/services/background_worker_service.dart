@@ -187,8 +187,8 @@ Future<void> _checkForWorkItems(ServiceInstance service) async {
     
     print('✅ [BackgroundWorker] Auth data available - serverUrl: ✓, token: ✓');
 
-    // Initialize notification service
-    await NotificationService().init();
+    // Don't initialize notification service here - it needs app context
+    // NotificationService should be initialized in main() before background service starts
     
     // Get work items
     final workItemService = WorkItemService();
