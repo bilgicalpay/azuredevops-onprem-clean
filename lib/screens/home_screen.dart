@@ -14,6 +14,7 @@ import '../services/storage_service.dart';
 import '../services/work_item_service.dart';
 import '../services/realtime_service.dart';
 import '../services/background_task_service.dart';
+import '../services/workmanager_service.dart';
 import '../services/wiki_service.dart';
 import 'work_item_detail_screen.dart';
 import 'queries_screen.dart';
@@ -306,6 +307,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 // Restart background service
                 BackgroundTaskService().stop();
                 await BackgroundTaskService().start();
+                // Restart WorkManager with new interval
+                await WorkManagerService.cancelTask();
+                await WorkManagerService.registerPeriodicTask();
               });
             },
             tooltip: 'Ayarlar',

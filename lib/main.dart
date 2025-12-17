@@ -20,6 +20,7 @@ import 'services/auth_service.dart';
 import 'services/storage_service.dart';
 import 'services/notification_service.dart';
 import 'services/background_task_service.dart';
+import 'services/workmanager_service.dart';
 
 /// Uygulama giriş noktası
 /// Servisleri başlatır ve ana widget'ı çalıştırır
@@ -41,7 +42,11 @@ void main() async {
   await storage.init();
   await NotificationService().init();
   
-  // Arka plan görev servisini başlat
+  // WorkManager'ı başlat (uygulama kapalıyken çalışmak için)
+  await WorkManagerService.initialize();
+  await WorkManagerService.registerPeriodicTask();
+  
+  // Arka plan görev servisini başlat (uygulama açıkken çalışmak için)
   final backgroundService = BackgroundTaskService();
   await backgroundService.init();
   await backgroundService.initializeTracking(); // Bildirim göndermeden takibi başlat
