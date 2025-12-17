@@ -1,5 +1,5 @@
 # Fastfile for Azure DevOps OnPrem Mobile App
-# Android build and deployment automation
+# Android and iOS build and deployment automation
 
 default_platform(:android)
 
@@ -78,6 +78,76 @@ platform :android do
       task: "clean",
       project_dir: "android"
     )
+  end
+end
+
+platform :ios do
+  desc "Build iOS IPA"
+  lane :build_ipa do
+    sh("flutter build ipa --release")
+  end
+
+  desc "Build iOS App"
+  lane :build_app do
+    sh("flutter build ios --release --no-codesign")
+  end
+
+  desc "Run Flutter tests"
+  lane :test do
+    sh("flutter pub get")
+    sh("flutter test")
+  end
+
+  desc "Run Flutter analyze"
+  lane :analyze do
+    sh("flutter pub get")
+    sh("flutter analyze")
+  end
+
+  desc "Build and deploy to TestFlight (beta)"
+  lane :beta do
+    # Get dependencies
+    sh("flutter pub get")
+    
+    # Run tests
+    test
+    
+    # Build IPA
+    build_ipa
+    
+    # Optional: Upload to TestFlight
+    # upload_to_testflight(
+    #   skip_waiting_for_build_processing: true,
+    #   skip_submission: true
+    # )
+  end
+
+  desc "Build and deploy to App Store (production)"
+  lane :release do
+    # Get dependencies
+    sh("flutter pub get")
+    
+    # Run tests
+    test
+    
+    # Run analyze
+    analyze
+    
+    # Build IPA for App Store
+    build_ipa
+    
+    # Optional: Upload to App Store
+    # upload_to_app_store(
+    #   force: true,
+    #   skip_metadata: false,
+    #   skip_screenshots: true
+    # )
+  end
+
+  desc "Clean build artifacts"
+  lane :clean do
+    sh("flutter clean")
+    sh("cd ios && xcodebuild clean")
   end
 end
 

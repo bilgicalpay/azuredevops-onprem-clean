@@ -1,0 +1,388 @@
+# GitHub Actions Workflow for iOS Build
+# Flutter iOS IPA build with automatic semantic versioning and release
+
+name: iOS Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: false
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Flutter analyze
+        run: flutter analyze
+
+      - name: Run Flutter test
+        run: flutter test
+
+  bump-version:
+    name: Bump Version and Create Tag
+    runs-on: ubuntu-latest
+    needs: test
+    if: |
+      github.ref == 'refs/heads/main' && 
+      github.event_name == 'push' && 
+      !contains(github.event.head_commit.message, 'chore(release):') &&
+      !contains(github.event.head_commit.message, '[skip version]')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Get current version
+        id: current_version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          VERSION_NUMBER=$(echo $VERSION | cut -d'+' -f1)
+          BUILD_NUMBER=$(echo $VERSION | cut -d'+' -f2)
+          echo "current_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Get last tag
+        id: last_tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          echo "Last tag: $LAST_TAG"
+
+      - name: Determine version bump type
+        id: bump_type
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            BUMP_TYPE="${{ github.event.inputs.version_bump }}"
+          else
+            # Auto-increment patch version for main branch pushes
+            BUMP_TYPE="patch"
+          fi
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "Bump type: $BUMP_TYPE"
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          CURRENT_VERSION="${{ steps.current_version.outputs.version_number }}"
+          BUILD_NUMBER="${{ steps.current_version.outputs.build_number }}"
+          BUMP_TYPE="${{ steps.bump_type.outputs.bump_type }}"
+          
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          case "$BUMP_TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
+          NEW_FULL_VERSION="${NEW_VERSION}+${NEW_BUILD_NUMBER}"
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_build_number=$NEW_BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "new_full_version=$NEW_FULL_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_FULL_VERSION"
+
+      - name: Update pubspec.yaml
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_full_version }}"
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/^version:.*/version: $NEW_VERSION/" pubspec.yaml
+          else
+            sed -i "s/^version:.*/version: $NEW_VERSION/" pubspec.yaml
+          fi
+          echo "Updated pubspec.yaml to version: $NEW_VERSION"
+
+      - name: Commit version bump
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_full_version }}"
+          git add pubspec.yaml
+          git commit -m "chore(release): bump version to $NEW_VERSION" || exit 0
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          TAG_NAME="v$NEW_VERSION"
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME - Azure DevOps OnPrem Mobile App"
+          git push origin "$TAG_NAME"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_ENV
+          echo "Tag $TAG_NAME created and pushed"
+
+      - name: Set outputs
+        id: outputs
+        run: |
+          echo "tag_name=v${{ steps.new_version.outputs.new_version }}" >> $GITHUB_OUTPUT
+          echo "version=${{ steps.new_version.outputs.new_full_version }}" >> $GITHUB_OUTPUT
+
+  build-ios-ipa:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    needs: test
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name != 'pull_request') ||
+      startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: Build iOS IPA
+        run: flutter build ipa --release
+
+      - name: Rename IPA to azuredevops.ipa
+        run: |
+          if [ -f "build/ios/ipa/azuredevops_onprem.ipa" ]; then
+            mkdir -p release-assets
+            cp build/ios/ipa/azuredevops_onprem.ipa release-assets/azuredevops.ipa
+          fi
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-ipa
+          path: release-assets/azuredevops.ipa
+          retention-days: 7
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-ios-ipa, bump-version]
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine tag name
+        id: tag
+        run: |
+          if startsWith(github.ref, 'refs/tags/v'); then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          else
+            # Get tag from bump-version job
+            TAG_NAME="${{ needs.bump-version.outputs.tag_name }}"
+            echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          fi
+          echo "Using tag: $TAG_NAME"
+
+      - name: Get version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Download IPA artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release-ipa
+          path: release-assets/
+
+      - name: Rename IPA with tag
+        run: |
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          mv release-assets/azuredevops.ipa "release-assets/azuredevops-$TAG_NAME.ipa"
+          echo "IPA renamed to azuredevops-$TAG_NAME.ipa"
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Get changelog from commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%an)" | head -30)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%an)" -20)
+          fi
+          
+          COMMIT_COUNT=$(git rev-list --count ${LAST_TAG}..HEAD 2>/dev/null || git rev-list --count HEAD)
+          
+          NOTES="## 🚀 Azure DevOps OnPrem Mobile App (iOS) - $TAG_NAME
+          
+          ### 📦 Version: $VERSION
+          
+          ### 📥 Downloads
+          - **IPA**: [azuredevops-$TAG_NAME.ipa](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$TAG_NAME.ipa)
+          
+          ### 📱 Installation
+          - **IPA**: Install via TestFlight, MDM, or direct installation (requires signed device)
+          
+          ### 🔧 Build Information
+          - **Flutter Version**: 3.24.0
+          - **Build Date**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          - **Commit**: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          - **Commits in this release**: $COMMIT_COUNT
+          
+          ### 📝 Changes ($COMMIT_COUNT commits)
+          $CHANGELOG
+          
+          ### 📋 Full Changelog
+          See [commit history](https://github.com/${{ github.repository }}/compare/${LAST_TAG}...$TAG_NAME) for detailed changes."
+          
+          echo "$NOTES" > release-notes.md
+          echo "Release notes generated"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: Release ${{ steps.tag.outputs.tag_name }} (iOS)
+          body_path: release-notes.md
+          files: |
+            release-assets/azuredevops-*.ipa
+          draft: false
+          prerelease: false
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-beta:
+    name: Deploy Beta (TestFlight)
+    runs-on: macos-latest
+    needs: build-ios-ipa
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: beta
+      url: https://appstoreconnect.apple.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Download IPA artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release-ipa
+          path: build/ios/ipa/
+
+      - name: Deploy with Fastlane
+        run: fastlane ios beta
+        env:
+          # Add your deployment credentials here
+          # APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          # MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+  deploy-production:
+    name: Deploy Production (App Store)
+    runs-on: macos-latest
+    needs: [build-ios-ipa, create-release]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: production
+      url: https://apps.apple.com/app/azuredevops-onprem
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Download IPA artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release-ipa
+          path: build/ios/ipa/
+
+      - name: Deploy with Fastlane
+        run: fastlane ios release
+        env:
+          # Add your deployment credentials here
+          # APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          # MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+

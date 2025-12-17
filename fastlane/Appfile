@@ -8,3 +8,9 @@ package_name("io.purplesoft.azuredevops_onprem")
 # json_key_file("path/to/your/google-play-service-account-key.json")
 # track("internal") # or "alpha", "beta", "production"
 
+# iOS App Store configuration
+# app_identifier("io.purplesoft.azuredevops-onprem") # Bundle identifier
+# apple_id("your-apple-id@example.com") # Apple ID
+# team_id("YOUR_TEAM_ID") # App Store Connect Team ID
+# itc_team_id("YOUR_ITC_TEAM_ID") # iTunes Connect Team ID
+
