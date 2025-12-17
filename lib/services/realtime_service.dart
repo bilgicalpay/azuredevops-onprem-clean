@@ -48,6 +48,7 @@ class RealtimeService {
     Function()? onConnected,
     Function()? onDisconnected,
   }) async {
+    print('🚀 [RealtimeService] Starting service...');
     this.onNewWorkItems = onNewWorkItems;
     this.onError = onError;
     this.onConnected = onConnected;
@@ -55,16 +56,20 @@ class RealtimeService {
     
     _shouldReconnect = true;
     
-    // Try WebSocket first, fallback to optimized polling
-    // Note: Azure DevOps Server may not have WebSocket support
-    // In that case, we'll use optimized polling
-    final wsSupported = await _tryWebSocket(authService, storageService);
-    
-    if (!wsSupported) {
-      // Fallback to optimized polling with adaptive intervals
-      await _startOptimizedPolling(authService, storageService);
-      onConnected?.call(); // Notify that polling started
+    // Check auth first
+    if (authService.serverUrl == null || authService.token == null) {
+      print('❌ [RealtimeService] Cannot start: missing auth data');
+      onError?.call('Missing authentication data');
+      return;
     }
+    
+    print('✅ [RealtimeService] Auth data available, starting polling...');
+    
+    // Skip WebSocket for now - Azure DevOps Server typically doesn't support it
+    // Go directly to polling for reliability
+    await _startOptimizedPolling(authService, storageService);
+    onConnected?.call(); // Notify that polling started
+    print('✅ [RealtimeService] Service started successfully');
   }
 
   /// Try to establish WebSocket connection
@@ -212,29 +217,56 @@ class RealtimeService {
     AuthService authService,
     StorageService storageService,
   ) async {
+    print('🔄 [RealtimeService] Starting optimized polling...');
+    
+    // Check auth before starting
+    if (authService.serverUrl == null || authService.token == null) {
+      print('❌ [RealtimeService] Cannot start polling: missing auth data');
+      onError?.call('Missing authentication data for polling');
+      return;
+    }
+    
+    print('✅ [RealtimeService] Auth data verified, initializing tracking...');
+    
     // Initialize tracking with current work items (without sending notifications)
-    print('🔄 [RealtimeService] Initializing tracking...');
     await _initializeTracking(authService, storageService);
     
     // Start polling timer - this will continue even when app is in background
     // Poll every 30 seconds for faster updates
     _pollingTimer?.cancel();
+    print('⏰ [RealtimeService] Setting up polling timer (30 second intervals)...');
+    
     _pollingTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
       if (!_shouldReconnect) {
+        print('⚠️ [RealtimeService] Polling stopped: shouldReconnect = false');
         timer.cancel();
         return;
       }
       
       try {
-        print('🔄 [RealtimeService] Polling check started...');
-        await _checkForNewWorkItems(authService, storageService);
-      } catch (e) {
+        print('🔄 [RealtimeService] Polling check started at ${DateTime.now()}...');
+        final hasChanges = await _checkForNewWorkItems(authService, storageService);
+        if (hasChanges) {
+          print('✅ [RealtimeService] Changes detected in polling check');
+        } else {
+          print('ℹ️ [RealtimeService] No changes in polling check');
+        }
+      } catch (e, stackTrace) {
         print('❌ [RealtimeService] Background polling error: $e');
+        print('❌ [RealtimeService] Stack trace: $stackTrace');
         // Continue polling even if there's an error
       }
     });
     
-    print('✅ [RealtimeService] Background polling started (30 second intervals)');
+    print('✅ [RealtimeService] Background polling started successfully (30 second intervals)');
+    
+    // Do an immediate check after starting
+    print('🔄 [RealtimeService] Performing immediate check...');
+    try {
+      await _checkForNewWorkItems(authService, storageService);
+    } catch (e) {
+      print('❌ [RealtimeService] Immediate check error: $e');
+    }
   }
 
   /// Initialize tracking with current work items (without notifications)

@@ -89,19 +89,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final storage = Provider.of<StorageService>(context, listen: false);
     
     print('🚀 [HomeScreen] Starting realtime service...');
+    print('🔍 [HomeScreen] Auth check - serverUrl: ${authService.serverUrl != null ? "✓" : "✗"}, token: ${authService.token != null ? "✓" : "✗"}');
     
-    // Start real-time service (WebSocket with polling fallback)
+    // Ensure we have auth before starting
+    if (authService.serverUrl == null || authService.token == null) {
+      print('❌ [HomeScreen] Cannot start realtime service: missing auth data');
+      return;
+    }
+    
+    // Start real-time service (direct polling, no WebSocket)
     // Polling interval: 30 seconds for faster updates
     RealtimeService().start(
       authService: authService,
       storageService: storage,
       onNewWorkItems: (changedIds) {
         // Refresh work items when changes are detected
-        print('🔄 [HomeScreen] Work items changed, refreshing list... (${changedIds.length} items)');
+        print('🔄 [HomeScreen] Work items changed callback triggered! (${changedIds.length} items)');
         if (mounted) {
+          print('✅ [HomeScreen] Widget is mounted, refreshing list...');
           // Force immediate refresh
           _loadWorkItems().then((_) {
-            print('✅ [HomeScreen] Work items list refreshed');
+            print('✅ [HomeScreen] Work items list refreshed successfully');
             if (mounted && changedIds.isNotEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -128,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         // Don't show error to user - service will retry automatically
       },
       onConnected: () {
-        print('✅ [HomeScreen] Realtime service connected');
+        print('✅ [HomeScreen] Realtime service connected and polling started');
       },
       onDisconnected: () {
         print('⚠️ [HomeScreen] Realtime service disconnected');
