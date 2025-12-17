@@ -349,8 +349,11 @@ class RealtimeService {
       _workItemAssignees.removeWhere((id, _) => !_knownWorkItemIds.contains(id));
       _workItemChangedDates.removeWhere((id, _) => !_knownWorkItemIds.contains(id));
 
-      if (newIds.isNotEmpty || changedIds.isNotEmpty) {
-        onNewWorkItems?.call([...newIds, ...changedIds]);
+      // Always call callback if there are changes - this ensures UI updates
+      if (newIds.isNotEmpty || changedIds.isNotEmpty || assigneeChangedIds.isNotEmpty) {
+        final allChangedIds = <int>{...newIds, ...changedIds, ...assigneeChangedIds};
+        print('🔄 [RealtimeService] Detected changes: ${allChangedIds.length} work items (new: ${newIds.length}, changed: ${changedIds.length}, assignee changed: ${assigneeChangedIds.length})');
+        onNewWorkItems?.call(allChangedIds.toList());
         return true;
       }
 

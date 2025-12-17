@@ -8,6 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/work_item_service.dart';
@@ -37,16 +38,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isLoading = true;
   String? _wikiContent;
   bool _isLoadingWiki = false;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadAppVersion();
     _loadWorkItems();
     _loadWikiContent();
     _startRealtimeService();
     // Ensure background task service is running
     BackgroundTaskService().start();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = 'v${packageInfo.version}+${packageInfo.buildNumber}';
+    });
   }
 
   @override
@@ -83,12 +93,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     RealtimeService().start(
       authService: authService,
       storageService: storage,
-      onNewWorkItems: (newIds) {
-        // Refresh work items when new ones are detected
+      onNewWorkItems: (changedIds) {
+        // Refresh work items when changes are detected
+        print('🔄 [HomeScreen] Work items changed, refreshing list... (${changedIds.length} items)');
         if (mounted) {
-          _loadWorkItems();
-          // Show notification in app (silent update, no snackbar to avoid spam)
-          // Work items are automatically refreshed in the list
+          // Force immediate refresh
+          _loadWorkItems().then((_) {
+            if (mounted && changedIds.isNotEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${changedIds.length} work item güncellendi'),
+                  duration: const Duration(seconds: 2),
+                  action: SnackBarAction(
+                    label: 'Yenile',
+                    onPressed: _loadWorkItems,
+                  ),
+                ),
+              );
+            }
+          });
         }
       },
       onError: (error) {
@@ -189,6 +212,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
+          // Version display in top right
+          if (_appVersion.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0, top: 8.0, bottom: 8.0),
+              child: Center(
+                child: Text(
+                  _appVersion,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.query_stats),
             onPressed: () {
