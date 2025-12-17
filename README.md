@@ -2,7 +2,7 @@
 
 **Geliştirici:** Alpay Bilgiç  
 **Versiyon:** 1.0.0  
-**Tarih:** 2024
+**Tarih:** 2025.12.17
 
 ## Genel Bakış
 
