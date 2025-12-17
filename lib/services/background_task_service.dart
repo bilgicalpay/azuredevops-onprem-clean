@@ -54,10 +54,15 @@ class BackgroundTaskService {
     print('🔄 [BackgroundTaskService] Performing initial check...');
     await _checkForChanges();
     
-    // Start periodic checks - every 15 seconds for faster updates
+    // Get polling interval from settings
+    final prefs = await SharedPreferences.getInstance();
+    final pollingInterval = prefs.getInt('polling_interval_seconds') ?? 15;
+    final clampedInterval = pollingInterval.clamp(5, 300);
+    
+    // Start periodic checks with configured interval
     _backgroundTimer?.cancel();
-    print('⏰ [BackgroundTaskService] Setting up periodic timer (15 second intervals)...');
-    _backgroundTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+    print('⏰ [BackgroundTaskService] Setting up periodic timer (${clampedInterval} second intervals)...');
+    _backgroundTimer = Timer.periodic(Duration(seconds: clampedInterval), (timer) async {
       if (!_isRunning) {
         print('⚠️ [BackgroundTaskService] Timer stopped: _isRunning = false');
         timer.cancel();
@@ -97,10 +102,17 @@ class BackgroundTaskService {
 
       print('🔄 [BackgroundTaskService] Checking for work item changes... (tracking ${_knownWorkItemIds.length} items)');
       
+      // Fetch work items with error handling and timeout
       final workItems = await _workItemService.getWorkItems(
         serverUrl: serverUrl,
         token: token,
         collection: collection,
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          print('⏱️ [BackgroundTaskService] Request timeout after 30 seconds');
+          return <dynamic>[]; // Return empty list on timeout
+        },
       );
 
       for (var workItem in workItems) {

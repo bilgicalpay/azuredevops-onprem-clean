@@ -65,9 +65,15 @@ class RealtimeService {
       return;
     }
     
-    // If polling is already running, just update callbacks and continue
+    // Get current polling interval
+    final currentInterval = await storageService.getPollingInterval();
+    
+    // If polling is already running, check if interval changed
     if (_pollingTimer != null && _pollingTimer!.isActive) {
-      print('ℹ️ [RealtimeService] Polling already running, updating callbacks only');
+      // Check if interval needs to be updated
+      // Note: We can't change interval of existing timer, so we'll restart if needed
+      // For now, just update callbacks
+      print('ℹ️ [RealtimeService] Polling already running (${currentInterval}s), updating callbacks only');
       onConnected?.call();
       return;
     }
@@ -79,6 +85,17 @@ class RealtimeService {
     await _startOptimizedPolling(authService, storageService);
     onConnected?.call(); // Notify that polling started
     print('✅ [RealtimeService] Service started successfully');
+  }
+  
+  /// Restart polling with new interval (called when settings change)
+  Future<void> restartPolling(
+    AuthService authService,
+    StorageService storageService,
+  ) async {
+    print('🔄 [RealtimeService] Restarting polling with new interval...');
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+    await _startOptimizedPolling(authService, storageService);
   }
 
   /// Try to establish WebSocket connection
@@ -240,12 +257,13 @@ class RealtimeService {
     // Initialize tracking with current work items (without sending notifications)
     await _initializeTracking(authService, storageService);
     
-    // Start polling timer - this will continue even when app is in background
-    // Poll every 15 seconds for faster updates
-    _pollingTimer?.cancel();
-    print('⏰ [RealtimeService] Setting up polling timer (15 second intervals)...');
+    // Get polling interval from settings
+    final pollingInterval = await storageService.getPollingInterval();
+    print('⏰ [RealtimeService] Setting up polling timer (${pollingInterval} second intervals)...');
     
-    _pollingTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+    // Start polling timer - this will continue even when app is in background
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(Duration(seconds: pollingInterval), (timer) async {
       if (!_shouldReconnect) {
         print('⚠️ [RealtimeService] Polling stopped: shouldReconnect = false');
         timer.cancel();
@@ -267,7 +285,7 @@ class RealtimeService {
       }
     });
     
-    print('✅ [RealtimeService] Background polling started successfully (15 second intervals)');
+    print('✅ [RealtimeService] Background polling started successfully (${pollingInterval} second intervals)');
     
     // Do an immediate check after starting
     print('🔄 [RealtimeService] Performing immediate check...');

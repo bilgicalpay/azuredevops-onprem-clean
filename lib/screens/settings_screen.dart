@@ -21,7 +21,9 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _wikiUrlController = TextEditingController();
+  final _pollingIntervalController = TextEditingController();
   bool _isLoading = false;
+  int _pollingInterval = 15;
 
   @override
   void initState() {
@@ -32,13 +34,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _wikiUrlController.dispose();
+    _pollingIntervalController.dispose();
     super.dispose();
   }
 
-  void _loadSettings() {
+  Future<void> _loadSettings() async {
     final storage = Provider.of<StorageService>(context, listen: false);
     final wikiUrl = storage.getWikiUrl();
     _wikiUrlController.text = wikiUrl ?? '';
+    
+    // Load polling interval
+    final interval = await storage.getPollingIntervalAsync();
+    setState(() {
+      _pollingInterval = interval;
+      _pollingIntervalController.text = interval.toString();
+    });
   }
 
   Future<void> _saveSettings() async {
@@ -63,6 +73,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
     
+    // Validate and save polling interval
+    final intervalText = _pollingIntervalController.text.trim();
+    if (intervalText.isNotEmpty) {
+      final interval = int.tryParse(intervalText);
+      if (interval == null || interval < 5 || interval > 300) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Polling interval 5-300 saniye arasında olmalıdır'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+      await storage.setPollingInterval(interval);
+    }
+    
     await storage.setWikiUrl(wikiUrl.isEmpty ? null : wikiUrl);
     
     setState(() => _isLoading = false);
@@ -70,8 +98,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Ayarlar kaydedildi'),
+        content: Text('Ayarlar kaydedildi. Uygulama yeniden başlatıldığında geçerli olacaktır.'),
         backgroundColor: Colors.green,
+        duration: Duration(seconds: 3),
       ),
     );
   }
@@ -128,6 +157,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Text('Kaydet'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Bildirim Ayarları',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Work item kontrolü için polling interval (saniye). Daha kısa interval daha hızlı bildirim sağlar ancak daha fazla pil tüketir.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _pollingIntervalController,
+                      decoration: const InputDecoration(
+                        labelText: 'Polling Interval (saniye)',
+                        hintText: '15',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.timer),
+                        helperText: '5-300 saniye arası (varsayılan: 15)',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                _pollingInterval = 10;
+                                _pollingIntervalController.text = '10';
+                              });
+                            },
+                            child: const Text('Hızlı (10s)'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                _pollingInterval = 15;
+                                _pollingIntervalController.text = '15';
+                              });
+                            },
+                            child: const Text('Normal (15s)'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                _pollingInterval = 30;
+                                _pollingIntervalController.text = '30';
+                              });
+                            },
+                            child: const Text('Yavaş (30s)'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

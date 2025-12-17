@@ -296,9 +296,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 MaterialPageRoute(
                   builder: (context) => const SettingsScreen(),
                 ),
-              ).then((_) {
+              ).then((_) async {
                 // Reload wiki content when returning from settings
                 _loadWikiContent();
+                // Restart realtime service with new polling interval if changed
+                final authService = Provider.of<AuthService>(context, listen: false);
+                final storage = Provider.of<StorageService>(context, listen: false);
+                await RealtimeService().restartPolling(authService, storage);
+                // Restart background service
+                BackgroundTaskService().stop();
+                await BackgroundTaskService().start();
               });
             },
             tooltip: 'Ayarlar',

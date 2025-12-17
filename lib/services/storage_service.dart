@@ -84,6 +84,36 @@ class StorageService extends ChangeNotifier {
     notifyListeners();
   }
   
+  // Polling Interval (in seconds)
+  /// Get polling interval from storage (default: 15 seconds)
+  Future<int> getPollingInterval() async {
+    try {
+      final interval = _prefs?.getInt('polling_interval_seconds');
+      // Default to 15 seconds, minimum 5 seconds, maximum 300 seconds (5 minutes)
+      if (interval == null || interval < 5) {
+        return 15;
+      }
+      if (interval > 300) {
+        return 300;
+      }
+      return interval;
+    } catch (e) {
+      return 15; // Default on error
+    }
+  }
+
+  /// Set polling interval in seconds
+  Future<void> setPollingInterval(int seconds) async {
+    try {
+      // Enforce limits: minimum 5 seconds, maximum 300 seconds (5 minutes)
+      final clampedSeconds = seconds.clamp(5, 300);
+      await _prefs?.setInt('polling_interval_seconds', clampedSeconds);
+      notifyListeners();
+    } catch (e) {
+      print('Error saving polling interval: $e');
+    }
+  }
+  
   Future<void> clear() async {
     // Güvenli depolamadan token'ı sil
     await _secureStorage.delete(key: 'auth_token');
