@@ -8,7 +8,7 @@
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'work_item_service.dart';
+import 'work_item_service.dart' show WorkItemService, WorkItem;
 import 'notification_service.dart';
 
 /// Arka plan görev servisi sınıfı
@@ -111,7 +111,7 @@ class BackgroundTaskService {
         const Duration(seconds: 30),
         onTimeout: () {
           print('⏱️ [BackgroundTaskService] Request timeout after 30 seconds');
-          return <dynamic>[]; // Return empty list on timeout
+          return List<WorkItem>.empty(); // Return empty list on timeout
         },
       );
 

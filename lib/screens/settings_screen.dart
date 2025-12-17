@@ -44,7 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _wikiUrlController.text = wikiUrl ?? '';
     
     // Load polling interval
-    final interval = await storage.getPollingIntervalAsync();
+    final interval = await storage.getPollingInterval();
     setState(() {
       _pollingInterval = interval;
       _pollingIntervalController.text = interval.toString();
