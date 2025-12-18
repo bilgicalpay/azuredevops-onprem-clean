@@ -29,9 +29,26 @@ if ! command -v cosign &> /dev/null; then
 fi
 
 # Sign the artifact
-cosign sign-blob \
-    --bundle "$SIGSTORE_OUTPUT" \
-    "$ARTIFACT_PATH"
+# Use OIDC for GitHub Actions (non-interactive)
+if [ -n "$GITHUB_ACTIONS" ]; then
+    # GitHub Actions environment - use OIDC
+    export COSIGN_EXPERIMENTAL=1
+    cosign sign-blob \
+        --bundle "$SIGSTORE_OUTPUT" \
+        --oidc-issuer https://token.actions.githubusercontent.com \
+        --oidc-provider-github \
+        "$ARTIFACT_PATH" || {
+        echo "⚠️  OIDC signing failed, trying interactive mode..."
+        cosign sign-blob \
+            --bundle "$SIGSTORE_OUTPUT" \
+            "$ARTIFACT_PATH"
+    }
+else
+    # Local environment - use interactive device flow
+    cosign sign-blob \
+        --bundle "$SIGSTORE_OUTPUT" \
+        "$ARTIFACT_PATH"
+fi
 
 if [ $? -eq 0 ]; then
     echo "✅ Artifact signed successfully!"

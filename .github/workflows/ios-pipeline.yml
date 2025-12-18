@@ -189,13 +189,124 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  build-ios:
-    name: Build iOS
+  bump-version:
+    name: Bump Version and Create Tag
     runs-on: macos-latest
     needs: [test, code-coverage, security-scan]
     if: |
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) ||
-      (github.event_name == 'workflow_dispatch')
+      github.ref == 'refs/heads/main' && 
+      github.event_name == 'push' && 
+      !contains(github.event.head_commit.message, 'chore(release):') &&
+      !contains(github.event.head_commit.message, '[skip version]')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Get current version
+        id: current_version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          VERSION_NUMBER=$(echo $VERSION | cut -d'+' -f1)
+          BUILD_NUMBER=$(echo $VERSION | cut -d'+' -f2)
+          echo "current_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Determine version bump type
+        id: bump_type
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            BUMP_TYPE="${{ github.event.inputs.version_bump }}"
+          else
+            BUMP_TYPE="patch"
+          fi
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "Bump type: $BUMP_TYPE"
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          CURRENT_VERSION="${{ steps.current_version.outputs.version_number }}"
+          BUILD_NUMBER="${{ steps.current_version.outputs.build_number }}"
+          BUMP_TYPE="${{ steps.bump_type.outputs.bump_type }}"
+          
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          case "$BUMP_TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
+          NEW_FULL_VERSION="${NEW_VERSION}+${NEW_BUILD_NUMBER}"
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_build_number=$NEW_BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "new_full_version=$NEW_FULL_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_FULL_VERSION"
+
+      - name: Update pubspec.yaml
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_full_version }}"
+          sed -i '' "s/^version:.*/version: $NEW_VERSION/" pubspec.yaml
+          echo "Updated pubspec.yaml to version: $NEW_VERSION"
+
+      - name: Commit version bump
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_full_version }}"
+          git add pubspec.yaml
+          git commit -m "chore(release): bump version to $NEW_VERSION [skip ci]" || exit 0
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+          TAG_NAME="v$NEW_VERSION"
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME - iOS Build" || exit 0
+          git push origin "$TAG_NAME" || exit 0
+          echo "tag_name=$TAG_NAME" >> $GITHUB_ENV
+          echo "Tag $TAG_NAME created and pushed"
+
+      - name: Set outputs
+        id: outputs
+        run: |
+          echo "tag_name=v${{ steps.new_version.outputs.new_version }}" >> $GITHUB_OUTPUT
+          echo "version=${{ steps.new_version.outputs.new_full_version }}" >> $GITHUB_OUTPUT
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    needs: [test, code-coverage, security-scan, bump-version]
+    if: |
+      always() && (
+        (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) ||
+        (github.event_name == 'workflow_dispatch')
+      )
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -244,6 +355,13 @@ jobs:
             cp build/ios/ipa/*.ipa "release-assets/ios/azuredevops-$VERSION.ipa"
           fi
 
+      - name: Install Cosign
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
+        run: |
+          echo "📦 Installing cosign..."
+          brew install cosign || echo "⚠️  Cosign installation failed"
+
       - name: Sign IPA with Sigstore
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         continue-on-error: true
@@ -251,6 +369,8 @@ jobs:
           echo "🔐 Signing IPA with Sigstore..."
           if command -v cosign &> /dev/null; then
             chmod +x scripts/sign_artifact.sh || true
+            # Use OIDC for authentication (non-interactive)
+            export COSIGN_EXPERIMENTAL=1
             ./scripts/sign_artifact.sh "release-assets/ios/azuredevops-${{ steps.version.outputs.version_number }}.ipa" || echo "⚠️  Sigstore signing skipped (authentication required)"
           else
             echo "⚠️  cosign not installed. Sigstore signing will be skipped."
@@ -275,10 +395,62 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
+  update-documentation:
+    name: Update Documentation
+    runs-on: macos-latest
+    needs: build-ios
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          VERSION_NUMBER=$(echo $VERSION | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Update RELEASE_NOTES.md
+        continue-on-error: true
+        run: |
+          VERSION="${{ steps.version.outputs.version_number }}"
+          BUILD_DATE=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          if [ -f "RELEASE_NOTES.md" ]; then
+            sed -i '' "s/^# Release Notes - v.*/# Release Notes - v$VERSION/" RELEASE_NOTES.md || true
+            sed -i '' "s/\*\*Release Date:\*\*.*/\*\*Release Date:\*\* $BUILD_DATE/" RELEASE_NOTES.md || true
+          fi
+
+      - name: Update README.md
+        continue-on-error: true
+        run: |
+          VERSION="${{ steps.version.outputs.version_number }}"
+          if [ -f "README.md" ]; then
+            sed -i '' "s/\*\*Versiyon:\*\*.*/\*\*Versiyon:\*\* $VERSION/" README.md || true
+          fi
+
+      - name: Commit documentation updates
+        continue-on-error: true
+        run: |
+          git add RELEASE_NOTES.md README.md docs/*.md 2>/dev/null || true
+          git commit -m "docs: Update documentation for v${{ steps.version.outputs.version_number }} [skip ci]" || exit 0
+          git push origin main || exit 0
+
   create-release:
     name: Create GitHub Release (iOS)
     runs-on: ubuntu-latest
-    needs: build-ios
+    needs: [build-ios, update-documentation]
     if: |
       (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
       startsWith(github.ref, 'refs/tags/v')
@@ -295,6 +467,9 @@ jobs:
         run: |
           if startsWith(github.ref, 'refs/tags/v'); then
             TAG_NAME=${GITHUB_REF#refs/tags/}
+            echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          elif [ -n "${{ needs.bump-version.outputs.tag_name }}" ]; then
+            TAG_NAME="${{ needs.bump-version.outputs.tag_name }}"
             echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           else
             VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ' | cut -d'+' -f1)
@@ -356,6 +531,14 @@ jobs:
           
           echo "$NOTES" > release-notes.md
 
+      - name: Download documentation
+        continue-on-error: true
+        run: |
+          mkdir -p release-assets/docs
+          cp RELEASE_NOTES.md release-assets/docs/ 2>/dev/null || true
+          cp README.md release-assets/docs/ 2>/dev/null || true
+          cp docs/*.md release-assets/docs/ 2>/dev/null || true
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -367,9 +550,10 @@ jobs:
             release-assets/ios/azuredevops-*.ipa.sigstore
             release-assets/spdx.json
             release-assets/sbom.txt
+            release-assets/docs/*.md
           draft: false
           prerelease: false
-          make_latest: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
