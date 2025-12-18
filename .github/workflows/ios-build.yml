@@ -325,12 +325,14 @@ jobs:
           
           COMMIT_COUNT=$(git rev-list --count ${LAST_TAG}..HEAD 2>/dev/null || git rev-list --count HEAD)
           
+          VERSION_NUMBER=$(echo $VERSION | cut -d'+' -f1)
+          
           NOTES="## 🚀 Azure DevOps OnPrem Mobile App (iOS) - $TAG_NAME
           
           ### 📦 Version: $VERSION
           
           ### 📥 Downloads
-          - **IPA**: [azuredevops-$TAG_NAME.ipa](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$TAG_NAME.ipa)
+          - **IPA**: [azuredevops-$VERSION_NUMBER.ipa](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$VERSION_NUMBER.ipa)
           
           ### 📱 Installation
           - **IPA**: Install via TestFlight, MDM, or direct installation (requires signed device)

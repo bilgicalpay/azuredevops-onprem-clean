@@ -326,7 +326,11 @@ jobs:
         id: version
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          VERSION_NUMBER=$(echo $VERSION | cut -d'+' -f1)
+          BUILD_NUMBER=$(echo $VERSION | cut -d'+' -f2)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Download Android artifacts
         uses: actions/download-artifact@v4
@@ -369,6 +373,7 @@ jobs:
         run: |
           TAG_NAME="${{ steps.tag.outputs.tag_name }}"
           VERSION="${{ steps.version.outputs.version }}"
+          VERSION_NUMBER="${{ steps.version.outputs.version_number }}"
           
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
@@ -386,11 +391,11 @@ jobs:
           ### 📥 Downloads
           
           #### Android
-          - **APK**: [azuredevops-$TAG_NAME.apk](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$TAG_NAME.apk)
-          - **AAB**: [azuredevops-$TAG_NAME.aab](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$TAG_NAME.aab)
+          - **APK**: [azuredevops-$VERSION_NUMBER.apk](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$VERSION_NUMBER.apk)
+          - **AAB**: [azuredevops-$VERSION_NUMBER.aab](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$VERSION_NUMBER.aab)
           
           #### iOS
-          - **IPA**: [azuredevops-$TAG_NAME.ipa](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$TAG_NAME.ipa)
+          - **IPA**: [azuredevops-$VERSION_NUMBER.ipa](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$VERSION_NUMBER.ipa)
           
           ### 📱 Installation
           - **Android APK**: Download and install directly on Android devices
