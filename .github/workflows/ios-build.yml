@@ -274,6 +274,37 @@ jobs:
           mv release-assets/azuredevops.ipa "release-assets/azuredevops-$TAG_NAME.ipa"
           echo "IPA renamed to azuredevops-$TAG_NAME.ipa"
 
+      - name: Generate SBOM
+        run: |
+          echo "📋 Generating SBOM for release..."
+          chmod +x scripts/generate_sbom.sh
+          ./scripts/generate_sbom.sh || true
+          mkdir -p release-assets
+          if [ -f "build/sbom/spdx.json" ]; then
+            cp build/sbom/spdx.json release-assets/
+            cp build/sbom/sbom.txt release-assets/
+          fi
+
+      - name: Generate Security Reports
+        run: |
+          echo "🔒 Generating security reports..."
+          mkdir -p security release-assets
+          flutter pub outdated > security/security_audit.md 2>&1 || true
+          if [ -f "security/security_report.md" ]; then
+            cp security/security_report.md release-assets/ || true
+          fi
+          if [ -f "security/security_audit.md" ]; then
+            cp security/security_audit.md release-assets/ || true
+          fi
+
+      - name: Copy RELEASE_NOTES.md
+        run: |
+          if [ -f "RELEASE_NOTES.md" ]; then
+            cp RELEASE_NOTES.md release-assets/ || true
+          else
+            echo "RELEASE_NOTES.md not found, will use generated notes"
+          fi
+
       - name: Generate release notes
         id: release_notes
         run: |
@@ -314,6 +345,15 @@ jobs:
           
           echo "$NOTES" > release-notes.md
           echo "Release notes generated"
+          
+      - name: Use RELEASE_NOTES.md if available
+        run: |
+          if [ -f "release-assets/RELEASE_NOTES.md" ]; then
+            echo "Using RELEASE_NOTES.md for release body"
+            cp release-assets/RELEASE_NOTES.md release-notes.md
+          else
+            echo "Using generated release notes"
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -323,6 +363,11 @@ jobs:
           body_path: release-notes.md
           files: |
             release-assets/azuredevops-*.ipa
+            release-assets/RELEASE_NOTES.md
+            release-assets/spdx.json
+            release-assets/sbom.txt
+            release-assets/security_report.md
+            release-assets/security_audit.md
           draft: false
           prerelease: false
           make_latest: false
