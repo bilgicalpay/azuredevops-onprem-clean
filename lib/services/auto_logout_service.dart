@@ -6,9 +6,9 @@
 /// @author Alpay Bilgiç
 
 import 'package:logging/logging.dart';
-import 'services/storage_service.dart';
-import 'services/auth_service.dart';
-import 'services/security_service.dart';
+import 'storage_service.dart';
+import 'auth_service.dart';
+import 'security_service.dart';
 
 /// Service for automatic logout functionality
 class AutoLogoutService {
