@@ -4,11 +4,29 @@
 
 set -e
 
-ROOT_DETECTOR_PATH="$HOME/.pub-cache/hosted/pub.dev/root_detector-0.0.6/android/build.gradle"
+# Find root_detector package in pub cache (try multiple versions)
+ROOT_DETECTOR_PATHS=(
+  "$HOME/.pub-cache/hosted/pub.dev/root_detector-0.0.6/android/build.gradle"
+  "$HOME/.pub-cache/hosted/pub.dev/root_detector-0.0.2/android/build.gradle"
+  "$HOME/.pub-cache/hosted/pub.dev/root_detector/android/build.gradle"
+)
 
-if [ ! -f "$ROOT_DETECTOR_PATH" ]; then
-    echo "⚠️  root_detector package not found at $ROOT_DETECTOR_PATH"
+ROOT_DETECTOR_PATH=""
+for path in "${ROOT_DETECTOR_PATHS[@]}"; do
+  if [ -f "$path" ]; then
+    ROOT_DETECTOR_PATH="$path"
+    break
+  fi
+done
+
+if [ -z "$ROOT_DETECTOR_PATH" ]; then
+    echo "⚠️  root_detector package not found in pub cache"
     echo "   This is normal if package hasn't been fetched yet"
+    echo "   Trying to find in current directory..."
+    # Try to find in current project
+    if [ -d ".dart_tool/pub/bin/root_detector" ] || [ -d "build/root_detector" ]; then
+        echo "   Found root_detector in project, but namespace fix may not be needed"
+    fi
     exit 0
 fi
 
