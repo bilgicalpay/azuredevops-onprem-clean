@@ -512,6 +512,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.5+1"
+  root_detector:
+    dependency: "direct main"
+    description:
+      name: root_detector
+      sha256: faa0ee4ba2619c17e7ba4cc89699d813e10461d7127df2a0246af9afcb68b712
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.6"
   shared_preferences:
     dependency: "direct main"
     description:
