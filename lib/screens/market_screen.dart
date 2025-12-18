@@ -37,10 +37,14 @@ class _MarketScreenState extends State<MarketScreen> {
   }
 
   void _initializeService() {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final storage = Provider.of<StorageService>(context, listen: false);
-    authService.setStorage(storage);
-    _marketService = MarketService(authService);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final storage = Provider.of<StorageService>(context, listen: false);
+      authService.setStorage(storage);
+      setState(() {
+        _marketService = MarketService(authService);
+      });
+    });
   }
 
   Future<void> _loadReleases() async {
@@ -62,7 +66,10 @@ class _MarketScreenState extends State<MarketScreen> {
       }
 
       if (_marketService == null) {
-        _initializeService();
+        final authService = Provider.of<AuthService>(context, listen: false);
+        final storage = Provider.of<StorageService>(context, listen: false);
+        authService.setStorage(storage);
+        _marketService = MarketService(authService);
       }
 
       final releases = await _marketService!.getReleases(repoUrl);
