@@ -4,6 +4,7 @@
 name: iOS Build Pipeline
 
 on:
+
   push:
     branches:
       - main
@@ -38,7 +39,8 @@ on:
 jobs:
   update-dependencies:
     name: Update Dependencies
-    runs-on: macos-latest
+    # runs-on: macos-latest
+    runs-on: alpay-mac
     continue-on-error: true
     steps:
       - name: Checkout code
@@ -71,7 +73,8 @@ jobs:
 
   test:
     name: Run Tests
-    runs-on: macos-latest
+    # runs-on: macos-latest
+    runs-on: alpay-mac
     needs: update-dependencies
     continue-on-error: true
     steps:
@@ -113,7 +116,8 @@ jobs:
 
   code-coverage:
     name: Code Coverage
-    runs-on: macos-latest
+    # runs-on: macos-latest
+    runs-on: alpay-mac
     needs: test
     continue-on-error: true
     steps:
@@ -157,7 +161,8 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: macos-latest
+    # runs-on: macos-latest
+    runs-on: alpay-mac
     needs: update-dependencies
     continue-on-error: true
     steps:
@@ -191,7 +196,8 @@ jobs:
 
   bump-version:
     name: Bump Version and Create Tag
-    runs-on: macos-latest
+    # runs-on: macos-latest
+    runs-on: alpay-mac
     needs: [test]
     if: |
       always() &&
@@ -303,7 +309,8 @@ jobs:
 
   build-ios:
     name: Build iOS
-    runs-on: macos-latest
+    # runs-on: macos-latest
+    runs-on: alpay-mac
     needs: [test, code-coverage, security-scan]
     if: |
       always() && (
@@ -420,7 +427,8 @@ jobs:
 
   update-documentation:
     name: Update Documentation
-    runs-on: macos-latest
+    # runs-on: macos-latest
+    runs-on: alpay-mac
     needs: build-ios
     if: |
       always() && 
