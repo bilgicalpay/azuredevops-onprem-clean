@@ -70,6 +70,17 @@ pipeline {
                         sh 'flutter test'
                     }
                 }
+                stage('Security Scan') {
+                    steps {
+                        sh '''
+                            echo "🔒 Running security scan..."
+                            chmod +x scripts/security_scan.sh
+                            ./scripts/security_scan.sh || true
+                            echo "📦 Checking for outdated packages..."
+                            flutter pub outdated || true
+                        '''
+                    }
+                }
             }
         }
         
@@ -82,8 +93,16 @@ pipeline {
                 }
             }
             steps {
-                sh 'flutter build apk --release'
-                archiveArtifacts artifacts: 'build/app/outputs/flutter-apk/app-release.apk', fingerprint: true
+                sh '''
+                    echo "📋 Generating SBOM..."
+                    chmod +x scripts/generate_sbom.sh
+                    ./scripts/generate_sbom.sh || true
+                    flutter build apk --release
+                    mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/azuredevops.apk || true
+                '''
+                archiveArtifacts artifacts: 'build/app/outputs/flutter-apk/azuredevops.apk', fingerprint: true
+                archiveArtifacts artifacts: 'build/sbom/**', fingerprint: true, allowEmptyArchive: true
+                archiveArtifacts artifacts: 'security/**', fingerprint: true, allowEmptyArchive: true
             }
         }
         

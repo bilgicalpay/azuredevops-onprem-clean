@@ -71,6 +71,17 @@ jobs:
       - name: Run Flutter test
         run: flutter test
 
+      - name: Security Scan
+        run: |
+          echo "🔒 Running security scan..."
+          chmod +x scripts/security_scan.sh
+          ./scripts/security_scan.sh || true
+          
+      - name: Check for outdated dependencies
+        run: |
+          echo "📦 Checking for outdated packages..."
+          flutter pub outdated || true
+
   bump-version:
     name: Bump Version and Create Tag
     runs-on: ubuntu-latest
@@ -206,6 +217,12 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Generate SBOM
+        run: |
+          echo "📋 Generating SBOM..."
+          chmod +x scripts/generate_sbom.sh
+          ./scripts/generate_sbom.sh || true
 
       - name: Build APK
         run: flutter build apk --release

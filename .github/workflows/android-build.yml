@@ -59,6 +59,17 @@ jobs:
       - name: Run Flutter test
         run: flutter test
 
+      - name: Security Scan
+        run: |
+          echo "🔒 Running security scan..."
+          chmod +x scripts/security_scan.sh
+          ./scripts/security_scan.sh || true
+          
+      - name: Check for outdated dependencies
+        run: |
+          echo "📦 Checking for outdated packages..."
+          flutter pub outdated || true
+
   bump-version:
     name: Bump Version and Create Tag
     runs-on: ubuntu-latest
@@ -205,6 +216,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate SBOM
+        run: |
+          echo "📋 Generating SBOM..."
+          chmod +x scripts/generate_sbom.sh
+          ./scripts/generate_sbom.sh || true
+
       - name: Build APK
         run: flutter build apk --release
 
@@ -317,6 +334,37 @@ jobs:
           mv release-assets/app-release.aab "release-assets/azuredevops-$TAG_NAME.aab"
           echo "AAB renamed to azuredevops-$TAG_NAME.aab"
 
+      - name: Generate SBOM
+        run: |
+          echo "📋 Generating SBOM for release..."
+          chmod +x scripts/generate_sbom.sh
+          ./scripts/generate_sbom.sh || true
+          mkdir -p release-assets
+          if [ -f "build/sbom/spdx.json" ]; then
+            cp build/sbom/spdx.json release-assets/
+            cp build/sbom/sbom.txt release-assets/
+          fi
+
+      - name: Generate Security Reports
+        run: |
+          echo "🔒 Generating security reports..."
+          mkdir -p security release-assets
+          flutter pub outdated > security/security_audit.md 2>&1 || true
+          if [ -f "security/security_report.md" ]; then
+            cp security/security_report.md release-assets/ || true
+          fi
+          if [ -f "security/security_audit.md" ]; then
+            cp security/security_audit.md release-assets/ || true
+          fi
+
+      - name: Copy RELEASE_NOTES.md
+        run: |
+          if [ -f "RELEASE_NOTES.md" ]; then
+            cp RELEASE_NOTES.md release-assets/ || true
+          else
+            echo "RELEASE_NOTES.md not found, will use generated notes"
+          fi
+
       - name: Generate release notes
         id: release_notes
         run: |
@@ -369,6 +417,11 @@ jobs:
           files: |
             release-assets/azuredevops-*.apk
             release-assets/azuredevops-*.aab
+            release-assets/RELEASE_NOTES.md
+            release-assets/spdx.json
+            release-assets/sbom.txt
+            release-assets/security_report.md
+            release-assets/security_audit.md
           draft: false
           prerelease: false
           make_latest: true

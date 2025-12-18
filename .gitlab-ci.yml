@@ -56,16 +56,36 @@ test:unit:
     - main
     - develop
 
+test:security:
+  stage: test
+  <<: *flutter_setup
+  script:
+    - echo "🔒 Running security scan..."
+    - chmod +x scripts/security_scan.sh
+    - ./scripts/security_scan.sh || true
+    - echo "📦 Checking for outdated packages..."
+    - flutter pub outdated || true
+  only:
+    - merge_requests
+    - main
+    - develop
+
 # Build stage
 build:apk:
   stage: build
   <<: *flutter_setup
   script:
+    - echo "📋 Generating SBOM..."
+    - chmod +x scripts/generate_sbom.sh
+    - ./scripts/generate_sbom.sh || true
     - flutter build apk --release
+    - mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/azuredevops.apk || true
     - ls -lh build/app/outputs/flutter-apk/
   artifacts:
     paths:
-      - build/app/outputs/flutter-apk/app-release.apk
+      - build/app/outputs/flutter-apk/azuredevops.apk
+      - build/sbom/
+      - security/
     expire_in: 1 week
     reports:
       junit: build/test-results/test/TEST-*.xml
