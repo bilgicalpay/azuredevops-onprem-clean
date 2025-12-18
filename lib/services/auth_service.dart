@@ -36,14 +36,48 @@ class AuthService extends ChangeNotifier {
   String? get token => _token;
   String? get username => _username;
   String? get authType => _authType;
+  
+  /// Get authentication token for API calls
+  /// For PAT: returns stored token
+  /// For AD: generates token from stored username and password at runtime
+  Future<String?> getAuthToken() async {
+    if (_authType == 'ad') {
+      // For AD auth, generate token from stored credentials at runtime
+      final username = await _storage?.getUsername();
+      final password = await _storage?.getAdPassword();
+      if (username != null && password != null) {
+        return _encodeBasicAuth(username, password);
+      }
+      return null;
+    } else {
+      // For PAT, return stored token
+      return _token;
+    }
+  }
 
   Future<void> _loadAuthState() async {
     if (_storage == null) return;
     _serverUrl = _storage!.getServerUrl();
-    _token = await _storage!.getToken(); // Async çağrı
-    _username = _storage!.getUsername();
     _authType = _storage!.getAuthType();
-    _isAuthenticated = _token != null && _serverUrl != null;
+    
+    if (_authType == 'ad') {
+      // For AD auth, check if username and password exist
+      _username = await _storage!.getUsername();
+      final password = await _storage!.getAdPassword();
+      _token = null; // AD auth doesn't store token
+      _isAuthenticated = _username != null && password != null && _serverUrl != null;
+    } else {
+      // For PAT auth, check if token exists
+      _token = await _storage!.getToken();
+      _username = null; // PAT doesn't use username
+      // For AD auth, check username and password; for PAT, check token
+    if (_authType == 'ad') {
+      _isAuthenticated = _username != null && _serverUrl != null;
+    } else {
+      _isAuthenticated = _token != null && _serverUrl != null;
+    }
+    }
+    
     notifyListeners();
   }
 
@@ -150,25 +184,26 @@ class AuthService extends ChangeNotifier {
       SecurityService.logApiCall(testUrl, method: 'GET', statusCode: response.statusCode);
 
       if (response.statusCode == 200) {
-        // Generate a token-like identifier for AD auth
-        final adToken = _encodeBasicAuth(username, password);
-        
+        // Store username and password separately in secure storage (encrypted)
+        // Base64 encoding is only done at runtime for API calls, not for storage
         await _storage?.setServerUrl(cleanUrl);
-        await _storage?.setToken(adToken);
         await _storage?.setUsername(username);
+        await _storage?.setAdPassword(password);
         await _storage?.setAuthType('ad');
         if (collection != null && collection.isNotEmpty) {
           await _storage?.setCollection(collection);
         }
         
+        // For AD auth, we don't store a token - we store username and password separately
+        // Token will be generated at runtime from stored credentials
         _isAuthenticated = true;
         _serverUrl = cleanUrl;
-        _token = adToken;
         _username = username;
+        _token = null; // AD auth doesn't use a stored token
         _authType = 'ad';
         
         SecurityService.logAuthentication('AD login successful', details: {'serverUrl': cleanUrl, 'username': username});
-        SecurityService.logTokenOperation('AD token stored', success: true);
+        SecurityService.logTokenOperation('AD credentials stored securely', success: true);
         
         notifyListeners();
         return true;

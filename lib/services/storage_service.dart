@@ -54,10 +54,35 @@ class StorageService extends ChangeNotifier {
     notifyListeners();
   }
   
-  // Username (for AD auth)
-  String? getUsername() => _prefs?.getString('username');
+  // Username (for AD auth) - Güvenli depolama
+  // Username FlutterSecureStorage'da şifrelenmiş olarak saklanır
+  Future<String?> getUsername() async {
+    return await _secureStorage.read(key: 'username');
+  }
+  
   Future<void> setUsername(String username) async {
-    await _prefs?.setString('username', username);
+    await _secureStorage.write(key: 'username', value: username);
+    notifyListeners();
+  }
+  
+  Future<void> deleteUsername() async {
+    await _secureStorage.delete(key: 'username');
+    notifyListeners();
+  }
+  
+  // AD Password - Güvenli depolama
+  // Password FlutterSecureStorage'da şifrelenmiş olarak saklanır
+  Future<String?> getAdPassword() async {
+    return await _secureStorage.read(key: 'ad_password');
+  }
+  
+  Future<void> setAdPassword(String password) async {
+    await _secureStorage.write(key: 'ad_password', value: password);
+    notifyListeners();
+  }
+  
+  Future<void> deleteAdPassword() async {
+    await _secureStorage.delete(key: 'ad_password');
     notifyListeners();
   }
   
@@ -161,8 +186,10 @@ class StorageService extends ChangeNotifier {
   }
 
   Future<void> clear() async {
-    // Güvenli depolamadan token'ı sil
+    // Güvenli depolamadan tüm hassas verileri sil
     await _secureStorage.delete(key: 'auth_token');
+    await _secureStorage.delete(key: 'username');
+    await _secureStorage.delete(key: 'ad_password');
     // SharedPreferences'ı temizle
     await _prefs?.clear();
     notifyListeners();

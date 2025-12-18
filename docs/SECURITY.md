@@ -66,18 +66,25 @@ dependencies:
 #### 2. Active Directory (AD) Kullanıcı Adı/Şifre
 
 - **Kullanım**: Windows AD kimlik bilgileri
-- **Güvenlik Seviyesi**: Orta-Yüksek
-- **Saklama**: Base64 kodlanmış olarak SharedPreferences'da
-- **Uyarı**: Şifreler şifrelenmez, sadece Base64 ile kodlanır
+- **Güvenlik Seviyesi**: Yüksek
+- **Saklama**: ✅ `flutter_secure_storage` kullanılıyor (şifrelenmiş)
+  - Username: FlutterSecureStorage'da şifrelenmiş
+  - Password: FlutterSecureStorage'da şifrelenmiş
+  - Android: EncryptedSharedPreferences
+  - iOS: Keychain Services
+- **Durum**: Production'da aktif olarak kullanılıyor
 
 **Güvenlik Notları:**
-- Şifreler HTTPS üzerinden gönderilir
-- Şifreler cihazda Base64 kodlanmış olarak saklanır
-- AD oturum yönetimi Azure DevOps Server tarafında yapılır
+- ✅ Şifreler HTTPS üzerinden gönderilir
+- ✅ Username ve password FlutterSecureStorage'da şifrelenmiş olarak saklanır
+- ✅ Base64 encoding sadece API çağrılarında runtime'da yapılır, saklama için kullanılmaz
+- ✅ AD oturum yönetimi Azure DevOps Server tarafında yapılır
+- ✅ Token, username ve password Base64 ile kodlanmadan şifrelenmiş olarak saklanır
 
-**Önerilen İyileştirmeler:**
-- Biometric authentication eklenebilir
-- Keychain/Keystore entegrasyonu yapılabilir
+**Uygulanan Özellikler:**
+- ✅ Username ve password ayrı ayrı FlutterSecureStorage'da saklanır
+- ✅ AES-256 şifreleme ile korunur
+- ✅ Base64 encoding sadece API çağrıları için runtime'da yapılır
 
 ### Token Yönetimi
 

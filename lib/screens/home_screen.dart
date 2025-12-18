@@ -178,9 +178,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     
     final authService = Provider.of<AuthService>(context, listen: false);
     final storage = Provider.of<StorageService>(context, listen: false);
+    final token = await authService.getAuthToken();
+    if (token == null || authService.serverUrl == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     final workItems = await _workItemService.getWorkItems(
       serverUrl: authService.serverUrl!,
-      token: authService.token!,
+      token: token,
       collection: storage.getCollection(),
     );
     
