@@ -4,7 +4,6 @@
 name: iOS Build Pipeline
 
 on:
-
   push:
     branches:
       - main
@@ -19,11 +18,12 @@ on:
   pull_request:
     branches:
       - main
-      - develop
     paths:
       - 'lib/**'
       - 'ios/**'
       - 'pubspec.yaml'
+      - '.github/workflows/ios-pipeline.yml'
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       version_bump:

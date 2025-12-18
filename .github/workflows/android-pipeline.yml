@@ -18,11 +18,12 @@ on:
   pull_request:
     branches:
       - main
-      - develop
     paths:
       - 'lib/**'
       - 'android/**'
       - 'pubspec.yaml'
+      - '.github/workflows/android-pipeline.yml'
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       version_bump:
