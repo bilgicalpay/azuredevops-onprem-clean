@@ -1,260 +1,262 @@
-# Security Features Documentation
+# Güvenlik Özellikleri Dokümantasyonu
 
-**Last Updated:** 2025-12-18  
-**Version:** 1.0.20+
+**Son Güncelleme:** 2025-12-18  
+**Versiyon:** 1.0.20+
 
-## Overview
+## Genel Bakış
 
-This document describes the security features implemented in the Azure DevOps Server 2022 Mobile Application, including recent enhancements and important configuration notes.
+Bu dokümantasyon, Azure DevOps Server 2022 Mobil Uygulaması'nda uygulanan güvenlik özelliklerini, son geliştirmeleri ve önemli yapılandırma notlarını açıklar.
 
-## 🔒 Implemented Security Features
+## 🔒 Uygulanan Güvenlik Özellikleri
 
 ### 1. Certificate Pinning
 
-**Status:** ✅ Implemented (Production Ready)
+**Durum:** ✅ Uygulandı (Production Hazır)
 
-Certificate pinning ensures that the app only communicates with servers that have specific SSL/TLS certificates, preventing man-in-the-middle (MITM) attacks.
+Certificate pinning, uygulamanın yalnızca belirli SSL/TLS sertifikalarına sahip sunucularla iletişim kurmasını sağlayarak man-in-the-middle (MITM) saldırılarını önler.
 
-#### Implementation Details:
+#### Uygulama Detayları:
 - **Service:** `lib/services/certificate_pinning_service.dart`
-- **Method:** SHA-256 fingerprint validation
-- **Activation:** Automatically enabled in production builds (`PRODUCTION=true`)
-- **Manual Testing:** Use `ENABLE_CERT_PINNING=true` flag
+- **Method:** SHA-256 fingerprint doğrulama
+- **Aktivasyon:** Production build'lerde otomatik olarak etkin (`PRODUCTION=true`)
+- **Manuel Test:** `ENABLE_CERT_PINNING=true` flag'i kullanın
 
-#### Configuration Required:
-1. Extract certificate fingerprints from your Azure DevOps Server:
+#### Gerekli Yapılandırma:
+1. Azure DevOps Server'ınızdan certificate fingerprint'lerini çıkarın:
    ```bash
    ./scripts/extract_certificate_fingerprints.sh https://your-azure-devops-server.com
    ```
 
-2. Add fingerprints to `lib/services/certificate_pinning_service.dart`:
+2. Fingerprint'leri `lib/services/certificate_pinning_service.dart` dosyasına ekleyin:
    ```dart
    static const List<String> _allowedFingerprints = [
      'SHA256:AB:CD:EF:...',  // Your Azure DevOps Server
    ];
    ```
 
-#### Important Notes:
-- ⚠️ **Certificate fingerprints must be added before production deployment**
-- ⚠️ **When server certificates are renewed, fingerprints must be updated**
-- ✅ Development builds work normally without fingerprints (pinning disabled)
-- ✅ Production builds will fail if fingerprints are missing and pinning is enabled
+#### Önemli Notlar:
+- ⚠️ **Certificate fingerprint'leri production deployment'tan önce eklenmelidir**
+- ⚠️ **Sunucu sertifikaları yenilendiğinde fingerprint'ler güncellenmelidir**
+- ✅ Development build'ler fingerprint olmadan normal çalışır (pinning devre dışı)
+- ✅ Production build'ler fingerprint eksikse ve pinning etkinse başarısız olur
 
-#### Documentation:
-- Setup Guide: `scripts/setup_certificate_pinning.md`
+#### Dokümantasyon:
+- Kurulum Kılavuzu: `scripts/setup_certificate_pinning.md`
 - Extraction Script: `scripts/extract_certificate_fingerprints.sh`
 
 ---
 
 ### 2. Root/Jailbreak Detection
 
-**Status:** ✅ Implemented
+**Durum:** ✅ Uygulandı
 
-Device security checks to detect if the device is rooted (Android) or jailbroken (iOS).
+Cihazın root edilmiş (Android) veya jailbreak yapılmış (iOS) olup olmadığını tespit eden cihaz güvenlik kontrolleri.
 
-#### Implementation Details:
+#### Uygulama Detayları:
 - **Service:** `lib/services/security_service.dart`
 - **Package:** `flutter_root_jailbreak_checker: ^2.0.1`
 - **Method:** `checkOfflineIntegrity()` (API v2.0+)
-- **Check Time:** Application startup
+- **Kontrol Zamanı:** Uygulama başlangıcında
 
-#### API Usage:
+#### API Kullanımı:
 ```dart
 final checker = FlutterRootJailbreakChecker();
 final result = await checker.checkOfflineIntegrity();
 final isCompromised = result.isRooted || result.isJailbroken;
 ```
 
-#### Behavior:
-- ✅ Checks device security at app startup
-- ✅ Logs security events (does not block app usage)
-- ✅ Error handling: Assumes device is safe on error (to avoid blocking legitimate users)
+#### Davranış:
+- ✅ Uygulama başlangıcında cihaz güvenliğini kontrol eder
+- ✅ Güvenlik olaylarını loglar (uygulama kullanımını engellemez)
+- ✅ Hata yönetimi: Hata durumunda cihazı güvenli varsayar (meşru kullanıcıları engellememek için)
 
-#### Important Notes:
-- ⚠️ **Package API changed in v2.0+**: Use `checkOfflineIntegrity()` method
-- ⚠️ **Instance-based**: Create instance before calling method
-- ✅ **Non-blocking**: App continues to work even if device is compromised (logged for monitoring)
+#### Önemli Notlar:
+- ⚠️ **Package API v2.0+ sürümünde değişti**: `checkOfflineIntegrity()` metodunu kullanın
+- ⚠️ **Instance-based**: Metodu çağırmadan önce instance oluşturun
+- ✅ **Non-blocking**: Cihaz güvenliği ihlal edilse bile uygulama çalışmaya devam eder (izleme için loglanır)
+
+**Not:** Şu anda geçici olarak devre dışı bırakılmıştır (package derleme hatası nedeniyle). Gelecekte yeniden etkinleştirilecektir.
 
 ---
 
 ### 3. Automatic Token Refresh
 
-**Status:** ✅ Implemented (Conceptual for PATs)
+**Durum:** ✅ Uygulandı (PAT'ler için kavramsal)
 
-Automatic token refresh mechanism to ensure authentication tokens remain valid.
+Kimlik doğrulama token'larının geçerli kalmasını sağlamak için otomatik token yenileme mekanizması.
 
-#### Implementation Details:
+#### Uygulama Detayları:
 - **Service:** `lib/services/token_refresh_service.dart`
-- **Check Time:** Application startup
-- **Expiry Buffer:** 5 minutes before token expiry
+- **Kontrol Zamanı:** Uygulama başlangıcında
+- **Expiry Buffer:** Token süresi dolmadan 5 dakika önce
 
-#### Current Implementation:
-- ✅ Token expiry checking
-- ✅ Automatic refresh trigger
-- ⚠️ **PAT Limitation:** Azure DevOps PATs don't have refresh tokens
-- ⚠️ **Placeholder:** Actual refresh logic needs implementation based on auth method
+#### Mevcut Uygulama:
+- ✅ Token süresi kontrolü
+- ✅ Otomatik yenileme tetikleme
+- ⚠️ **PAT Limitation:** Azure DevOps PAT'ler refresh token'a sahip değildir
+- ⚠️ **Placeholder:** Gerçek yenileme mantığı auth method'una göre uygulanmalıdır
 
-#### Storage:
-- Token expiry stored in `SharedPreferences` via `StorageService`
-- Methods: `getTokenExpiry()`, `setTokenExpiry()`
+#### Depolama:
+- Token süresi `StorageService` aracılığıyla `SharedPreferences`'da saklanır
+- Metodlar: `getTokenExpiry()`, `setTokenExpiry()`
 
-#### Important Notes:
-- ⚠️ **PAT Refresh Not Implemented:** Azure DevOps PATs require manual token generation
-- ⚠️ **Future Enhancement:** Implement refresh for OAuth2 or other auth methods
-- ✅ **Expiry Tracking:** Currently tracks and logs token expiry status
+#### Önemli Notlar:
+- ⚠️ **PAT Yenileme Uygulanmadı:** Azure DevOps PAT'ler manuel token oluşturma gerektirir
+- ⚠️ **Gelecek Geliştirme:** OAuth2 veya diğer auth method'ları için yenileme uygulanmalıdır
+- ✅ **Süre Takibi:** Şu anda token süresi durumunu takip eder ve loglar
 
 ---
 
 ### 4. Security Logging
 
-**Status:** ✅ Implemented
+**Durum:** ✅ Uygulandı
 
-Centralized security event logging for monitoring and auditing.
+İzleme ve denetim için merkezi güvenlik olayı loglama.
 
-#### Implementation Details:
+#### Uygulama Detayları:
 - **Service:** `lib/services/security_service.dart`
 - **Package:** `logging: ^1.3.0`
-- **Log Levels:** INFO, WARNING, SEVERE
+- **Log Seviyeleri:** INFO, WARNING, SEVERE
 
-#### Logged Events:
-- ✅ Authentication events (`logAuthentication`)
-- ✅ Token operations (`logTokenOperation`)
-- ✅ API calls (`logApiCall`)
-- ✅ Sensitive data access (`logSensitiveDataAccess`)
-- ✅ Security events (`logSecurityEvent`)
+#### Loglanan Olaylar:
+- ✅ Kimlik doğrulama olayları (`logAuthentication`)
+- ✅ Token işlemleri (`logTokenOperation`)
+- ✅ API çağrıları (`logApiCall`)
+- ✅ Hassas veri erişimi (`logSensitiveDataAccess`)
+- ✅ Güvenlik olayları (`logSecurityEvent`)
 
-#### Usage Example:
+#### Kullanım Örneği:
 ```dart
 SecurityService.logAuthentication('Token login attempt', details: {'serverUrl': serverUrl});
 SecurityService.logTokenOperation('Token stored', success: true);
 SecurityService.logApiCall('/api/projects', method: 'GET', statusCode: 200);
 ```
 
-#### Important Notes:
-- ✅ **Centralized:** All security events logged through `SecurityService`
-- ✅ **Level-based:** Different log levels for different severity
-- ⚠️ **Production Integration:** TODO: Integrate with security monitoring service
-- ✅ **Console Output:** Logs to console in debug mode (WARNING+)
+#### Önemli Notlar:
+- ✅ **Merkezi:** Tüm güvenlik olayları `SecurityService` aracılığıyla loglanır
+- ✅ **Seviye tabanlı:** Farklı önem dereceleri için farklı log seviyeleri
+- ⚠️ **Production Entegrasyonu:** TODO: Güvenlik izleme servisi ile entegre edilmeli
+- ✅ **Console Çıktısı:** Debug mode'da console'a loglar (WARNING+)
 
 ---
 
-## 🔧 Integration Points
+## 🔧 Entegrasyon Noktaları
 
-### Main Application (`lib/main.dart`)
+### Ana Uygulama (`lib/main.dart`)
 
-All security services are initialized at application startup:
+Tüm güvenlik servisleri uygulama başlangıcında başlatılır:
 
 ```dart
-// Initialize security service first
+// Önce güvenlik servisini başlat
 await SecurityService.initialize();
 
-// Check device security
+// Cihaz güvenliğini kontrol et
 final isCompromised = await SecurityService.isDeviceCompromised();
 
-// Ensure token is valid
+// Token'ın geçerli olduğundan emin ol
 await TokenRefreshService.ensureValidToken(storage);
 ```
 
-### API Services
+### API Servisleri
 
-All API calls use certificate pinning:
+Tüm API çağrıları certificate pinning kullanır:
 
-- `lib/services/auth_service.dart` - Uses `CertificatePinningService.createSecureDio()`
-- `lib/services/work_item_service.dart` - Uses `CertificatePinningService.createSecureDio()`
-- `lib/services/wiki_service.dart` - Uses `CertificatePinningService.createSecureDio()`
+- `lib/services/auth_service.dart` - `CertificatePinningService.createSecureDio()` kullanır
+- `lib/services/work_item_service.dart` - `CertificatePinningService.createSecureDio()` kullanır
+- `lib/services/wiki_service.dart` - `CertificatePinningService.createSecureDio()` kullanır
 
 ### Storage Service
 
-Token expiry tracking:
+Token süresi takibi:
 
-- `lib/services/storage_service.dart` - Methods: `getTokenExpiry()`, `setTokenExpiry()`
+- `lib/services/storage_service.dart` - Metodlar: `getTokenExpiry()`, `setTokenExpiry()`
 
 ---
 
-## 📋 CI/CD Integration
+## 📋 CI/CD Entegrasyonu
 
-All security features are integrated into CI/CD pipelines:
+Tüm güvenlik özellikleri CI/CD pipeline'larına entegre edilmiştir:
 
 ### GitHub Actions
-- ✅ `PRODUCTION=true` flag in build commands
-- ✅ Security checks in workflow
-- ✅ SBOM generation
-- ✅ Security audit reports
+- ✅ Build komutlarında `PRODUCTION=true` flag'i
+- ✅ Workflow'da güvenlik kontrolleri
+- ✅ SBOM oluşturma
+- ✅ Güvenlik denetim raporları
 
 ### GitLab CI
-- ✅ `PRODUCTION=true` flag in build commands
-- ✅ Security scanning stages
+- ✅ Build komutlarında `PRODUCTION=true` flag'i
+- ✅ Güvenlik tarama aşamaları
 
 ### Jenkins
-- ✅ `PRODUCTION=true` flag in build commands
-- ✅ Security audit jobs
+- ✅ Build komutlarında `PRODUCTION=true` flag'i
+- ✅ Güvenlik denetim işleri
 
 ---
 
-## 🚨 Important Security Notes
+## 🚨 Önemli Güvenlik Notları
 
 ### Certificate Pinning
-1. **Fingerprint Configuration Required:** Must add server fingerprints before production
-2. **Certificate Renewal:** Update fingerprints when certificates are renewed
-3. **Multiple Certificates:** Add all certificates in chain (server, load balancer, CDN)
+1. **Fingerprint Yapılandırması Gerekli:** Production'dan önce sunucu fingerprint'lerini eklemelisiniz
+2. **Certificate Yenileme:** Sertifikalar yenilendiğinde fingerprint'leri güncelleyin
+3. **Çoklu Sertifikalar:** Zincirdeki tüm sertifikaları ekleyin (sunucu, load balancer, CDN)
 
 ### Root/Jailbreak Detection
-1. **Non-Blocking:** App continues to work even if device is compromised
-2. **Monitoring:** Security events are logged for investigation
-3. **Production Consideration:** May want to block app usage on compromised devices
+1. **Non-Blocking:** Cihaz güvenliği ihlal edilse bile uygulama çalışmaya devam eder
+2. **İzleme:** Güvenlik olayları araştırma için loglanır
+3. **Production Düşüncesi:** Güvenliği ihlal edilmiş cihazlarda uygulama kullanımını engellemek isteyebilirsiniz
 
 ### Token Refresh
-1. **PAT Limitation:** Azure DevOps PATs don't support refresh tokens
-2. **Manual Token Generation:** Users must generate new PATs when expired
-3. **Future Enhancement:** Implement for OAuth2 or other auth methods
+1. **PAT Limitation:** Azure DevOps PAT'ler refresh token'ı desteklemez
+2. **Manuel Token Oluşturma:** Kullanıcılar süresi dolduğunda yeni PAT oluşturmalıdır
+3. **Gelecek Geliştirme:** OAuth2 veya diğer auth method'ları için uygulanmalıdır
 
 ### Security Logging
-1. **Production Integration:** TODO: Send logs to security monitoring service
-2. **Log Retention:** Consider log retention policies
-3. **Privacy:** Ensure sensitive data is not logged
+1. **Production Entegrasyonu:** TODO: Logları güvenlik izleme servisine gönderin
+2. **Log Saklama:** Log saklama politikalarını düşünün
+3. **Gizlilik:** Hassas verilerin loglanmadığından emin olun
 
 ---
 
-## 📚 Related Documentation
+## 📚 İlgili Dokümantasyon
 
-- **Certificate Pinning Setup:** `scripts/setup_certificate_pinning.md`
-- **Security Audit:** `security/security_audit.md`
-- **Security Report:** `security/security_report.md`
-- **Security Implementation Report:** `security/security_implementation_report.md`
-- **Comprehensive Audit:** `security/comprehensive_audit.md`
+- **Certificate Pinning Kurulumu:** `scripts/setup_certificate_pinning.md`
+- **Güvenlik Denetimi:** `security/security_audit.md`
+- **Güvenlik Raporu:** `security/security_report.md`
+- **Güvenlik Uygulama Raporu:** `security/security_implementation_report.md`
+- **Kapsamlı Denetim:** `security/comprehensive_audit.md`
 
 ---
 
-## 🔄 Recent Changes (v1.0.20+)
+## 🔄 Son Değişiklikler (v1.0.20+)
 
 ### Certificate Pinning
-- ✅ Fixed fingerprint extraction script (preserve colon format)
-- ✅ Added comprehensive setup documentation
-- ✅ Improved error handling and warnings
-- ✅ Added `ENABLE_CERT_PINNING` flag for manual testing
+- ✅ Fingerprint extraction script düzeltildi (colon formatı korunuyor)
+- ✅ Kapsamlı kurulum dokümantasyonu eklendi
+- ✅ Hata yönetimi ve uyarılar iyileştirildi
+- ✅ Manuel test için `ENABLE_CERT_PINNING` flag'i eklendi
 
 ### Root/Jailbreak Detection
-- ✅ Fixed API usage for `flutter_root_jailbreak_checker` v2.0+
-- ✅ Updated to use `checkOfflineIntegrity()` method
-- ✅ Improved error handling
+- ✅ `flutter_root_jailbreak_checker` v2.0+ için API kullanımı düzeltildi
+- ✅ `checkOfflineIntegrity()` metodunu kullanacak şekilde güncellendi
+- ✅ Hata yönetimi iyileştirildi
+- ⚠️ Geçici olarak devre dışı bırakıldı (package derleme hatası nedeniyle)
 
 ### Security Logging
-- ✅ Integrated into all authentication flows
-- ✅ Added logging for API calls
-- ✅ Added logging for token operations
+- ✅ Tüm kimlik doğrulama akışlarına entegre edildi
+- ✅ API çağrıları için loglama eklendi
+- ✅ Token işlemleri için loglama eklendi
 
 ---
 
-## 📞 Support
+## 📞 Destek
 
-For security-related issues or questions:
-- Review security implementation report: `security/security_implementation_report.md`
-- Check security audit: `security/security_audit.md`
-- Run security checks: `./scripts/security_checks.sh`
+Güvenlik ile ilgili sorunlar veya sorular için:
+- Güvenlik uygulama raporunu inceleyin: `security/security_implementation_report.md`
+- Güvenlik denetimini kontrol edin: `security/security_audit.md`
+- Güvenlik kontrollerini çalıştırın: `./scripts/security_checks.sh`
 
 ---
 
-**Developer:** Alpay Bilgiç  
-**Email:** bilgicalpay@gmail.com  
-**Last Updated:** 2025-12-18
-
+**Geliştirici:** Alpay Bilgiç  
+**E-posta:** bilgicalpay@gmail.com  
+**Son Güncelleme:** 2025-12-18
