@@ -432,7 +432,14 @@ jobs:
           name: Release ${{ steps.tag.outputs.tag_name }}
           body_path: release-notes.md
           files: |
-            release-assets/**/*
+            release-assets/android/azuredevops-${{ steps.version.outputs.version_number }}.apk
+            release-assets/android/azuredevops-${{ steps.version.outputs.version_number }}.aab
+            release-assets/ios/azuredevops-${{ steps.version.outputs.version_number }}.ipa
+            release-assets/RELEASE_NOTES.md
+            release-assets/spdx.json
+            release-assets/sbom.txt
+            release-assets/security_report.md
+            release-assets/security_audit.md
           draft: false
           prerelease: false
           make_latest: true
