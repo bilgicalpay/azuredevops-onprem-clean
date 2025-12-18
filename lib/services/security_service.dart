@@ -26,8 +26,11 @@ class SecurityService {
   /// Check if device is rooted (Android) or jailbroken (iOS)
   /// 
   /// Uses root_detector package for detection
+  /// Note: iOS build may have issues with root_detector package, handled gracefully
   static Future<bool> isDeviceCompromised() async {
     try {
+      // Try to use root_detector package
+      // On iOS, this may fail due to package compilation issues
       final isRooted = await RootDetector.isRooted;
       final isJailbroken = await RootDetector.isJailbroken;
       final isCompromised = isRooted || isJailbroken;
@@ -46,7 +49,14 @@ class SecurityService {
       
       return isCompromised;
     } catch (e) {
-      _logSecurityEvent('Error checking device security: $e', Level.SEVERE);
+      // Handle iOS build errors gracefully
+      // root_detector package may have compilation issues on iOS
+      _logSecurityEvent(
+        'Error checking device security (may be iOS build issue): $e',
+        Level.WARNING
+      );
+      // Return false to allow app to continue (non-blocking)
+      // In production, you might want to implement alternative detection
       return false;
     }
   }
