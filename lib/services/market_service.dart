@@ -17,6 +17,7 @@ import 'package:html/dom.dart' as html_dom;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:permission_handler/permission_handler.dart';
 import 'auth_service.dart';
 import 'certificate_pinning_service.dart';
 
@@ -666,6 +667,22 @@ class MarketService {
     try {
       _logger.info('Downloading artifact on Android: ${artifact.name}');
       
+      // Android 9 ve altı için storage izni iste (Android 10+ için gerekli değil)
+      if (Platform.isAndroid) {
+        try {
+          final androidVersion = await _getAndroidVersion();
+          if (androidVersion != null && androidVersion < 29) {
+            // Android 9 ve altı için storage izni iste
+            final status = await Permission.storage.request();
+            if (!status.isGranted) {
+              _logger.warning('Storage permission not granted, file will be saved to app directory');
+            }
+          }
+        } catch (e) {
+          _logger.warning('Could not check Android version or request permission: $e');
+        }
+      }
+      
       // Önce uygulama dizinine indir (Android 10+ scoped storage için)
       final appDir = await getApplicationDocumentsDirectory();
       final tempFilePath = path.join(appDir.path, artifact.name);
@@ -771,5 +788,22 @@ class MarketService {
         rethrow;
       }
     }
+  }
+  
+  /// Android sürümünü al (API level)
+  Future<int?> _getAndroidVersion() async {
+    try {
+      if (Platform.isAndroid) {
+        // Platform.version format: "Android 12, API level 31"
+        final versionString = Platform.version;
+        final match = RegExp(r'API level (\d+)').firstMatch(versionString);
+        if (match != null) {
+          return int.tryParse(match.group(1)!);
+        }
+      }
+    } catch (e) {
+      _logger.warning('Could not get Android version: $e');
+    }
+    return null;
   }
 }

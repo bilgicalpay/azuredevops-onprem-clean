@@ -49,6 +49,7 @@ dependencies:
   provider: ^6.1.1
   path_provider: ^2.1.2  # Android Downloads klasörü erişimi için
   path: ^1.9.0  # Path işlemleri için
+  permission_handler: ^11.3.1  # Android runtime permissions için
   
   # Tarih/saat ve uluslararasılaştırma
   intl: ^0.18.1
