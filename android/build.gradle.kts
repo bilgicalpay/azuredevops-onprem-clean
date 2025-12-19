@@ -76,6 +76,25 @@ subprojects {
                 println("⚠️  Could not set Java compatibility for package_info_plus: ${e.message}")
             }
         }
+        
+        // Fix root_detector JVM target compatibility
+        if (project.name == "root_detector") {
+            try {
+                val android = project.extensions.findByName("android")
+                if (android != null) {
+                    val androidExtension = android as? com.android.build.gradle.BaseExtension
+                    if (androidExtension != null) {
+                        // Force Java 17 for root_detector
+                        androidExtension.compileOptions {
+                            sourceCompatibility = org.gradle.api.JavaVersion.VERSION_17
+                            targetCompatibility = org.gradle.api.JavaVersion.VERSION_17
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("⚠️  Could not set Java compatibility for root_detector: ${e.message}")
+            }
+        }
     }
 }
 
