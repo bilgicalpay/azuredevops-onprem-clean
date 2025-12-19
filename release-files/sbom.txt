@@ -2,8 +2,8 @@ Software Bill of Materials (SBOM)
 ==================================
 
 Package: azuredevops_onprem
-Version: 1.0.22+25
-Generated: 2025-12-18T19:26:58Z
+Version: 1.0.25+31
+Generated: 2025-12-19T11:14:05Z
 
 Dependencies:
   - flutter
@@ -16,6 +16,9 @@ Dependencies:
   - shared_preferences
   - flutter_secure_storage
   - provider
+  - path_provider
+  - path
+  - permission_handler
   - intl
   - url_launcher
   - package_info_plus
@@ -24,6 +27,7 @@ Dependencies:
   - flutter_background_service_android
   - flutter_html
   - flutter_markdown
+  - html
   - logging
   - root_detector
   - flutter_test
@@ -32,6 +36,6 @@ Dependencies:
   - assets
 
 Build Information:
-  - Flutter SDK: Flutter 3.40.0-1.0.pre-212 • channel master • https://github.com/flutter/flutter.git
-  - Dart SDK: Tools • Dart 3.11.0 (build 3.11.0-245.0.dev) • DevTools 2.53.0
-  - Build Date: Thu Dec 18 22:27:00 +03 2025
+  - Flutter SDK: Flutter 3.38.5 • channel stable • https://github.com/flutter/flutter.git
+  - Dart SDK: Tools • Dart 3.10.4 • DevTools 2.51.1
+  - Build Date: Fri Dec 19 14:14:09 +03 2025
