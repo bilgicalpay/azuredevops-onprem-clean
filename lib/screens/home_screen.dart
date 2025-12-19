@@ -242,10 +242,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final authService = Provider.of<AuthService>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 140, // AppBar yüksekliğini daha da artır
-        title: Padding(
-          padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(180), // AppBar için daha fazla yükseklik
+        child: SafeArea(
+          child: AppBar(
+            toolbarHeight: 180,
+            title: Padding(
+              padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           // Versiyon bilgisi en sağda, üstte
           if (_appVersion.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(right: 16.0, top: 16.0),
+              padding: const EdgeInsets.only(right: 16.0, top: 8.0),
               child: Center(
                 child: Text(
                   _appVersion,
@@ -387,6 +390,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ],
         centerTitle: false,
         automaticallyImplyLeading: false,
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
