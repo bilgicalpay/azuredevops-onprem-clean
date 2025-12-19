@@ -4,6 +4,7 @@
 /// PAT (Personal Access Token) veya AD (Active Directory) kimlik doğrulama destekler.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

@@ -4,6 +4,7 @@
 /// periyodik olarak work item kontrolü yapar.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'dart:async';
 import 'dart:ui';
@@ -110,7 +111,7 @@ void onStart(ServiceInstance service) async {
   final pollingIntervalSeconds = prefs.getInt('polling_interval_seconds') ?? 15;
   final clampedInterval = pollingIntervalSeconds.clamp(5, 300);
   
-  print('⏰ [BackgroundWorker] Polling interval: ${clampedInterval} seconds');
+  print('⏰ [BackgroundWorker] Polling interval: $clampedInterval seconds');
   
   // Update foreground notification immediately
   if (service is AndroidServiceInstance) {

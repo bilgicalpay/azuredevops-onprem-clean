@@ -5,6 +5,7 @@
 /// Server URL, kullanıcı adı, collection ve wiki URL bilgileri SharedPreferences'da saklanır.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'dart:convert';
 import 'package:flutter/material.dart';

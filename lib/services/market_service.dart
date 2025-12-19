@@ -4,6 +4,7 @@
 /// APK ve IPA dosyalarını indirme işlemlerini yönetir.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'dart:convert';
 import 'package:dio/dio.dart';
@@ -200,7 +201,9 @@ class MarketService {
       // Skip parent directory links
       if (href == '../' || href == '..' || href == './' || href == '.' || 
           href == '/' || href.toLowerCase().contains('parent') ||
-          href.toLowerCase().contains('up')) continue;
+          href.toLowerCase().contains('up')) {
+        continue;
+      }
       
       // Only include directories (ending with /)
       if (href.endsWith('/')) {
@@ -431,7 +434,9 @@ class MarketService {
       // Skip parent directory links and self-references
       if (href == '../' || href == '..' || href == './' || href == '.' || 
           href == '/' || href.toLowerCase().contains('parent') ||
-          href.toLowerCase().contains('up')) continue;
+          href.toLowerCase().contains('up')) {
+        continue;
+      }
       
       // Get file name from href
       String fileName = href;
@@ -510,7 +515,9 @@ class MarketService {
             
             // Skip directories and parent links
             if (fileName.endsWith('/') || fileName == '../' || fileName == '..' || 
-                fileName == './' || fileName == '.' || fileName == '/') continue;
+                fileName == './' || fileName == '.' || fileName == '/') {
+              continue;
+            }
             
             // Clean up file name
             if (fileName.contains('?')) fileName = fileName.split('?').first;

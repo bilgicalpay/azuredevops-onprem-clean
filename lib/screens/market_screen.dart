@@ -4,6 +4,7 @@
 /// Kullanıcılar klasörleri favorilerine ekleyebilir ve APK/IPA dosyalarını indirebilir.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

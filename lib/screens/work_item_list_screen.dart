@@ -4,6 +4,7 @@
 /// Her work item için detay sayfasına geçiş sağlar.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import '../services/work_item_service.dart';

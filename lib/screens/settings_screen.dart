@@ -4,6 +4,7 @@
 /// mevcut server bilgilerini gösterir.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

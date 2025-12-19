@@ -4,6 +4,7 @@
 /// Periyodik kontroller yaparak yeni atamalar ve güncellemeler için bildirim gönderir.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'dart:async';
 import 'dart:convert';
@@ -26,11 +27,11 @@ class BackgroundTaskService {
   bool _isRunning = false;
   final WorkItemService _workItemService = WorkItemService();
   final NotificationService _notificationService = NotificationService();
-  Map<int, int> _workItemRevisions = {};
-  Map<int, String?> _workItemAssignees = {}; // Track assignees to detect assignee changes
-  Map<int, DateTime?> _workItemChangedDates = {}; // Track changed dates for better change detection
+  final Map<int, int> _workItemRevisions = {};
+  final Map<int, String?> _workItemAssignees = {}; // Track assignees to detect assignee changes
+  final Map<int, DateTime?> _workItemChangedDates = {}; // Track changed dates for better change detection
   Set<int> _knownWorkItemIds = {};
-  Set<int> _notifiedWorkItemIds = {}; // Track which work items we've already notified about
+  final Set<int> _notifiedWorkItemIds = {}; // Track which work items we've already notified about
 
   /// Initialize the service (called on app start)
   Future<void> init() async {
@@ -66,7 +67,7 @@ class BackgroundTaskService {
     
     // Start periodic checks with configured interval
     _backgroundTimer?.cancel();
-    print('⏰ [BackgroundTaskService] Setting up periodic timer (${clampedInterval} second intervals)...');
+    print('⏰ [BackgroundTaskService] Setting up periodic timer ($clampedInterval second intervals)...');
     _backgroundTimer = Timer.periodic(Duration(seconds: clampedInterval), (timer) async {
       if (!_isRunning) {
         print('⚠️ [BackgroundTaskService] Timer stopped: _isRunning = false');

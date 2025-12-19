@@ -37,8 +37,7 @@ class CertificatePinningService {
       // Check if fingerprints are configured
       if (_allowedFingerprints.isEmpty) {
         SecurityService.logSecurityEvent(
-          'Certificate pinning requested but no fingerprints configured. Pinning disabled. ' +
-          'Run: ./scripts/extract_certificate_fingerprints.sh https://your-server.com',
+          'Certificate pinning requested but no fingerprints configured. Pinning disabled. ' 'Run: ./scripts/extract_certificate_fingerprints.sh https://your-server.com',
           Level.WARNING
         );
       } else {
@@ -93,7 +92,7 @@ class CertificatePinningService {
       // Extract SHA-256 fingerprint from certificate
       // Format: SHA256:HEX_VALUE (uppercase, no colons)
       final der = cert.der;
-      if (der != null && der.isNotEmpty) {
+      if (der.isNotEmpty) {
         // Use openssl or platform-specific method to get SHA-256
         // For now, we'll use the certificate's subject and issuer to create a unique identifier
         // In production, use proper SHA-256 hash of the certificate

@@ -4,6 +4,7 @@
 /// Active Directory (AD) kullanıcı adı/şifre ile kimlik doğrulama sağlar.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'dart:convert' show base64, utf8;
 import 'package:flutter/material.dart';

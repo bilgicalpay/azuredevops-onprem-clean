@@ -8,6 +8,7 @@
 /// 
 /// @author Alpay Bilgiç
 /// @version 1.0.0
+library;
 
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';

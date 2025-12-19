@@ -4,6 +4,7 @@
 /// Checks last activity timestamp and triggers logout if needed
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:logging/logging.dart';
 import 'storage_service.dart';

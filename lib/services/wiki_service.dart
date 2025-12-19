@@ -5,6 +5,7 @@
 /// Markdown ve HTML formatlarını işler.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'dart:convert' show base64, utf8;
 import 'package:dio/dio.dart';

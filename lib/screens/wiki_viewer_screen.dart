@@ -4,6 +4,7 @@
 /// Markdown formatındaki içeriği render eder.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';

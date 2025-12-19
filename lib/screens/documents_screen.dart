@@ -4,6 +4,7 @@
 /// Güvenlik, altyapı ve MDM entegrasyon dokümantasyonlarını içerir.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

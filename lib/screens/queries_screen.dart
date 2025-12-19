@@ -4,6 +4,7 @@
 /// My Queries, Shared Queries ve Favorites kategorilerinde query'leri gösterir.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';

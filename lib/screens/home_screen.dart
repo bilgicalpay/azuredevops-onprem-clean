@@ -4,6 +4,7 @@
 /// Work item'ları görüntüleme, detay sayfasına gitme ve yenileme işlemlerini yönetir.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -492,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                   const SizedBox(height: 4),
                                                   Text(
                                                     wikiUrl != null && wikiUrl.isNotEmpty
-                                                        ? 'URL: ${wikiUrl.length > 50 ? wikiUrl.substring(0, 50) + "..." : wikiUrl}'
+                                                        ? 'URL: ${wikiUrl.length > 50 ? "${wikiUrl.substring(0, 50)}..." : wikiUrl}'
                                                         : 'Wiki URL\'si ayarlanmamış',
                                                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                                                     textAlign: TextAlign.center,

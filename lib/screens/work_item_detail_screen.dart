@@ -5,6 +5,7 @@
 /// ve ilişkili work item'ları görüntüleme özelliklerini içerir.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -278,7 +279,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
         });
         debugPrint('✅ [UI] State updated. _relatedWorkItemsGrouped.length = ${_relatedWorkItemsGrouped.length}');
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       debugPrint('❌ [UI] Error loading related work items from relations: $e');
       if (mounted) {
         setState(() {
@@ -328,7 +329,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           _isLoadingRelated = false;
         });
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       debugPrint('❌ [UI] Error loading related work items: $e');
       if (mounted) {
         setState(() {
@@ -534,7 +535,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                       child: Text('State yükleniyor...', style: TextStyle(color: Colors.grey)),
                                     )
                                   : DropdownButtonFormField<String>(
-                                      value: _selectedState,
+                                      initialValue: _selectedState,
                                       items: _availableStates.map((state) {
                                         return DropdownMenuItem(
                                           value: state,
@@ -844,7 +845,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 16.0),
                                     child: DropdownButtonFormField<String>(
-                                      value: entry.value,
+                                      initialValue: entry.value,
                                       decoration: InputDecoration(
                                         labelText: fieldDef?.name ?? entry.key,
                                         border: const OutlineInputBorder(),

@@ -4,6 +4,7 @@
 /// WebSocket mevcut değilse optimize edilmiş polling mekanizmasına geçer.
 /// 
 /// @author Alpay Bilgiç
+library;
 
 import 'dart:async';
 import 'dart:convert';
@@ -235,9 +236,9 @@ class RealtimeService {
   }
 
   Timer? _pollingTimer;
-  Map<int, int> _workItemRevisions = {}; // Track revisions to detect changes
-  Map<int, String?> _workItemAssignees = {}; // Track assignees to detect assignee changes
-  Map<int, DateTime?> _workItemChangedDates = {}; // Track changed dates for better change detection
+  final Map<int, int> _workItemRevisions = {}; // Track revisions to detect changes
+  final Map<int, String?> _workItemAssignees = {}; // Track assignees to detect assignee changes
+  final Map<int, DateTime?> _workItemChangedDates = {}; // Track changed dates for better change detection
   
   /// Optimized polling fallback - works in background
   Future<void> _startOptimizedPolling(
@@ -261,7 +262,7 @@ class RealtimeService {
     
     // Get polling interval from settings
     final pollingInterval = await storageService.getPollingInterval();
-    print('⏰ [RealtimeService] Setting up polling timer (${pollingInterval} second intervals)...');
+    print('⏰ [RealtimeService] Setting up polling timer ($pollingInterval second intervals)...');
     
     // Start polling timer - this will continue even when app is in background
     _pollingTimer?.cancel();
@@ -287,7 +288,7 @@ class RealtimeService {
       }
     });
     
-    print('✅ [RealtimeService] Background polling started successfully (${pollingInterval} second intervals)');
+    print('✅ [RealtimeService] Background polling started successfully ($pollingInterval second intervals)');
     
     // Do an immediate check after starting
     print('🔄 [RealtimeService] Performing immediate check...');
