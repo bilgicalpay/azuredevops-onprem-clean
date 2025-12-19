@@ -8,6 +8,9 @@ library;
 
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart' show TargetPlatform;
+import 'package:flutter/services.dart' show Platform;
 import 'package:logging/logging.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as html_dom;
@@ -641,14 +644,28 @@ class MarketService {
   /// Download artifact
   Future<void> downloadArtifact(Artifact artifact) async {
     try {
-      if (await canLaunchUrl(Uri.parse(artifact.downloadUrl))) {
-        await launchUrl(
-          Uri.parse(artifact.downloadUrl),
-          mode: LaunchMode.externalApplication,
-        );
-      } else {
+      final uri = Uri.parse(artifact.downloadUrl);
+      
+      // Check if URL can be launched
+      if (!await canLaunchUrl(uri)) {
         throw Exception('Could not launch ${artifact.downloadUrl}');
       }
+      
+      // Android için platformDefault kullan, iOS için externalApplication
+      // Android'de externalApplication bazen "couldn't launch" hatası veriyor
+      final isAndroid = !kIsWeb && Platform.isAndroid;
+      final launchMode = isAndroid 
+          ? LaunchMode.platformDefault 
+          : LaunchMode.externalApplication;
+      
+      _logger.info('Downloading artifact: ${artifact.name} (${isAndroid ? "Android" : "iOS/Other"})');
+      
+      await launchUrl(
+        uri,
+        mode: launchMode,
+      );
+      
+      _logger.info('Successfully launched download for: ${artifact.name}');
     } catch (e) {
       _logger.severe('Error downloading artifact: $e');
       rethrow;

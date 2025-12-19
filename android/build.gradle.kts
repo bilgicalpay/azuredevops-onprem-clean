@@ -57,6 +57,25 @@ subprojects {
             sourceCompatibility = "17"
             targetCompatibility = "17"
         }
+        
+        // Fix package_info_plus JVM target compatibility
+        if (project.name == "package_info_plus") {
+            try {
+                val android = project.extensions.findByName("android")
+                if (android != null) {
+                    val androidExtension = android as? com.android.build.gradle.BaseExtension
+                    if (androidExtension != null) {
+                        // Force Java 17 for package_info_plus
+                        androidExtension.compileOptions {
+                            sourceCompatibility = org.gradle.api.JavaVersion.VERSION_17
+                            targetCompatibility = org.gradle.api.JavaVersion.VERSION_17
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("⚠️  Could not set Java compatibility for package_info_plus: ${e.message}")
+            }
+        }
     }
 }
 
