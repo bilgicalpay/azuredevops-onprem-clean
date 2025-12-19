@@ -126,11 +126,30 @@ class MarketService {
 
         // Parse as HTML directory listing
         return _parseHtmlFolders(content, normalizedUrl);
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        throw Exception('IIS dizinine erişim reddedildi (${response.statusCode}). Kimlik doğrulama gerekebilir.');
+      } else if (response.statusCode == 404) {
+        throw Exception('IIS dizini bulunamadı (404). URL\'yi kontrol edin: $normalizedUrl');
       } else {
         throw Exception('Dizin listesi alınamadı: HTTP ${response.statusCode}');
       }
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Bağlantı zaman aşımı. IIS sunucusuna erişilemiyor.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Bağlantı hatası. IIS sunucusuna erişilemiyor: ${e.message}');
+      } else if (e.type == DioExceptionType.badCertificate) {
+        throw Exception('SSL sertifika hatası. IIS sunucusunun sertifikası doğrulanamadı.');
+      } else if (e.response != null) {
+        throw Exception('HTTP ${e.response!.statusCode}: ${e.response!.statusMessage}');
+      } else {
+        throw Exception('IIS dizinine erişilemedi: ${e.message}');
+      }
     } catch (e) {
       _logger.severe('Error fetching folders: $e');
+      if (e.toString().contains('Invalid repository URL')) {
+        throw Exception('Geçersiz Market URL formatı. Örnek: https://devops.higgscloud.com/_static/market/');
+      }
       rethrow;
     }
   }
@@ -195,13 +214,32 @@ class MarketService {
         folderName = folderName.replaceAll('/', '').trim();
         
         if (folderName.isNotEmpty) {
-          final fullPath = '$baseUrl$href';
+          // Normalize href - remove leading slash if present
+          String normalizedHref = href;
+          if (normalizedHref.startsWith('/')) {
+            // Absolute path - extract relative path from baseUrl
+            final baseUri = Uri.parse(baseUrl);
+            final basePath = baseUri.path;
+            if (normalizedHref.startsWith(basePath)) {
+              normalizedHref = normalizedHref.substring(basePath.length);
+            } else {
+              // Path doesn't match base, skip it
+              continue;
+            }
+          }
+          
+          // Ensure href ends with /
+          if (!normalizedHref.endsWith('/')) {
+            normalizedHref += '/';
+          }
+          
+          final fullPath = '$baseUrl$normalizedHref';
           
           // Check if folder already exists
-          if (!folders.any((f) => f.path == href)) {
+          if (!folders.any((f) => f.path == normalizedHref)) {
             folders.add(MarketFolder(
               name: folderName,
-              path: href,
+              path: normalizedHref,
               fullPath: fullPath,
             ));
           }

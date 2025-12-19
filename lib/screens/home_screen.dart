@@ -243,43 +243,45 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Üst satır: Logo, AzureDevOps yazısı ve versiyon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: 28,
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'AzureDevOps',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            // Alt satır: Menüler
-            Container(
-              margin: const EdgeInsets.only(top: 4.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Üst satır: Logo, AzureDevOps yazısı ve versiyon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  SizedBox(
+                    height: 28,
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'AzureDevOps',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              // Alt satır: Menüler
+              Container(
+                margin: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
                   IconButton(
                     icon: const Icon(Icons.query_stats),
-                    color: Colors.white,
+                    color: Colors.blue.shade900,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -292,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   IconButton(
                     icon: const Icon(Icons.description),
-                    color: Colors.white,
+                    color: Colors.blue.shade900,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -305,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   IconButton(
                     icon: const Icon(Icons.store),
-                    color: Colors.white,
+                    color: Colors.blue.shade900,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -318,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   IconButton(
                     icon: const Icon(Icons.settings),
-                    color: Colors.white,
+                    color: Colors.blue.shade900,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -344,7 +346,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   IconButton(
                     icon: const Icon(Icons.refresh),
-                    color: Colors.white,
+                    color: Colors.blue.shade900,
                     onPressed: () {
                       _loadWorkItems();
                       _loadWikiContent();
@@ -353,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   IconButton(
                     icon: const Icon(Icons.logout),
-                    color: Colors.white,
+                    color: Colors.blue.shade900,
                     onPressed: () async {
                       await authService.logout();
                     },

@@ -77,9 +77,15 @@ class _MarketScreenState extends State<MarketScreen> {
       });
 
       // Load folders and files from current path
+      // Normalize marketUrl - ensure it ends with /
+      String normalizedMarketUrl = marketUrl;
+      if (!normalizedMarketUrl.endsWith('/')) {
+        normalizedMarketUrl += '/';
+      }
+      
       final baseUrl = _currentFolderPath != null 
-          ? '$marketUrl$_currentFolderPath'
-          : marketUrl;
+          ? '$normalizedMarketUrl$_currentFolderPath'
+          : normalizedMarketUrl;
       
       // Load both folders and files
       final folders = await _marketService!.getFolders(baseUrl);
@@ -93,11 +99,11 @@ class _MarketScreenState extends State<MarketScreen> {
          a.name.toLowerCase().endsWith('.aab'))
       ).toList();
       
-      // Update tracked files for favorite folders (root level)
-      final currentPath = _currentFolderPath;
-      for (var favoritePath in _favoriteFolders) {
-        // Only update if we're at root or in the favorite folder
-        if (currentPath == null || favoritePath.startsWith(currentPath)) {
+        // Update tracked files for favorite folders (root level)
+        final currentPath = _currentFolderPath;
+        for (var favoritePath in _favoriteFolders) {
+          // Only update if we're at root or in the favorite folder
+          if (currentPath == null || favoritePath.startsWith(currentPath)) {
           try {
             final favoriteUrl = '$marketUrl$favoritePath';
             final favoriteFiles = await _marketService!.getFiles(favoriteUrl);
@@ -147,7 +153,23 @@ class _MarketScreenState extends State<MarketScreen> {
         return;
       }
 
-      final folderUrl = '$marketUrl$folderPath';
+      // Normalize folderPath - ensure it doesn't start with / and ends with /
+      String normalizedFolderPath = folderPath;
+      if (normalizedFolderPath.startsWith('/')) {
+        // Remove leading slash
+        normalizedFolderPath = normalizedFolderPath.substring(1);
+      }
+      if (!normalizedFolderPath.endsWith('/')) {
+        normalizedFolderPath += '/';
+      }
+      
+      // Ensure marketUrl ends with /
+      String normalizedMarketUrl = marketUrl;
+      if (!normalizedMarketUrl.endsWith('/')) {
+        normalizedMarketUrl += '/';
+      }
+      
+      final folderUrl = '$normalizedMarketUrl$normalizedFolderPath';
       final folders = await _marketService!.getFolders(folderUrl);
       final allArtifacts = await _marketService!.getFiles(folderUrl);
       
@@ -265,10 +287,23 @@ class _MarketScreenState extends State<MarketScreen> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {
                   // Go back to parent folder
-                  final pathParts = _currentFolderPath!.split('/').where((p) => p.isNotEmpty).toList();
-                  if (pathParts.length > 1) {
-                    pathParts.removeLast();
-                    _loadFolder('${pathParts.join('/')}/');
+                  String? parentPath = _currentFolderPath;
+                  if (parentPath != null && parentPath.isNotEmpty) {
+                    // Remove trailing slash
+                    if (parentPath.endsWith('/')) {
+                      parentPath = parentPath.substring(0, parentPath.length - 1);
+                    }
+                    // Get parent directory
+                    final pathParts = parentPath.split('/').where((p) => p.isNotEmpty).toList();
+                    if (pathParts.length > 1) {
+                      pathParts.removeLast();
+                      _loadFolder('${pathParts.join('/')}/');
+                    } else if (pathParts.length == 1) {
+                      // Go back to root
+                      _loadFolders();
+                    } else {
+                      _loadFolders(); // Already at root
+                    }
                   } else {
                     _loadFolders(); // Go back to root
                   }
