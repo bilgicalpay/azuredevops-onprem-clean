@@ -95,19 +95,6 @@ Market özelliği, IIS static dizininden APK ve IPA dosyalarını indirmenizi sa
 
 Market kullanımı için IIS altında bir dizin oluşturularak bu HTML adresi uygulamaya girilir. O dizin altına da product ve versionlar ile ayrılmış dizinler oluşturulur ve APK ve IPA dosyaları buraya atılır. Ancak uygulama üzerinden dosya indirilebilmesi için aşağıdaki gibi ana folder altına `web.config` eklenmelidir.
 
-**web.config içeriği:**
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-    <system.webServer>
-        <staticContent>
-            <mimeMap fileExtension=".IPA" mimeType="application/octet-stream" />
-            <mimeMap fileExtension=".APK" mimeType="application/octet-stream" />
-        </staticContent>
-    </system.webServer>
-</configuration>
-```
 
 **Yapılandırma Adımları:**
 
@@ -129,7 +116,7 @@ Market kullanımı için IIS altında bir dizin oluşturularak bu HTML adresi uy
 
 - **Android APK:** `.apk` dosyaları
 - **iOS IPA:** `.ipa` dosyaları
-- **Android AAB:** `.aab` dosyaları (App Bundle)
+- **Android AAB:** `.aab` dosyaları (App Bundle) (bu veya başka dosya tipleri için webconfiğe yeni satır ekleyin.)
 
 #### Notlar
 
@@ -137,6 +124,7 @@ Market kullanımı için IIS altında bir dizin oluşturularak bu HTML adresi uy
 - Git repository veya Azure DevOps Releases API kullanmaz
 - Directory listing (HTML veya JSON) formatını destekler
 - APK, IPA ve AAB dosyaları otomatik olarak filtrelenir
+- Buraya kdar okuyan olursa bir Türk kahvesini içerim.
 
 Detaylı bilgi için [docs/README.md](docs/README.md#market-özelliği-ile-dağıtım) dosyasına bakın.
 
