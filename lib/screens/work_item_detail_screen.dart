@@ -235,9 +235,9 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
         else if (fieldType == 'html' || fieldType == 'plainttext' || fieldType == 'text') {
           // TextArea field - use multiline text field
           _fieldControllers[fieldKey] = TextEditingController(
-            text: currentValue,
-          );
-        }
+              text: currentValue,
+            );
+          }
         // Regular text/number field
         else if (fieldValue is String || fieldValue is num || fieldValue == null) {
           _fieldControllers[fieldKey] = TextEditingController(
@@ -248,6 +248,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       
       // Load Steps field if exists
       _parseSteps(detailedItem.allFields);
+      debugPrint('📊 [Steps] After parsing: ${_steps.length} steps found');
       
       // Load comments
       _loadComments();
@@ -553,10 +554,10 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       else if (fieldType == 'date' || fieldType == 'datetime') {
         final currentStringValue = currentValue?.toString();
         if (entry.value != currentStringValue && entry.value != null && entry.value!.isNotEmpty) {
-          updates.add({
-            'path': '/fields/${entry.key}',
-            'value': entry.value!,
-          });
+        updates.add({
+          'path': '/fields/${entry.key}',
+          'value': entry.value!,
+        });
         }
       } 
       // Handle string/selectbox/combobox/picklist fields
@@ -819,7 +820,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                           ),
                         ),
                       if (_steps.isNotEmpty)
-                        const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
                       // Related Work Items - YENİDEN YAZILDI
                       Card(
@@ -843,18 +844,18 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                     padding: EdgeInsets.all(16.0),
                                     child: CircularProgressIndicator(),
                                   ),
-                                )
+                                    )
                               // Empty state
                               else if (_relatedWorkItemsGrouped.isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Text(
-                                    'Related work item bulunamadı',
-                                    style: TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
+                                    const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Text(
+                                        'Related work item bulunamadı',
+                                        style: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
                                 )
                               // Data state
                               else
@@ -926,9 +927,9 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                           }
                                         },
                                         child: InputDecorator(
-                                          decoration: InputDecoration(
-                                            labelText: fieldDef?.name ?? entry.key,
-                                            border: const OutlineInputBorder(),
+                                        decoration: InputDecoration(
+                                          labelText: fieldDef?.name ?? entry.key,
+                                          border: const OutlineInputBorder(),
                                             suffixIcon: const Icon(Icons.calendar_today),
                                           ),
                                           child: Text(
@@ -949,23 +950,23 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                       fieldType.contains('picklist') ||
                                       (fieldDef?.isComboBox ?? false)) {
                                     // Dropdown for selectbox/combobox/picklist
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 16.0),
-                                      child: DropdownButtonFormField<String>(
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16.0),
+                                    child: DropdownButtonFormField<String>(
                                         value: entry.value,
-                                        decoration: InputDecoration(
-                                          labelText: fieldDef?.name ?? entry.key,
-                                          border: const OutlineInputBorder(),
-                                        ),
-                                        items: allowedValues.map((value) {
-                                          return DropdownMenuItem(
-                                            value: value,
-                                            child: Text(value),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _comboBoxValues[entry.key] = value;
+                                      decoration: InputDecoration(
+                                        labelText: fieldDef?.name ?? entry.key,
+                                        border: const OutlineInputBorder(),
+                                      ),
+                                      items: allowedValues.map((value) {
+                                        return DropdownMenuItem(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _comboBoxValues[entry.key] = value;
                                           });
                                         },
                                       ),
@@ -1019,7 +1020,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                           ),
                         ),
                       ],
-                      
+
                       const SizedBox(height: 16),
 
                       // Discussion/Comments
@@ -1028,7 +1029,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                        children: [
                               const Text(
                                 'Discussion',
                                 style: TextStyle(
@@ -1115,8 +1116,8 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                         ),
                                       ],
                                     ),
-                                  );
-                                }),
+                              );
+                            }),
                               
                               const SizedBox(height: 16),
                               const Divider(),
@@ -1354,7 +1355,10 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
   void _parseSteps(Map<String, dynamic>? allFields) {
     _steps = [];
     
-    if (allFields == null) return;
+    if (allFields == null) {
+      debugPrint('⚠️ [Steps] allFields is null');
+      return;
+    }
     
     // Try different possible field names for Steps
     final stepsFields = [
@@ -1364,16 +1368,20 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
     ];
     
     String? stepsHtml;
+    String? foundFieldName;
     for (final fieldName in stepsFields) {
       if (allFields.containsKey(fieldName)) {
         stepsHtml = allFields[fieldName]?.toString();
         if (stepsHtml != null && stepsHtml.isNotEmpty) {
+          foundFieldName = fieldName;
+          debugPrint('✅ [Steps] Found Steps field: $fieldName');
           break;
         }
       }
     }
     
     if (stepsHtml == null || stepsHtml.isEmpty) {
+      debugPrint('⚠️ [Steps] Steps field not found or empty. Available fields: ${allFields.keys.where((k) => k.toLowerCase().contains('step')).toList()}');
       return;
     }
     
