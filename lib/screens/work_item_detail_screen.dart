@@ -51,6 +51,9 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
   
   // Steps data structure
   List<Map<String, String>> _steps = []; // Each step: {'action': '', 'expectedResult': ''}
+  
+  // Attachments data structure
+  List<Map<String, dynamic>> _attachments = []; // Each attachment: {'name': '', 'url': '', 'size': 0}
 
   @override
   void initState() {
@@ -1500,6 +1503,24 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
             _steps.add({
               'action': decodedAction,
               'expectedResult': decodedExpectedResult,
+            });
+          }
+          
+          // If we have action but no expectedResult from parameterizedstring, still add the step
+          if (action != null && expectedResult == null && _steps.isEmpty) {
+            String decodedAction = action.trim();
+            decodedAction = decodedAction
+                .replaceAll('&lt;', '<')
+                .replaceAll('&gt;', '>')
+                .replaceAll('&amp;', '&')
+                .replaceAll('&quot;', '"')
+                .replaceAll('&apos;', "'");
+            
+            debugPrint('✅ [Steps] Adding step with action only: Action="${decodedAction.substring(0, decodedAction.length > 50 ? 50 : decodedAction.length)}..."');
+            
+            _steps.add({
+              'action': decodedAction,
+              'expectedResult': '',
             });
           }
         }
