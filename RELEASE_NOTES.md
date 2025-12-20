@@ -1,4 +1,4 @@
-# Release Notes - v1.1.3 (Build 41)
+# Release Notes - v1.1.4 (Build 42)
 
 **Release Date:** 2024-12-20  
 **Package Name:** io.rdc.azuredevops  
@@ -6,8 +6,8 @@
 
 ## 📦 Build Files
 
-- **Android APK:** azuredevops-1.1.3.apk
-- **iOS IPA:** azuredevops-1.1.3.ipa (if available)
+- **Android APK:** azuredevops-1.1.4.apk
+- **iOS IPA:** azuredevops-1.1.4.ipa
 
 ## 🚀 Deployment Status
 
@@ -16,43 +16,55 @@
 
 ## ✨ New Features & Improvements
 
-### Bildirim Ayarları Entegrasyonu ✅
-- Bildirim ayarları artık background task service ve realtime service'de aktif olarak kullanılıyor
-- **İlk Atamada Bildirim** ayarı background servislerde uygulanıyor
-- **Tüm Güncellemelerde Bildirim** ayarı background servislerde uygulanıyor
-- **Sadece Hotfix** filtresi background servislerde uygulanıyor
-- **Grup Bildirimleri** ayarı background servislerde uygulanıyor
-- Tüm bildirim filtreleri hem uygulama açıkken hem de arka planda çalışırken aktif
+### Work Item Custom Field İyileştirmeleri 🆕
+- **Gizli Custom Field Filtreleme:** Gizli field'lar (isReadOnly, isLocked, isIdentity, !isQueryable) artık gösterilmiyor
+- **Selectbox/Combobox Desteği:** Custom field'larda selectbox ve combobox değerleri düzenlenebilir
+- **Checkbox/Tickbox Desteği:** Boolean field'lar için checkbox desteği eklendi
+- **FieldDefinition İyileştirmeleri:** isHidden property eklendi ve field kontrolü iyileştirildi
 
-### Deploy Script'leri ✅
-- **build_and_deploy_all.sh:** Her derleme sonrasında otomatik deploy
-- **quick_deploy.sh:** Sadece deploy için (build zaten yapılmışsa)
-- **build_and_deploy.sh:** iOS desteği eklendi
-- Android ve iOS için otomatik build ve deploy desteği
+### Discussion/Comments Özelliği 🆕
+- **Yorum Ekleme:** Work item'lara yorum ekleme özelliği eklendi
+- **Yorum Görüntüleme:** Work item yorumlarını görüntüleme özelliği eklendi
+- **WorkItemComment API:** getWorkItemComments ve addWorkItemComment metodları eklendi
+- **Discussion UI:** Work item detail ekranına Discussion bölümü eklendi
 
 ## 🐛 Bug Fixes
 
-### Settings Screen
-- Bildirim ayarları için eksik değişken tanımlamaları düzeltildi
-- Bildirim ayarları artık doğru şekilde yükleniyor ve kaydediliyor
+### Bildirim Ayarları
+- ✅ **"Sadece bana ilk atandığında bildirim gönder" seçeneği düzeltildi**
+- ✅ Bildirim kontrol mantığı BackgroundTaskService ve RealtimeService'de iyileştirildi
+- ✅ Artık sadece ilk atamada bildirim gönder seçeneği doğru çalışıyor
+- ✅ Bildirim filtreleme mantığı yeniden düzenlendi
+
+### UI İyileştirmeleri
+- ✅ Related work items debug kısmı temizlendi
+- ✅ Gereksiz debug mesajları ve UI elementleri kaldırıldı
+- ✅ UI daha temiz ve kullanıcı dostu hale getirildi
 
 ## 🔧 Technical Improvements
 
-### Git Yönetimi
-- APK ve IPA dosyaları .gitignore'a eklendi
-- Büyük binary dosyalar repository'den kaldırıldı
-- Repository boyutu optimize edildi
+### Work Item Service
+- ✅ getWorkItemComments ve addWorkItemComment metodları eklendi
+- ✅ Field definition'da isHidden kontrolü eklendi
+- ✅ Boolean field desteği iyileştirildi
+- ✅ WorkItemComment sınıfı eklendi
+
+### Background Services
+- ✅ Bildirim kontrol mantığı iyileştirildi
+- ✅ İlk atama kontrolü düzeltildi
+- ✅ Güncelleme kontrolü iyileştirildi
 
 ## 📝 Documentation Updates
 
-- ✅ **CHANGELOG.md:** v1.1.3 release notları eklendi
-- ✅ **README.md:** Versiyon bilgileri güncellendi (1.1.3+41)
-- ✅ **DEPLOY_README.md:** Deploy script'leri kullanım kılavuzu eklendi
+- ✅ **CHANGELOG.md:** v1.1.4 release notları eklendi
+- ✅ **README.md:** Versiyon bilgileri güncellendi (1.1.4+42)
+- ✅ **RELEASE_NOTES.md:** v1.1.4 release notları oluşturuldu
 
 ## 🔒 Security
 
-- Tüm önceki güvenlik özellikleri korunuyor
-- Bildirim ayarları güvenli bir şekilde saklanıyor
+- ✅ Güvenlik taraması yapıldı
+- ✅ SBOM (Software Bill of Materials) oluşturuldu
+- ✅ Artifact signing (Sigstore) hazır
 
 ## 📱 Platform Support
 
@@ -61,51 +73,36 @@
 
 ## 🔄 Migration Notes
 
-### For Existing Users
-- Bildirim ayarları otomatik olarak yüklenir
-- Mevcut ayarlar korunur
-- Uygulama güncellemesi sorunsuz
+Bu versiyon önceki versiyonlarla uyumludur. Herhangi bir migration işlemi gerekmez.
 
-### For Developers
-- Deploy script'leri kullanarak otomatik build ve deploy yapabilirsiniz
-- `./scripts/build_and_deploy_all.sh` - Build ve deploy
-- `./scripts/quick_deploy.sh` - Sadece deploy
+## 📥 Installation
 
-## 📦 Files Included in Release
+### Android
+1. APK dosyasını indirin
+2. Cihazınızda "Bilinmeyen kaynaklardan yükleme" seçeneğini aktif edin
+3. APK dosyasını açın ve yükleyin
 
-- azuredevops-1.1.3.apk (Android APK)
-- azuredevops-1.1.3.ipa (iOS IPA - if available)
-- RELEASE_NOTES.md (This file)
-- CHANGELOG.md
+### iOS
+1. IPA dosyasını indirin
+2. MDM sistemi veya TestFlight üzerinden yükleyin
+3. Cihazınızda güven ayarlarını yapın
 
-## 🔗 Links
+## 📋 Files Included
 
-- **Repository:** https://github.com/bilgicalpay/azuredevops-server-mobile
-- **Release:** https://github.com/bilgicalpay/azuredevops-server-mobile/releases/tag/v1.1.3
+- `azuredevops-1.1.4.apk` - Android release APK
+- `azuredevops-1.1.4.ipa` - iOS release IPA
+- `sbom.json` - Software Bill of Materials (SPDX format)
+- `sbom.txt` - Software Bill of Materials (text format)
+- `*.sigstore` - Artifact signatures (Sigstore)
+
+## 🐛 Known Issues
+
+Şu anda bilinen kritik bir sorun yoktur.
 
 ## 📞 Support
 
-**Developer:** Alpay Bilgiç  
-**Email:** bilgicalpay@gmail.com
+Sorularınız için: bilgicalpay@gmail.com
 
 ---
 
-## 🎯 Summary of Changes
-
-### New Features
-1. ✅ Bildirim ayarları background servislerde aktif
-2. ✅ Otomatik deploy script'leri
-3. ✅ Git repository optimizasyonu
-
-### Bug Fixes
-1. ✅ Settings screen değişken tanımlamaları düzeltildi
-2. ✅ Bildirim ayarları yükleme/kaydetme düzeltildi
-
-### Documentation
-1. ✅ CHANGELOG güncellendi
-2. ✅ README versiyon bilgileri senkronize edildi
-3. ✅ Deploy kılavuzu eklendi
-
----
-
-**Note:** Bu release bildirim ayarları entegrasyonunu tamamlar ve test edilmiştir. Tüm özellikler Android ve iOS platformlarında çalışmaktadır.
+**Not:** Bu release test edilmiş ve onaylanmıştır.

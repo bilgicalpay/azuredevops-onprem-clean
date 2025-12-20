@@ -1,7 +1,7 @@
 # Azure DevOps Server 2022 Mobile App
 
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.1.3  
+**Versiyon:** 1.1.4  
 **Tarih:** 2024.12.20
 
 ## Genel Bakış
@@ -11,6 +11,9 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
 ## Özellikler
 
 - ✅ Work Item görüntüleme ve yönetimi
+  - Custom field düzenleme (selectbox, combobox, tickbox desteği)
+  - Gizli field'lar otomatik filtrelenir
+  - Discussion/Comments özelliği (yorum ekleme ve görüntüleme)
 - ✅ Query çalıştırma ve sonuç görüntüleme
 - ✅ Wiki içerik görüntüleme
 - ✅ Push notification desteği
@@ -218,4 +221,4 @@ Bu uygulama kurumsal kullanım için geliştirilmiştir.
 
 **Geliştirici:** Alpay Bilgiç  
 **Son Güncelleme:** 2024 20 Aralık  
-**Versiyon:** 1.1.3+41
+**Versiyon:** 1.1.4+42

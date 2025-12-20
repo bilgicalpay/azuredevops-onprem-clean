@@ -2,6 +2,42 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [1.1.4] - 2024-12-20
+
+### 🆕 Yeni Özellikler
+
+#### Work Item Custom Field İyileştirmeleri
+- ✅ Gizli custom field'lar filtrelendi (isHidden kontrolü eklendi)
+- ✅ Selectbox, combobox, tickbox custom field'ları düzenlenebilir hale getirildi
+- ✅ Boolean field'lar için checkbox/tickbox desteği eklendi
+- ✅ FieldDefinition sınıfına isHidden property eklendi
+
+#### Discussion/Comments Özelliği
+- ✅ Work item'lara yorum ekleme özelliği eklendi
+- ✅ Work item yorumlarını görüntüleme özelliği eklendi
+- ✅ WorkItemComment sınıfı ve API metodları eklendi
+- ✅ Discussion UI'ı work item detail ekranına eklendi
+
+### 🐛 Hata Düzeltmeleri
+
+#### Bildirim Ayarları
+- ✅ "Sadece bana ilk atandığında bildirim gönder" seçeneği düzeltildi
+- ✅ Bildirim kontrol mantığı BackgroundTaskService ve RealtimeService'de iyileştirildi
+- ✅ Artık sadece ilk atamada bildirim gönder seçeneği doğru çalışıyor
+
+#### UI İyileştirmeleri
+- ✅ Related work items debug kısmı temizlendi
+- ✅ Gereksiz debug mesajları ve UI elementleri kaldırıldı
+
+### 🔧 İyileştirmeler
+
+#### Work Item Service
+- ✅ getWorkItemComments ve addWorkItemComment metodları eklendi
+- ✅ Field definition'da isHidden kontrolü eklendi
+- ✅ Boolean field desteği iyileştirildi
+
+---
+
 ## [1.1.3] - 2024-12-20
 
 ### ✅ Test Edildi ve Onaylandı
