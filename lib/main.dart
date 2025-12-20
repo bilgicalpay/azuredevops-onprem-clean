@@ -28,7 +28,7 @@ import 'services/token_refresh_service.dart';
 import 'services/auto_logout_service.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:azuredevops_onprem/l10n/app_localizations.dart';
 import 'dart:ui' show Locale;
 
 /// Uygulama giriş noktası
