@@ -1391,51 +1391,138 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       return;
     }
     
-    // Parse HTML - Steps are typically in div structure
-    // Example: <div><div>Action</div><div>Expected result</div></div><div><div>Step 1 action</div><div>Step 1 expected</div></div>...
+    debugPrint('🔍 [Steps] Raw Steps content: ${stepsHtml.substring(0, stepsHtml.length > 200 ? 200 : stepsHtml.length)}...');
+    
+    // Try to detect format: XML (<steps>, <step>) or HTML (<div>)
+    final isXmlFormat = stepsHtml.trim().startsWith('<steps') || stepsHtml.contains('<step ');
+    final isDivFormat = stepsHtml.contains('<div>') || stepsHtml.contains('<div ');
+    
     try {
-      // Parse HTML while preserving HTML content (not just text)
-      final regex = RegExp(r'<div[^>]*>(.*?)</div>', dotAll: true);
-      final matches = regex.allMatches(stepsHtml);
-      
-      List<String> cells = [];
-      for (var match in matches) {
-        final content = match.group(1)?.trim() ?? '';
-        // Keep HTML content, don't strip tags
-        if (content.isNotEmpty) {
-          cells.add(content);
+      if (isXmlFormat) {
+        // Parse XML format: <steps><step id="..." type="Action">...</step><step id="..." type="ExpectedResult">...</step></steps>
+        debugPrint('🔍 [Steps] Detected XML format');
+        final stepRegex = RegExp(r'<step[^>]*type="([^"]*)"[^>]*>(.*?)</step>', dotAll: true);
+        final matches = stepRegex.allMatches(stepsHtml);
+        
+        String? currentAction;
+        String? currentExpectedResult;
+        
+        for (var match in matches) {
+          final stepType = match.group(1)?.toLowerCase() ?? '';
+          final stepContent = match.group(2)?.trim() ?? '';
+          
+          if (stepType.contains('action')) {
+            currentAction = stepContent;
+          } else if (stepType.contains('expected')) {
+            currentExpectedResult = stepContent;
+            // When we get ExpectedResult, we have a complete step pair
+            if (currentAction != null) {
+              _steps.add({
+                'action': currentAction,
+                'expectedResult': currentExpectedResult,
+              });
+              currentAction = null;
+              currentExpectedResult = null;
+            }
+          } else {
+            // Unknown step type, treat as action if we don't have one
+            if (currentAction == null) {
+              currentAction = stepContent;
+            } else {
+              // We have an action, this might be expected result
+              currentExpectedResult = stepContent;
+              _steps.add({
+                'action': currentAction,
+                'expectedResult': currentExpectedResult,
+              });
+              currentAction = null;
+              currentExpectedResult = null;
+            }
+          }
         }
-      }
-      
-      // Steps are typically in pairs: Action, Expected result
-      // Skip header row if exists (first two cells might be "Action" and "Expected result")
-      int startIndex = 0;
-      if (cells.length >= 2) {
-        // Check if first two cells are headers (plain text, no HTML tags)
-        final firstCell = cells[0].replaceAll(RegExp(r'<[^>]+>'), '').toLowerCase();
-        final secondCell = cells[1].replaceAll(RegExp(r'<[^>]+>'), '').toLowerCase();
-        if (firstCell.contains('action') || secondCell.contains('expected')) {
-          startIndex = 2;
-        }
-      }
-      
-      // Parse pairs - keep HTML content
-      for (int i = startIndex; i < cells.length; i += 2) {
-        if (i + 1 < cells.length) {
+        
+        // If we have leftover action, add it
+        if (currentAction != null) {
           _steps.add({
-            'action': cells[i], // Keep HTML
-            'expectedResult': cells[i + 1], // Keep HTML
-          });
-        } else {
-          // Single cell (action only)
-          _steps.add({
-            'action': cells[i], // Keep HTML
-            'expectedResult': '',
+            'action': currentAction,
+            'expectedResult': currentExpectedResult ?? '',
           });
         }
+        
+        // If no steps found with type attribute, try parsing by order (alternating Action/ExpectedResult)
+        if (_steps.isEmpty) {
+          final simpleStepRegex = RegExp(r'<step[^>]*>(.*?)</step>', dotAll: true);
+          final simpleMatches = simpleStepRegex.allMatches(stepsHtml);
+          final stepContents = simpleMatches.map((m) => m.group(1)?.trim() ?? '').where((s) => s.isNotEmpty).toList();
+          
+          for (int i = 0; i < stepContents.length; i += 2) {
+            if (i + 1 < stepContents.length) {
+              _steps.add({
+                'action': stepContents[i],
+                'expectedResult': stepContents[i + 1],
+              });
+            } else {
+              _steps.add({
+                'action': stepContents[i],
+                'expectedResult': '',
+              });
+            }
+          }
+        }
+      } else if (isDivFormat) {
+        // Parse HTML div format: <div><div>Action</div><div>Expected result</div></div>...
+        debugPrint('🔍 [Steps] Detected HTML div format');
+        final regex = RegExp(r'<div[^>]*>(.*?)</div>', dotAll: true);
+        final matches = regex.allMatches(stepsHtml);
+        
+        List<String> cells = [];
+        for (var match in matches) {
+          final content = match.group(1)?.trim() ?? '';
+          // Keep HTML content, don't strip tags
+          if (content.isNotEmpty) {
+            cells.add(content);
+          }
+        }
+        
+        // Steps are typically in pairs: Action, Expected result
+        // Skip header row if exists (first two cells might be "Action" and "Expected result")
+        int startIndex = 0;
+        if (cells.length >= 2) {
+          // Check if first two cells are headers (plain text, no HTML tags)
+          final firstCell = cells[0].replaceAll(RegExp(r'<[^>]+>'), '').toLowerCase();
+          final secondCell = cells[1].replaceAll(RegExp(r'<[^>]+>'), '').toLowerCase();
+          if (firstCell.contains('action') || secondCell.contains('expected')) {
+            startIndex = 2;
+          }
+        }
+        
+        // Parse pairs - keep HTML content
+        for (int i = startIndex; i < cells.length; i += 2) {
+          if (i + 1 < cells.length) {
+            _steps.add({
+              'action': cells[i], // Keep HTML
+              'expectedResult': cells[i + 1], // Keep HTML
+            });
+          } else {
+            // Single cell (action only)
+            _steps.add({
+              'action': cells[i], // Keep HTML
+              'expectedResult': '',
+            });
+          }
+        }
+      } else {
+        // Unknown format, try to parse as plain text or show as-is
+        debugPrint('⚠️ [Steps] Unknown format, showing as single field');
+        _steps = [{
+          'action': stepsHtml.trim(),
+          'expectedResult': '',
+        }];
       }
+      
+      debugPrint('✅ [Steps] Parsed ${_steps.length} steps');
     } catch (e) {
-      debugPrint('Error parsing Steps: $e');
+      debugPrint('❌ [Steps] Error parsing Steps: $e');
       // If parsing fails, show as single text field with HTML
       _steps = [{
         'action': stepsHtml.trim(), // Keep HTML
