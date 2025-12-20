@@ -292,9 +292,13 @@ class StorageService extends ChangeNotifier {
 
   // ==================== BİLDİRİM AYARLARI ====================
   
-  /// Sadece ilk atamada bildirim (varsayılan: true)
+  /// Sadece ilk atamada bildirim (varsayılan: false - kullanıcı açıkça seçmeli)
   bool getNotifyOnFirstAssignment() {
-    return _prefs?.getBool('notify_on_first_assignment') ?? true;
+    // Eğer hiç ayarlanmamışsa, false döndür (kullanıcı açıkça seçmeli)
+    if (_prefs?.containsKey('notify_on_first_assignment') != true) {
+      return false;
+    }
+    return _prefs?.getBool('notify_on_first_assignment') ?? false;
   }
   
   Future<void> setNotifyOnFirstAssignment(bool value) async {
@@ -302,9 +306,13 @@ class StorageService extends ChangeNotifier {
     notifyListeners();
   }
   
-  /// Tüm güncellemelerde bildirim (varsayılan: true)
+  /// Tüm güncellemelerde bildirim (varsayılan: false - kullanıcı açıkça seçmeli)
   bool getNotifyOnAllUpdates() {
-    return _prefs?.getBool('notify_on_all_updates') ?? true;
+    // Eğer hiç ayarlanmamışsa, false döndür (kullanıcı açıkça seçmeli)
+    if (_prefs?.containsKey('notify_on_all_updates') != true) {
+      return false;
+    }
+    return _prefs?.getBool('notify_on_all_updates') ?? false;
   }
   
   Future<void> setNotifyOnAllUpdates(bool value) async {

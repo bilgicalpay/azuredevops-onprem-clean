@@ -818,6 +818,12 @@ class BackgroundTaskService {
         return false;
       }
       
+      // Eğer hiçbir bildirim ayarı aktif değilse, bildirim gönderme
+      if (!notifyOnFirstAssignment && !notifyOnAllUpdates) {
+        print('🔕 [BackgroundTaskService] Skipping notification: No notification settings enabled (notifyOnFirstAssignment=$notifyOnFirstAssignment, notifyOnAllUpdates=$notifyOnAllUpdates)');
+        return false;
+      }
+      
       // Default: bildirim gönder (sadece yukarıdaki kontrollerden geçtiyse)
       // NOT: Bu sadece notifyOnAllUpdates aktifse veya notifyOnFirstAssignment aktif değilse çalışır
       return true;
