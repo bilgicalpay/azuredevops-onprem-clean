@@ -730,6 +730,12 @@ class BackgroundTaskService {
       final notifyOnGroupAssignments = _storageService!.getNotifyOnGroupAssignments();
       final notificationGroups = await _storageService!.getNotificationGroups();
       
+      // ÖNEMLİ: Eğer hiçbir bildirim ayarı aktif değilse, bildirim gönderme
+      if (!notifyOnFirstAssignment && !notifyOnAllUpdates && !notifyOnHotfixOnly && !notifyOnGroupAssignments) {
+        print('🔕 [BackgroundTaskService] Skipping notification: No notification settings enabled (all disabled)');
+        return false;
+      }
+      
       // ÖNEMLİ: Eğer sadece "ilk atamada bildirim" aktifse (ve "tüm güncellemelerde bildirim" aktif değilse),
       // ve bu work item daha önce "first_assignment_notified" olarak işaretlenmişse,
       // bir daha asla bildirim gönderme

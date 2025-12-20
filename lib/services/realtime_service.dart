@@ -756,8 +756,9 @@ class RealtimeService {
   Future<bool> _shouldNotifyForWorkItem(WorkItem workItem, {required bool isNew, required bool wasAssigned}) async {
     try {
       if (_storageService == null) {
-        // If storage service not available, default to sending notification
-        return true;
+        // If storage service not available, default to NOT sending notification (safer)
+        print('🔕 [RealtimeService] Storage service not available, skipping notification');
+        return false;
       }
       
       // Get notification settings
@@ -766,6 +767,12 @@ class RealtimeService {
       final notifyOnHotfixOnly = _storageService!.getNotifyOnHotfixOnly();
       final notifyOnGroupAssignments = _storageService!.getNotifyOnGroupAssignments();
       final notificationGroups = await _storageService!.getNotificationGroups();
+      
+      // ÖNEMLİ: Eğer hiçbir bildirim ayarı aktif değilse, bildirim gönderme
+      if (!notifyOnFirstAssignment && !notifyOnAllUpdates && !notifyOnHotfixOnly && !notifyOnGroupAssignments) {
+        print('🔕 [RealtimeService] Skipping notification: No notification settings enabled (all disabled)');
+        return false;
+      }
       
       // ÖNEMLİ: Eğer sadece "ilk atamada bildirim" aktifse (ve "tüm güncellemelerde bildirim" aktif değilse),
       // ve bu work item daha önce "first_assignment_notified" olarak işaretlenmişse,
@@ -855,15 +862,17 @@ class RealtimeService {
         return false;
       }
       
-      // Eğer hiçbir bildirim ayarı aktif değilse, bildirim gönderme
+      // Eğer hiçbir bildirim ayarı aktif değilse, bildirim gönderme (zaten yukarıda kontrol edildi ama tekrar kontrol)
       if (!notifyOnFirstAssignment && !notifyOnAllUpdates) {
         print('🔕 [RealtimeService] Skipping notification: No notification settings enabled (notifyOnFirstAssignment=$notifyOnFirstAssignment, notifyOnAllUpdates=$notifyOnAllUpdates)');
         return false;
       }
       
-      // Default: bildirim gönder (sadece yukarıdaki kontrollerden geçtiyse)
-      // NOT: Bu sadece notifyOnAllUpdates aktifse veya notifyOnFirstAssignment aktif değilse çalışır
-      return true;
+      // Default: bildirim gönderme (sadece yukarıdaki kontrollerden geçtiyse ve bir ayar aktifse)
+      // Eğer buraya geldiysek, bir ayar aktif demektir, ama yine de false döndürelim çünkü
+      // yukarıdaki koşullar zaten tüm durumları kapsıyor
+      print('🔕 [RealtimeService] Skipping notification: No matching condition (isNew=$isNew, wasAssigned=$wasAssigned, notifyOnFirstAssignment=$notifyOnFirstAssignment, notifyOnAllUpdates=$notifyOnAllUpdates)');
+      return false;
     } catch (e) {
       print('⚠️ [RealtimeService] Error checking notification settings: $e');
       // On error, default to sending notification (fail-safe)
