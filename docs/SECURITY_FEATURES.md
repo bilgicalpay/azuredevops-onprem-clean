@@ -1,7 +1,7 @@
 # Güvenlik Özellikleri Dokümantasyonu
 
-**Son Güncelleme:** 2025-12-18  
-**Versiyon:** 1.0.20+
+**Son Güncelleme:** 2024-12-20  
+**Versiyon:** 1.1.4+43
 
 ## Genel Bakış
 

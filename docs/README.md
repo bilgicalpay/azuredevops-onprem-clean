@@ -1,8 +1,8 @@
 # Azure DevOps Server 2022 Mobile App - Dokümantasyon
 
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.0.0  
-**Tarih:** 2025
+**Versiyon:** 1.1.4+43  
+**Tarih:** 2024-12-20
 
 ## Genel Bakış
 
@@ -11,34 +11,49 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
 ## Özellikler
 
 - ✅ Work Item görüntüleme ve yönetimi
+  - Custom field düzenleme (selectbox, combobox, tickbox desteği)
+  - Gizli field'lar otomatik filtrelenir
+  - Discussion/Comments özelliği (yorum ekleme ve görüntüleme)
+  - Work Item Attachments (dosya ekleme ve görüntüleme)
 - ✅ Query çalıştırma ve sonuç görüntüleme
 - ✅ Wiki içerik görüntüleme
 - ✅ Push notification desteği
+  - Bildirim ayarları özelleştirmesi (ilk atama, tüm güncellemeler, Hotfix filtresi, grup bildirimleri)
 - ✅ Personal Access Token (PAT) kimlik doğrulama
-- ✅ Active Directory (AD) kimlik doğrulama
+- ✅ Active Directory (AD) kimlik doğrulama (local user desteği)
 - ✅ MDM entegrasyonu
-- ✅ Offline çalışma desteği (sınırlı)
 - ✅ Market özelliği (IIS static dizininden APK/IPA indirme)
+- ✅ Türk Kültürü Popup (ana sayfada pull-to-refresh ile rastgele bilgiler)
 
 ## Dokümantasyon
 
+### Mimari ve Topoloji
+
+1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Mimari topoloji dokümantasyonu
+   - Mimari katmanlar
+   - Bileşen diyagramları
+   - Veri akışı
+   - Güvenlik mimarisi
+   - Deployment topolojisi
+   - Teknoloji stack
+
 ### Güvenlik ve Altyapı
 
-1. **[SECURITY.md](SECURITY.md)** - Güvenlik dokümantasyonu
+2. **[SECURITY.md](SECURITY.md)** - Güvenlik dokümantasyonu
    - Güvenlik mimarisi
    - Kimlik doğrulama
    - Veri güvenliği
    - Ağ güvenliği
    - Güvenlik açıkları ve önlemler
 
-2. **[INFRASTRUCTURE.md](INFRASTRUCTURE.md)** - Altyapı dokümantasyonu
+3. **[INFRASTRUCTURE.md](INFRASTRUCTURE.md)** - Altyapı dokümantasyonu
    - Sistem gereksinimleri
    - Ağ yapılandırması
    - Sertifika yönetimi
    - Dağıtım adımları
    - İzleme ve bakım
 
-3. **[MDM_INTEGRATION.md](MDM_INTEGRATION.md)** - MDM entegrasyon kılavuzu
+4. **[MDM_INTEGRATION.md](MDM_INTEGRATION.md)** - MDM entegrasyon kılavuzu
    - Microsoft Intune entegrasyonu
    - VMware Workspace ONE entegrasyonu
    - Yapılandırma profilleri
@@ -228,6 +243,6 @@ Bu uygulama kurumsal kullanım için geliştirilmiştir.
 
 ---
 
-**Son Güncelleme:** 2025  
-**Dokümantasyon Versiyonu:** 1.0
+**Son Güncelleme:** 2024-12-20  
+**Dokümantasyon Versiyonu:** 1.1.4
 

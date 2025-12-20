@@ -8,11 +8,10 @@
 library;
 
 import 'dart:convert' show base64, utf8;
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'certificate_pinning_service.dart';
-import 'security_service.dart';
-import 'token_refresh_service.dart';
 
 /// Work Item servisi sınıfı
 /// Azure DevOps API ile work item işlemlerini yönetir
@@ -821,8 +820,8 @@ class WorkItemService {
           ? '$cleanUrl/$collection'
           : cleanUrl;
 
-      // Get work item with relations (use expand=relations to get relations)
-      final url = '$baseUrl/_apis/wit/workitems/$workItemId?\$expand=relations&api-version=7.0';
+      // Get work item with all fields and relations (use expand=all to get all fields including custom fields)
+      final url = '$baseUrl/_apis/wit/workitems/$workItemId?\$expand=all&api-version=7.0';
       
       final response = await _dio.get(
         url,
@@ -1686,6 +1685,13 @@ class WorkItemService {
               final refName = fieldData['referenceName'] as String;
               final allowedValues = (fieldData['allowedValues'] as List?)?.map((v) => v.toString()).toList() ?? [];
               final fieldType = fieldData['type'] as String? ?? '';
+              final isReadOnly = fieldData['readOnly'] as bool? ?? false;
+              final isLocked = fieldData['locked'] as bool? ?? false;
+              final isIdentity = fieldData['identity'] as bool? ?? false;
+              final isQueryable = fieldData['queryable'] as bool? ?? true;
+              
+              // Check if field is hidden: read-only, locked, identity, or not queryable
+              final isHidden = isReadOnly || isLocked || isIdentity || !isQueryable;
               
               // Check if it's a combo box: has allowed values and is string/picklist type
               final isComboBox = allowedValues.isNotEmpty && 
@@ -1700,6 +1706,7 @@ class WorkItemService {
                 type: fieldType,
                 allowedValues: allowedValues,
                 isComboBox: isComboBox,
+                isHidden: isHidden,
               );
             }
             
@@ -1718,6 +1725,330 @@ class WorkItemService {
     } catch (e) {
       debugPrint('Get field definitions error: $e');
       return {};
+    }
+  }
+
+  /// Get work item comments
+  /// Azure DevOps Server 2022 may use history or comments endpoint
+  Future<List<WorkItemComment>> getWorkItemComments({
+    required String serverUrl,
+    required String token,
+    required int workItemId,
+    String? collection,
+    String? project,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      // Try multiple endpoints
+      List<String> endpoints = [];
+      
+      if (project != null && project.isNotEmpty) {
+        if (collection != null && collection.isNotEmpty) {
+          endpoints.add('$cleanUrl/$collection/$project/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+        }
+        endpoints.add('$cleanUrl/$project/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+      }
+      endpoints.add('$baseUrl/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+      
+      for (final url in endpoints) {
+        try {
+          debugPrint('🔍 [COMMENTS] Trying to get comments from: $url');
+          
+          final response = await _dio.get(
+            url,
+            options: Options(
+              headers: {
+                'Authorization': 'Basic ${_encodeToken(token)}',
+                'Content-Type': 'application/json',
+              },
+              validateStatus: (status) => status! < 500,
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            final comments = <WorkItemComment>[];
+            final commentsList = response.data['comments'] as List? ?? response.data['value'] as List? ?? [];
+            
+            for (var commentData in commentsList) {
+              comments.add(WorkItemComment.fromJson(commentData));
+            }
+            
+            debugPrint('✅ [COMMENTS] Loaded ${comments.length} comments from: $url');
+            return comments;
+          } else {
+            debugPrint('⚠️ [COMMENTS] Failed with status ${response.statusCode} for: $url');
+          }
+        } catch (e) {
+          debugPrint('⚠️ [COMMENTS] Error with endpoint $url: $e');
+          continue;
+        }
+      }
+      
+      // Fallback: Try to get from work item history
+      debugPrint('🔄 [COMMENTS] Trying fallback: Get from work item history');
+      try {
+        final historyUrl = '$baseUrl/_apis/wit/workitems/$workItemId/updates?api-version=7.0';
+        final historyResponse = await _dio.get(
+          historyUrl,
+          options: Options(
+            headers: {
+              'Authorization': 'Basic ${_encodeToken(token)}',
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
+        
+        if (historyResponse.statusCode == 200) {
+          final comments = <WorkItemComment>[];
+          final updates = historyResponse.data['value'] as List? ?? [];
+          
+          for (var update in updates) {
+            final fields = update['fields'] as Map<String, dynamic>?;
+            if (fields != null && fields.containsKey('System.History')) {
+              final historyText = fields['System.History']?['newValue'] as String?;
+              if (historyText != null && historyText.isNotEmpty) {
+                comments.add(WorkItemComment(
+                  id: update['id'] as int? ?? 0,
+                  workItemId: workItemId,
+                  rev: update['rev'] as int? ?? 0,
+                  text: historyText,
+                  createdBy: update['revisedBy']?['displayName'] as String?,
+                  createdDate: update['revisedDate'] != null 
+                      ? DateTime.tryParse(update['revisedDate'] as String)
+                      : null,
+                ));
+              }
+            }
+          }
+          
+          debugPrint('✅ [COMMENTS] Loaded ${comments.length} comments from history');
+          return comments;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [COMMENTS] Error getting from history: $e');
+      }
+
+      return [];
+    } catch (e, stackTrace) {
+      debugPrint('❌ [COMMENTS] Get work item comments error: $e');
+      debugPrint('❌ [COMMENTS] Stack trace: $stackTrace');
+      return [];
+    }
+  }
+
+  /// Add comment to work item
+  /// Azure DevOps Server 2022 uses work item history/updates for comments
+  Future<bool> addWorkItemComment({
+    required String serverUrl,
+    required String token,
+    required int workItemId,
+    required String text,
+    String? collection,
+    String? project,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      // Try multiple endpoints - Azure DevOps Server may use different endpoints
+      List<String> endpoints = [];
+      
+      // Method 1: Comments endpoint (if available)
+      if (project != null && project.isNotEmpty) {
+        if (collection != null && collection.isNotEmpty) {
+          endpoints.add('$cleanUrl/$collection/$project/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+        }
+        endpoints.add('$cleanUrl/$project/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+      }
+      endpoints.add('$baseUrl/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+      
+      for (final url in endpoints) {
+        try {
+          debugPrint('🔍 [COMMENTS] Trying to add comment via: $url');
+          
+          final response = await _dio.post(
+            url,
+            data: {
+              'text': text,
+            },
+            options: Options(
+              headers: {
+                'Authorization': 'Basic ${_encodeToken(token)}',
+                'Content-Type': 'application/json',
+              },
+              validateStatus: (status) => status! < 500,
+            ),
+          );
+
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            debugPrint('✅ [COMMENTS] Comment added successfully via: $url');
+            return true;
+          } else {
+            debugPrint('⚠️ [COMMENTS] Failed with status ${response.statusCode} for: $url');
+            debugPrint('⚠️ [COMMENTS] Response: ${response.data}');
+          }
+        } catch (e) {
+          debugPrint('⚠️ [COMMENTS] Error with endpoint $url: $e');
+          continue;
+        }
+      }
+      
+      // Fallback: Use work item update with System.History field
+      debugPrint('🔄 [COMMENTS] Trying fallback method: Update work item with System.History');
+      try {
+        final updateUrl = '$baseUrl/_apis/wit/workitems/$workItemId?api-version=7.0';
+        
+        // Update work item with comment in System.History field
+        final patchBody = [
+          {
+            'op': 'add',
+            'path': '/fields/System.History',
+            'value': text,
+          }
+        ];
+        
+        final patchResponse = await _dio.patch(
+          updateUrl,
+          data: patchBody,
+          options: Options(
+            headers: {
+              'Authorization': 'Basic ${_encodeToken(token)}',
+              'Content-Type': 'application/json-patch+json',
+            },
+          ),
+        );
+        
+        if (patchResponse.statusCode == 200) {
+          debugPrint('✅ [COMMENTS] Comment added via System.History field');
+          return true;
+        } else {
+          debugPrint('⚠️ [COMMENTS] Failed to add comment via System.History: ${patchResponse.statusCode}');
+          debugPrint('⚠️ [COMMENTS] Response: ${patchResponse.data}');
+        }
+      } catch (e) {
+        debugPrint('❌ [COMMENTS] Fallback method error: $e');
+      }
+      
+      return false;
+    } catch (e, stackTrace) {
+      debugPrint('❌ [COMMENTS] Add work item comment error: $e');
+      debugPrint('❌ [COMMENTS] Stack trace: $stackTrace');
+      return false;
+    }
+  }
+  
+  /// Upload attachment to Azure DevOps and attach it to a work item
+  Future<String?> uploadAttachment({
+    required String serverUrl,
+    required String token,
+    required String filePath,
+    required String fileName,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      // Step 1: Upload file to Azure DevOps
+      final uploadUrl = '$baseUrl/_apis/wit/attachments?fileName=$fileName&api-version=7.0';
+      
+      final file = File(filePath);
+      final fileBytes = await file.readAsBytes();
+      
+      final uploadResponse = await _dio.post(
+        uploadUrl,
+        data: fileBytes,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/octet-stream',
+          },
+        ),
+      );
+
+      if (uploadResponse.statusCode == 200 || uploadResponse.statusCode == 201) {
+        final attachmentUrl = uploadResponse.data['url'] as String?;
+        debugPrint('✅ [ATTACHMENT] File uploaded successfully: $attachmentUrl');
+        return attachmentUrl;
+      } else {
+        debugPrint('❌ [ATTACHMENT] Upload failed with status: ${uploadResponse.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ [ATTACHMENT] Upload error: $e');
+      return null;
+    }
+  }
+  
+  /// Attach uploaded file to work item
+  Future<bool> attachFileToWorkItem({
+    required String serverUrl,
+    required String token,
+    required int workItemId,
+    required String attachmentUrl,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final url = '$baseUrl/_apis/wit/workitems/$workItemId?api-version=7.0';
+      
+      final patchBody = [
+        {
+          'op': 'add',
+          'path': '/relations/-',
+          'value': {
+            'rel': 'AttachedFile',
+            'url': attachmentUrl,
+          },
+        }
+      ];
+
+      final response = await _dio.patch(
+        url,
+        data: patchBody,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json-patch+json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [ATTACHMENT] File attached to work item successfully');
+        return true;
+      } else {
+        debugPrint('❌ [ATTACHMENT] Failed to attach file: ${response.statusCode}');
+        debugPrint('❌ [ATTACHMENT] Response: ${response.data}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('❌ [ATTACHMENT] Attach file error: $e');
+      return false;
     }
   }
 }
@@ -1787,6 +2118,7 @@ class FieldDefinition {
   final String type;
   final List<String> allowedValues;
   final bool isComboBox;
+  final bool isHidden;
 
   FieldDefinition({
     required this.referenceName,
@@ -1794,6 +2126,7 @@ class FieldDefinition {
     required this.type,
     required this.allowedValues,
     required this.isComboBox,
+    this.isHidden = false,
   });
 }
 
@@ -1834,6 +2167,43 @@ class SavedQuery {
       wiql: json['wiql'] as String? ?? '',
       url: json['url'] as String?,
       isFolder: json['isFolder'] as bool? ?? false,
+    );
+  }
+}
+
+class WorkItemComment {
+  final int id;
+  final int workItemId;
+  final int rev;
+  final String text;
+  final String? createdBy;
+  final DateTime? createdDate;
+  final DateTime? modifiedDate;
+
+  WorkItemComment({
+    required this.id,
+    required this.workItemId,
+    required this.rev,
+    required this.text,
+    this.createdBy,
+    this.createdDate,
+    this.modifiedDate,
+  });
+
+  factory WorkItemComment.fromJson(Map<String, dynamic> json) {
+    return WorkItemComment(
+      id: json['id'] as int? ?? json['commentId'] as int? ?? 0,
+      workItemId: json['workItemId'] as int? ?? 0,
+      rev: json['rev'] as int? ?? 0,
+      text: json['text'] as String? ?? '',
+      createdBy: json['createdBy']?['displayName'] as String? ?? 
+                 json['createdBy']?['uniqueName'] as String?,
+      createdDate: json['createdDate'] != null 
+          ? DateTime.tryParse(json['createdDate'] as String)
+          : null,
+      modifiedDate: json['modifiedDate'] != null 
+          ? DateTime.tryParse(json['modifiedDate'] as String)
+          : null,
     );
   }
 }

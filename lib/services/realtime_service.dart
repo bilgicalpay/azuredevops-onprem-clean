@@ -8,8 +8,8 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'work_item_service.dart';
 import 'notification_service.dart';
 import 'auth_service.dart';
@@ -34,6 +34,11 @@ class RealtimeService {
   final NotificationService _notificationService = NotificationService();
   StorageService? _storageService;
   Set<int> _knownWorkItemIds = {};
+  Set<int> _notifiedWorkItemIds = {}; // Track which work items we've already notified about
+  
+  // SharedPreferences key for persistent notified work item IDs
+  static const String _notifiedIdsKey = 'notified_work_item_ids';
+  static const String _firstAssignmentNotifiedIdsKey = 'first_assignment_notified_work_item_ids';
   
   // Callbacks
   Function(List<int>)? onNewWorkItems;
@@ -244,6 +249,102 @@ class RealtimeService {
   final Map<int, String?> _workItemAssignees = {}; // Track assignees to detect assignee changes
   final Map<int, DateTime?> _workItemChangedDates = {}; // Track changed dates for better change detection
   
+  /// Load notified work item IDs from persistent storage
+  Future<void> _loadNotifiedWorkItemIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final idsJson = prefs.getString(_notifiedIdsKey);
+      if (idsJson != null && idsJson.isNotEmpty) {
+        final List<dynamic> ids = jsonDecode(idsJson);
+        _notifiedWorkItemIds = ids.map((e) => e as int).toSet();
+        print('📂 [RealtimeService] Loaded ${_notifiedWorkItemIds.length} notified work item IDs from storage');
+      }
+    } catch (e) {
+      print('⚠️ [RealtimeService] Error loading notified work item IDs: $e');
+    }
+  }
+  
+  /// Save notified work item IDs to persistent storage
+  Future<void> _saveNotifiedWorkItemIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_notifiedIdsKey, jsonEncode(_notifiedWorkItemIds.toList()));
+      print('💾 [RealtimeService] Saved ${_notifiedWorkItemIds.length} notified work item IDs to storage');
+    } catch (e) {
+      print('⚠️ [RealtimeService] Error saving notified work item IDs: $e');
+    }
+  }
+  
+  /// Add work item ID to notified set and persist
+  Future<void> _markAsNotified(int workItemId) async {
+    _notifiedWorkItemIds.add(workItemId);
+    await _saveNotifiedWorkItemIds();
+  }
+  
+  /// Check if work item was already notified
+  bool _wasNotified(int workItemId) {
+    return _notifiedWorkItemIds.contains(workItemId);
+  }
+  
+  /// Get last notified revision for a work item
+  Future<int?> _getLastNotifiedRevision(int workItemId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt('notified_rev_$workItemId');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Save last notified revision for a work item
+  Future<void> _saveLastNotifiedRevision(int workItemId, int revision) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('notified_rev_$workItemId', revision);
+    } catch (e) {
+      print('Error saving notified revision: $e');
+    }
+  }
+  
+  /// Mark work item as first-assignment-notified (permanent, even after app reinstall)
+  Future<void> _markAsFirstAssignmentNotified(int workItemId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final idsJson = prefs.getString(_firstAssignmentNotifiedIdsKey);
+      Set<int> firstAssignmentNotifiedIds = {};
+      
+      if (idsJson != null && idsJson.isNotEmpty) {
+        final List<dynamic> ids = jsonDecode(idsJson);
+        firstAssignmentNotifiedIds = ids.map((e) => e as int).toSet();
+      }
+      
+      firstAssignmentNotifiedIds.add(workItemId);
+      await prefs.setString(_firstAssignmentNotifiedIdsKey, jsonEncode(firstAssignmentNotifiedIds.toList()));
+      print('🔒 [RealtimeService] Work item #$workItemId marked as first-assignment-notified (permanent)');
+    } catch (e) {
+      print('⚠️ [RealtimeService] Error marking first-assignment-notified: $e');
+    }
+  }
+  
+  /// Check if work item was first-assignment-notified (permanent check)
+  Future<bool> _isFirstAssignmentNotified(int workItemId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final idsJson = prefs.getString(_firstAssignmentNotifiedIdsKey);
+      
+      if (idsJson == null || idsJson.isEmpty) {
+        return false;
+      }
+      
+      final List<dynamic> ids = jsonDecode(idsJson);
+      final firstAssignmentNotifiedIds = ids.map((e) => e as int).toSet();
+      return firstAssignmentNotifiedIds.contains(workItemId);
+    } catch (e) {
+      print('⚠️ [RealtimeService] Error checking first-assignment-notified: $e');
+      return false;
+    }
+  }
+  
   /// Optimized polling fallback - works in background
   Future<void> _startOptimizedPolling(
     AuthService authService,
@@ -309,6 +410,9 @@ class RealtimeService {
     StorageService storageService,
   ) async {
     try {
+      // ÖNCE: Kalıcı olarak saklanan bildirim gönderilmiş ID'leri yükle
+      await _loadNotifiedWorkItemIds();
+      
       final token = await authService.getAuthToken();
       if (authService.serverUrl == null || token == null) {
         print('⚠️ [RealtimeService] Cannot initialize: missing auth');
@@ -327,9 +431,20 @@ class RealtimeService {
         _workItemRevisions[workItem.id] = workItem.rev ?? 0;
         _workItemAssignees[workItem.id] = workItem.assignedTo;
         _workItemChangedDates[workItem.id] = workItem.changedDate;
+        
+        // Eğer bu work item daha önce bildirim gönderilmişse (kalıcı listede varsa)
+        // tekrar bildirim gönderme
+        if (_wasNotified(workItem.id)) {
+          // Son bildirim gönderilen revision'ı kontrol et
+          final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
+          if (lastNotifiedRev != null && lastNotifiedRev >= (workItem.rev ?? 0)) {
+            // Bu work item için zaten bildirim gönderilmiş ve değişiklik yok
+            print('📌 [RealtimeService] Work item #${workItem.id} already notified (rev: $lastNotifiedRev)');
+          }
+        }
       }
 
-      print('✅ [RealtimeService] Tracking initialized for ${workItems.length} work items');
+      print('✅ [RealtimeService] Tracking initialized for ${workItems.length} work items (${_notifiedWorkItemIds.length} already notified in storage)');
     } catch (e) {
       print('❌ [RealtimeService] Error initializing tracking: $e');
     }
@@ -371,24 +486,90 @@ class RealtimeService {
         
         if (!_knownWorkItemIds.contains(workItem.id)) {
           // New work item - just assigned to user
-          print('🆕 [RealtimeService] New work item detected: #${workItem.id} - ${workItem.title}');
-          newIds.add(workItem.id);
           _knownWorkItemIds.add(workItem.id);
           _workItemRevisions[workItem.id] = currentRev;
           _workItemAssignees[workItem.id] = currentAssignee;
           _workItemChangedDates[workItem.id] = currentChangedDate;
           
-          // Bildirim ayarlarını kontrol et
-          if (await _shouldNotifyForWorkItem(workItem, isNew: true, wasAssigned: true)) {
-            await _notificationService.showWorkItemNotification(
-              workItemId: workItem.id,
-              title: workItem.title,
-              body: 'Size yeni bir work item atandı: ${workItem.type}',
-            );
-          } else {
-            print('🔕 [RealtimeService] Notification skipped for work item #${workItem.id} based on settings');
+          // ÖNEMLİ: Eğer bu work item "ilk atamada bildirim" ile işaretlenmişse ve sadece "ilk atamada bildirim" aktifse,
+          // bir daha asla bildirim gönderme
+          if (await _isFirstAssignmentNotified(workItem.id)) {
+            final notifyOnFirstAssignment = _storageService!.getNotifyOnFirstAssignment();
+            final notifyOnAllUpdates = _storageService!.getNotifyOnAllUpdates();
+            
+            if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+              print('🔒 [RealtimeService] Work item #${workItem.id} was first-assignment-notified, skipping all future notifications');
+              continue;
+            }
           }
+          
+          // ÖNEMLİ: Bu work item için daha önce bildirim gönderilmiş mi kontrol et
+          // Uygulama yeniden kurulsa bile bu bilgi kalıcı olarak saklanır
+          if (_wasNotified(workItem.id)) {
+            // Son bildirim gönderilen revision'ı kontrol et
+            final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
+            if (lastNotifiedRev != null && lastNotifiedRev >= currentRev) {
+              // Bu work item için zaten bildirim gönderilmiş ve değişiklik yok
+              print('📌 [RealtimeService] Work item #${workItem.id} already notified previously (rev: $lastNotifiedRev), skipping');
+              continue; // Bildirim gönderme, sonraki work item'a geç
+            }
+          }
+          
+          // Bildirim ayarlarını kontrol et
+          final shouldNotify = await _shouldNotifyForWorkItem(workItem, isNew: true, wasAssigned: true);
+          if (!shouldNotify) {
+            print('🔕 [RealtimeService] Notification skipped for work item #${workItem.id} based on settings');
+            continue;
+          }
+          
+          // Yeni work item veya değişiklik var - bildirim gönder
+          print('🆕 [RealtimeService] New work item detected: #${workItem.id} - ${workItem.title}');
+          newIds.add(workItem.id);
+          await _notificationService.showWorkItemNotification(
+            workItemId: workItem.id,
+            title: workItem.title,
+            body: 'Size yeni bir work item atandı: ${workItem.type}',
+          );
+          
+          // ÖNEMLİ: Eğer sadece "ilk atamada bildirim" aktifse (ve "tüm güncellemelerde bildirim" aktif değilse),
+          // bu work item için bir daha ASLA bildirim gönderme (uygulama kaldırılıp tekrar kurulsa bile)
+          final notifyOnFirstAssignment = _storageService!.getNotifyOnFirstAssignment();
+          final notifyOnAllUpdates = _storageService!.getNotifyOnAllUpdates();
+          
+          if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+            // Sadece ilk atamada bildirim aktifse, bu work item'ı "first_assignment_notified" olarak işaretle
+            // Bu sayede bir daha asla bildirim gönderilmeyecek
+            await _markAsFirstAssignmentNotified(workItem.id);
+            print('🔒 [RealtimeService] Work item #${workItem.id} marked as first-assignment-notified (no more notifications)');
+          }
+          
+          await _markAsNotified(workItem.id); // Kalıcı olarak kaydet
+          await _saveLastNotifiedRevision(workItem.id, currentRev);
+          print('✅ [RealtimeService] Notification sent for work item #${workItem.id}');
         } else {
+          // ÖNEMLİ: ÖNCE kontrol et - eğer bu work item "ilk atamada bildirim" ile işaretlenmişse ve sadece "ilk atamada bildirim" aktifse,
+          // bir daha asla bildirim gönderme (değişiklik olsa bile)
+          // Bu kontrolü değişiklik tespitinden ÖNCE yapıyoruz
+          final notifyOnFirstAssignment = _storageService!.getNotifyOnFirstAssignment();
+          final notifyOnAllUpdates = _storageService!.getNotifyOnAllUpdates();
+          
+          if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+            if (await _isFirstAssignmentNotified(workItem.id)) {
+              print('🔒 [RealtimeService] Work item #${workItem.id} was first-assignment-notified, skipping all future notifications (including updates)');
+              // Update tracking even if notification skipped
+              if (knownRev == null) {
+                _workItemRevisions[workItem.id] = currentRev;
+              }
+              if (knownAssignee == null) {
+                _workItemAssignees[workItem.id] = currentAssignee;
+              }
+              if (knownChangedDate == null && currentChangedDate != null) {
+                _workItemChangedDates[workItem.id] = currentChangedDate;
+              }
+              continue; // Bu work item için hiçbir bildirim gönderme
+            }
+          }
+          
           // Check for changes
           bool hasChanged = false;
           bool assigneeChanged = false;
@@ -430,23 +611,75 @@ class RealtimeService {
           }
           
           if (hasChanged) {
+            
+            // ÖNEMLİ: Bu work item için daha önce bildirim gönderilmiş mi kontrol et
+            final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
+            if (lastNotifiedRev != null && lastNotifiedRev >= currentRev) {
+              // Bu work item için zaten bildirim gönderilmiş ve değişiklik yok
+              print('📌 [RealtimeService] Work item #${workItem.id} already notified for this revision (rev: $lastNotifiedRev), skipping');
+              // Update tracking even if notification skipped
+              if (knownRev == null) {
+                _workItemRevisions[workItem.id] = currentRev;
+              }
+              if (knownAssignee == null) {
+                _workItemAssignees[workItem.id] = currentAssignee;
+              }
+              if (knownChangedDate == null && currentChangedDate != null) {
+                _workItemChangedDates[workItem.id] = currentChangedDate;
+              }
+              continue;
+            }
+            
             changedIds.add(workItem.id);
             print('🔄 [RealtimeService] Work item #${workItem.id} changed, checking notification settings');
             
             // Bildirim ayarlarını kontrol et
             final wasAssigned = knownAssignee == null && currentAssignee != null;
-            if (await _shouldNotifyForWorkItem(workItem, isNew: false, wasAssigned: wasAssigned)) {
-              // Send notification with appropriate message
-              await _notificationService.showWorkItemNotification(
-                workItemId: workItem.id,
-                title: workItem.title,
-                body: changeMessage.isNotEmpty 
-                    ? changeMessage 
-                    : 'Work item güncellendi: ${workItem.state}',
-              );
-            } else {
-              print('🔕 [RealtimeService] Notification skipped for work item #${workItem.id} based on settings');
+            final notifyOnFirstAssignment = _storageService!.getNotifyOnFirstAssignment();
+            final notifyOnAllUpdates = _storageService!.getNotifyOnAllUpdates();
+            
+            // ÇİFT KONTROL: Eğer sadece "ilk atamada bildirim" aktifse, güncellemelerde bildirim gönderme
+            if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+              print('🔒 [RealtimeService] Work item #${workItem.id} - First assignment only mode active, blocking update notification');
+              // Update tracking even if notification skipped
+              if (knownRev == null) {
+                _workItemRevisions[workItem.id] = currentRev;
+              }
+              if (knownAssignee == null) {
+                _workItemAssignees[workItem.id] = currentAssignee;
+              }
+              if (knownChangedDate == null && currentChangedDate != null) {
+                _workItemChangedDates[workItem.id] = currentChangedDate;
+              }
+              continue;
             }
+            
+            if (!await _shouldNotifyForWorkItem(workItem, isNew: false, wasAssigned: wasAssigned)) {
+              print('🔕 [RealtimeService] Notification skipped for work item #${workItem.id} based on settings');
+              // Update tracking even if notification skipped
+              if (knownRev == null) {
+                _workItemRevisions[workItem.id] = currentRev;
+              }
+              if (knownAssignee == null) {
+                _workItemAssignees[workItem.id] = currentAssignee;
+              }
+              if (knownChangedDate == null && currentChangedDate != null) {
+                _workItemChangedDates[workItem.id] = currentChangedDate;
+              }
+              continue;
+            }
+            
+            // Send notification with appropriate message
+            await _notificationService.showWorkItemNotification(
+              workItemId: workItem.id,
+              title: workItem.title,
+              body: changeMessage.isNotEmpty 
+                  ? changeMessage 
+                  : 'Work item güncellendi: ${workItem.state}',
+            );
+            await _saveLastNotifiedRevision(workItem.id, currentRev);
+            await _markAsNotified(workItem.id); // Kalıcı olarak kaydet
+            print('✅ [RealtimeService] Notification sent for work item #${workItem.id}: $changeMessage');
           }
           
           // Update tracking even if no change detected (to keep data fresh)
@@ -463,7 +696,6 @@ class RealtimeService {
       }
 
       // Update known IDs (remove items that are no longer assigned)
-      final previousKnownCount = _knownWorkItemIds.length;
       _knownWorkItemIds = workItems.map((item) => item.id).toSet();
       
       // Remove tracking data for items no longer assigned
@@ -517,14 +749,16 @@ class RealtimeService {
     _workItemRevisions.clear();
     _workItemAssignees.clear();
     _workItemChangedDates.clear();
+    _notifiedWorkItemIds.clear();
   }
   
   /// Check if notification should be sent based on user settings
   Future<bool> _shouldNotifyForWorkItem(WorkItem workItem, {required bool isNew, required bool wasAssigned}) async {
     try {
       if (_storageService == null) {
-        // If storage service not available, default to sending notification
-        return true;
+        // If storage service not available, default to NOT sending notification (safer)
+        print('🔕 [RealtimeService] Storage service not available, skipping notification');
+        return false;
       }
       
       // Get notification settings
@@ -534,6 +768,25 @@ class RealtimeService {
       final notifyOnGroupAssignments = _storageService!.getNotifyOnGroupAssignments();
       final notificationGroups = await _storageService!.getNotificationGroups();
       
+      // DEBUG: Log all notification settings
+      print('🔍 [RealtimeService] Notification settings: notifyOnFirstAssignment=$notifyOnFirstAssignment, notifyOnAllUpdates=$notifyOnAllUpdates, notifyOnHotfixOnly=$notifyOnHotfixOnly, notifyOnGroupAssignments=$notifyOnGroupAssignments, groups=${notificationGroups.length}');
+      
+      // ÖNEMLİ: Eğer hiçbir bildirim ayarı aktif değilse, bildirim gönderme
+      if (!notifyOnFirstAssignment && !notifyOnAllUpdates && !notifyOnHotfixOnly && !notifyOnGroupAssignments) {
+        print('🔕 [RealtimeService] Skipping notification: No notification settings enabled (all disabled)');
+        return false;
+      }
+      
+      // ÖNEMLİ: Eğer sadece "ilk atamada bildirim" aktifse (ve "tüm güncellemelerde bildirim" aktif değilse),
+      // ve bu work item daha önce "first_assignment_notified" olarak işaretlenmişse,
+      // bir daha asla bildirim gönderme
+      if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+        if (await _isFirstAssignmentNotified(workItem.id)) {
+          print('🔒 [RealtimeService] Skipping notification: First assignment only mode and work item #${workItem.id} was already notified');
+          return false;
+        }
+      }
+      
       // Sadece Hotfix filtresi
       if (notifyOnHotfixOnly && workItem.type.toLowerCase() != 'hotfix') {
         print('🔕 [RealtimeService] Skipping notification: Only Hotfix allowed, but type is ${workItem.type}');
@@ -542,16 +795,45 @@ class RealtimeService {
       
       // İlk atamada bildirim kontrolü
       if (isNew && wasAssigned) {
-        if (!notifyOnFirstAssignment) {
+        // Sadece ilk atamada bildirim gönder seçeneği aktifse ve bu ilk atama ise, bildirim gönder
+        if (notifyOnFirstAssignment) {
+          print('✅ [RealtimeService] Notifying: First assignment allowed and this is a new assignment');
+          return true;
+        } else {
           print('🔕 [RealtimeService] Skipping notification: First assignment notifications disabled');
           return false;
         }
       }
       
-      // Tüm güncellemelerde bildirim kontrolü
+      // Tüm güncellemelerde bildirim kontrolü (sadece ilk atama değilse)
       if (!isNew && !wasAssigned) {
-        if (!notifyOnAllUpdates) {
+        // Eğer sadece "ilk atamada bildirim" aktifse, güncellemelerde bildirim gönderme
+        if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+          print('🔕 [RealtimeService] Skipping notification: First assignment only mode, no updates allowed');
+          return false;
+        }
+        // Tüm güncellemelerde bildirim gönder seçeneği aktifse, bildirim gönder
+        if (notifyOnAllUpdates) {
+          print('✅ [RealtimeService] Notifying: All updates allowed and this is an update');
+          return true;
+        } else {
           print('🔕 [RealtimeService] Skipping notification: All updates notifications disabled');
+          return false;
+        }
+      }
+      
+      // Eğer ilk atama değil ama assignee değiştiyse, notifyOnAllUpdates kontrolü yap
+      if (!isNew && wasAssigned) {
+        // Eğer sadece "ilk atamada bildirim" aktifse, assignee değişikliklerinde de bildirim gönderme
+        if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+          print('🔕 [RealtimeService] Skipping notification: First assignment only mode, no updates allowed for assignee change');
+          return false;
+        }
+        if (notifyOnAllUpdates) {
+          print('✅ [RealtimeService] Notifying: All updates allowed and assignee changed');
+          return true;
+        } else {
+          print('🔕 [RealtimeService] Skipping notification: All updates disabled for assignee change');
           return false;
         }
       }
@@ -571,7 +853,29 @@ class RealtimeService {
         }
       }
       
-      return true;
+      // Eğer sadece "ilk atamada bildirim" aktifse ve bu bir güncelleme ise, bildirim gönderme
+      if (notifyOnFirstAssignment && !notifyOnAllUpdates && !isNew) {
+        print('🔕 [RealtimeService] Skipping notification: First assignment only mode, this is an update (isNew=$isNew, wasAssigned=$wasAssigned)');
+        return false;
+      }
+      
+      // Eğer hiçbir koşul eşleşmediyse ve sadece "ilk atamada bildirim" aktifse, bildirim gönderme
+      if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+        print('🔕 [RealtimeService] Skipping notification: First assignment only mode, no matching condition (isNew=$isNew, wasAssigned=$wasAssigned)');
+        return false;
+      }
+      
+      // Eğer hiçbir bildirim ayarı aktif değilse, bildirim gönderme (zaten yukarıda kontrol edildi ama tekrar kontrol)
+      if (!notifyOnFirstAssignment && !notifyOnAllUpdates) {
+        print('🔕 [RealtimeService] Skipping notification: No notification settings enabled (notifyOnFirstAssignment=$notifyOnFirstAssignment, notifyOnAllUpdates=$notifyOnAllUpdates)');
+        return false;
+      }
+      
+      // Default: bildirim gönderme (sadece yukarıdaki kontrollerden geçtiyse ve bir ayar aktifse)
+      // Eğer buraya geldiysek, bir ayar aktif demektir, ama yine de false döndürelim çünkü
+      // yukarıdaki koşullar zaten tüm durumları kapsıyor
+      print('🔕 [RealtimeService] Skipping notification: No matching condition (isNew=$isNew, wasAssigned=$wasAssigned, notifyOnFirstAssignment=$notifyOnFirstAssignment, notifyOnAllUpdates=$notifyOnAllUpdates)');
+      return false;
     } catch (e) {
       print('⚠️ [RealtimeService] Error checking notification settings: $e');
       // On error, default to sending notification (fail-safe)

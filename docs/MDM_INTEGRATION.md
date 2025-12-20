@@ -2,8 +2,8 @@
 
 **Uygulama:** Azure DevOps Server 2022 Mobile App  
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.0.0  
-**Tarih:** 2025
+**Versiyon:** 1.1.4+43  
+**Tarih:** 2024-12-20
 
 ## İçindekiler
 
@@ -489,6 +489,6 @@ auto_logout_minutes=30
 
 ---
 
-**Son Güncelleme:** 2025  
-**Dokümantasyon Versiyonu:** 1.0
+**Son Güncelleme:** 2024-12-20  
+**Dokümantasyon Versiyonu:** 1.1.4
 

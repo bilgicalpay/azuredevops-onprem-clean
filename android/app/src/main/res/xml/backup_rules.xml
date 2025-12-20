@@ -9,13 +9,19 @@
     - SharedPreferences (including server_url, collection, wiki_url, etc.)
     - EncryptedSharedPreferences (FlutterSecureStorage - auth_token, username, password)
     - App-specific files in getFilesDir() and getDatabasePath()
+    
+    IMPORTANT: For backup to work, user must have:
+    1. Google account signed in
+    2. Auto Backup enabled in device settings
+    3. App data synced to Google Drive
 -->
 <full-backup-content>
-    <!-- Include all SharedPreferences files -->
+    <!-- Include all SharedPreferences files (app settings) -->
     <include domain="sharedpref" path="." />
     
-    <!-- Include FlutterSecureStorage (EncryptedSharedPreferences) -->
+    <!-- Include FlutterSecureStorage (EncryptedSharedPreferences - credentials) -->
     <include domain="sharedpref" path="FlutterSecureStorage" />
+    <include domain="sharedpref" path="flutter_secure_storage_" />
     
     <!-- Include app-specific files if needed -->
     <include domain="file" path="." />
@@ -23,5 +29,6 @@
     <!-- Exclude cache and temporary files -->
     <exclude domain="file" path="cache/" />
     <exclude domain="file" path="tmp/" />
+    <exclude domain="file" path="code_cache/" />
 </full-backup-content>
 

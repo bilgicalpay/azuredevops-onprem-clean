@@ -25,6 +25,7 @@ import 'wiki_viewer_screen.dart';
 import 'documents_screen.dart';
 import 'market_screen.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../services/turkish_culture_service.dart';
 
 /// Ana ekran widget'ı
 /// Work item listesi ve wiki içeriğini gösterir
@@ -43,6 +44,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _wikiContent;
   bool _isLoadingWiki = false;
   String _appVersion = '';
+  bool _showCulturePopup = false;
+  Map<String, String>? _cultureInfo;
 
   @override
   void initState() {
@@ -408,11 +411,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _loadWorkItems();
-          await _loadWikiContent();
-        },
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: () async {
+              await _loadWorkItems();
+              await _loadWikiContent();
+              // Show Turkish culture popup on refresh
+              _showTurkishCulturePopup();
+            },
         child: Column(
           children: [
             // Üst Bölüm: Wiki
@@ -570,6 +577,100 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
             ),
           ],
+        ),
+          ),
+          // Turkish Culture Popup
+          if (_showCulturePopup && _cultureInfo != null)
+            _buildCulturePopup(),
+        ],
+      ),
+    );
+  }
+
+  /// Show Turkish culture popup
+  void _showTurkishCulturePopup() {
+    final info = TurkishCultureService.getRandomInfo();
+    // Ensure content is max 250 characters
+    String content = info['content']!;
+    if (content.length > 250) {
+      content = content.substring(0, 247) + '...';
+    }
+    
+    setState(() {
+      _cultureInfo = {
+        'title': info['title']!,
+        'content': content,
+        'type': info['type']!,
+      };
+      _showCulturePopup = true;
+    });
+  }
+
+  /// Build Turkish culture popup widget
+  Widget _buildCulturePopup() {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Card(
+          margin: const EdgeInsets.all(24.0),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with close button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _cultureInfo!['title']!,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        setState(() {
+                          _showCulturePopup = false;
+                          _cultureInfo = null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Content
+                Text(
+                  _cultureInfo!['content']!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.justify,
+                ),
+                const SizedBox(height: 16),
+                // Footer
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _showCulturePopup = false;
+                        _cultureInfo = null;
+                      });
+                    },
+                    child: const Text('Kapat'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

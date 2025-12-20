@@ -1,18 +1,25 @@
 # Azure DevOps Server 2022 Mobile App
 
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.1.3  
-**Tarih:** 2024.12.20
+**Versiyon:** 1.1.4+43  
+**Tarih:** 2024-12-20
 
-## Genel Bakış
+## 📱 Genel Bakış
 
-Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişim sağlar. Kurumsal MDM (Mobile Device Management) sistemleri ile entegre edilerek güvenli bir şekilde dağıtılabilir.
+Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişim sağlar. Kurumsal MDM (Mobile Device Management) sistemleri ile entegre edilerek güvenli bir şekilde dağıtılabilir. Flutter framework kullanılarak geliştirilmiştir ve hem Android hem iOS platformlarını destekler.
 
-## Özellikler
+## ✨ Özellikler
 
+### Work Item Yönetimi
 - ✅ Work Item görüntüleme ve yönetimi
+- ✅ Custom field düzenleme (selectbox, combobox, tickbox desteği)
+- ✅ Gizli field'lar otomatik filtrelenir
+- ✅ Discussion/Comments özelliği (yorum ekleme ve görüntüleme)
+- ✅ Work Item Attachments (dosya ekleme ve görüntüleme)
+- ✅ HTML desteği (Description ve diğer HTML alanları)
 - ✅ Query çalıştırma ve sonuç görüntüleme
-- ✅ Wiki içerik görüntüleme
+
+### Bildirim Sistemi
 - ✅ Push notification desteği
 - ✅ **Bildirim Ayarları Özelleştirmesi:**
   - İlk atamada bildirim (sadece size ilk atandığında)
@@ -20,14 +27,160 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
   - Sadece Hotfix filtresi (yalnızca Hotfix tipindeki work item'lar için)
   - Grup bildirimleri (belirtilen gruplara atama yapıldığında)
   - Tüm ayarlar background servislerde aktif olarak çalışır
-- ✅ Personal Access Token (PAT) kimlik doğrulama
-- ✅ Active Directory (AD) kimlik doğrulama
-- ✅ MDM entegrasyonu
-- ✅ Güvenli token saklama (FlutterSecureStorage)
-- ✅ Belgeler ekranı (Güvenlik, Altyapı, MDM dokümantasyonları)
-- ✅ **Market Özelliği:** IIS static dizininden APK ve IPA dosyalarını indirme
+- ✅ Gerçek zamanlı güncellemeler (WebSocket)
+- ✅ Background task ile periyodik kontrol
 
-## Sistem Gereksinimleri
+### Kimlik Doğrulama
+- ✅ Personal Access Token (PAT) kimlik doğrulama
+- ✅ Active Directory (AD) kimlik doğrulama (local user desteği)
+- ✅ Güvenli token saklama (FlutterSecureStorage - AES-256)
+- ✅ Otomatik token kontrolü
+- ✅ 30 günlük otomatik logout (inaktivite)
+
+### Wiki ve İçerik
+- ✅ Wiki içerik görüntüleme
+- ✅ Markdown rendering desteği
+
+### Market Özelliği
+- ✅ IIS static dizininden APK ve IPA dosyalarını indirme
+- ✅ Klasör yapısı desteği (Product → Version → Files)
+- ✅ Otomatik dosya filtreleme (APK, IPA, AAB)
+
+### Kültürel Özellikler
+- ✅ Türk Kültürü Popup (ana sayfada pull-to-refresh ile rastgele bilgiler)
+  - 50+ Türk tarihi figürü (bilim, sanat, edebiyat)
+  - 12 tarihi Türk devleti
+  - 15 modern Türk cumhuriyeti ve aktif Türk devleti
+
+### Güvenlik
+- ✅ Certificate Pinning (SHA-256)
+- ✅ Root/Jailbreak Detection
+- ✅ Security Logging
+- ✅ Encrypted Storage (AES-256)
+- ✅ MDM entegrasyonu
+- ✅ Uzaktan silme desteği
+
+### Belgeler
+- ✅ Belgeler ekranı (Güvenlik, Altyapı, MDM dokümantasyonları)
+
+## 🏗️ Mimari Topoloji
+
+### Mimari Katmanlar
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              Presentation Layer (UI)                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
+│  │  Screens │  │ Widgets  │  │ Provider │            │
+│  └──────────┘  └──────────┘  └──────────┘            │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│           Business Logic Layer (Services)              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
+│  │   Auth   │  │ WorkItem │  │  Wiki    │            │
+│  └──────────┘  └──────────┘  └──────────┘            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
+│  │  Notify  │  │ Background│ │ Realtime │            │
+│  └──────────┘  └──────────┘  └──────────┘            │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│              Data Layer                                 │
+│  ┌──────────────┐  ┌──────────────┐                    │
+│  │ Secure Store │  │ Preferences  │                    │
+│  │ (Encrypted)  │  │  (Plain)     │                    │
+│  └──────────────┘  └──────────────┘                    │
+│  ┌──────────────┐  ┌──────────────┐                    │
+│  │  HTTP Client │  │  WebSocket   │                    │
+│  └──────────────┘  └──────────────┘                    │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│            Platform Layer                               │
+│  ┌──────────────┐  ┌──────────────┐                    │
+│  │   Android    │  │     iOS      │                    │
+│  │   APIs       │  │    APIs      │                    │
+│  └──────────────┘  └──────────────┘                    │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│              Network (HTTPS/TLS 1.2+)                  │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│         Azure DevOps Server (API v7.0)                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Servis Mimarisi
+
+**Core Services:**
+- **AuthService**: PAT ve AD kimlik doğrulama, token yönetimi
+- **StorageService**: Güvenli veri saklama (FlutterSecureStorage, SharedPreferences)
+- **WorkItemService**: Work item CRUD, custom fields, attachments, comments
+- **WikiService**: Wiki içerik çekme ve rendering
+- **NotificationService**: Local notification gönderme
+- **BackgroundTaskService**: Periyodik work item kontrolü ve bildirim
+- **RealtimeService**: WebSocket ile gerçek zamanlı güncellemeler
+- **MarketService**: IIS static dizin listeleme ve dosya indirme
+- **TurkishCultureService**: Rastgele Türk kültürü bilgileri
+- **SecurityService**: Root/jailbreak tespiti, güvenlik loglama
+- **CertificatePinningService**: SHA-256 certificate pinning
+
+### Veri Akışı
+
+1. **Authentication Flow:**
+   - Kullanıcı kimlik bilgilerini girer
+   - AuthService API'ye istek gönderir
+   - Token alınır ve FlutterSecureStorage'da şifrelenmiş olarak saklanır
+   - Token tüm API isteklerinde kullanılır
+
+2. **Work Item Flow:**
+   - Kullanıcı work item listesini görüntüler
+   - WorkItemService API'den work item'ları çeker
+   - Custom field definition'ları alınır
+   - Veriler UI'da gösterilir
+   - Kullanıcı değişiklik yaparsa API'ye gönderilir
+
+3. **Notification Flow:**
+   - BackgroundTaskService periyodik olarak çalışır
+   - Yeni/güncellenmiş work item'lar kontrol edilir
+   - Bildirim ayarlarına göre filtreleme yapılır
+   - Uygun bildirimler gönderilir
+
+Detaylı mimari bilgisi için [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) dosyasına bakın.
+
+## 🔧 Teknik Özellikler
+
+### Platform Desteği
+- **Android:** Minimum 5.0 (SDK 21), Target 14 (SDK 34)
+- **iOS:** Minimum 12.0, Target 17.0
+
+### Teknoloji Stack
+- **Framework:** Flutter 3.24.0
+- **Language:** Dart
+- **State Management:** Provider
+- **UI Components:** Material Design, Cupertino
+- **HTTP Client:** Dio
+- **Storage:** FlutterSecureStorage (AES-256), SharedPreferences
+- **Real-time:** WebSocket Channel
+
+### Güvenlik Özellikleri
+- **Certificate Pinning:** SHA-256 fingerprint doğrulama
+- **Encryption:** AES-256 şifreleme (FlutterSecureStorage)
+- **Root Detection:** Root/jailbreak tespiti
+- **Security Logging:** Merkezi güvenlik loglama
+- **Auto Logout:** 30 günlük inaktivite sonrası otomatik logout
+- **MDM Integration:** MDM sistemleri ile entegrasyon
+
+### API Entegrasyonu
+- **Azure DevOps Server REST API:** v7.0
+- **Protocol:** HTTPS/TLS 1.2+
+- **Real-time:** WebSocket (WSS)
+- **Authentication:** PAT veya AD (Basic Auth)
+
+## 📋 Sistem Gereksinimleri
 
 ### Azure DevOps Server
 - Azure DevOps Server 2022 veya üzeri
@@ -38,7 +191,9 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
 - **Android:** Minimum 5.0 (SDK 21), Target 14 (SDK 34)
 - **iOS:** Minimum 12.0, Target 17.0
 
-## Kurulum
+## 🚀 Kurulum
+
+### Geliştirme Ortamı
 
 ```bash
 # Bağımlılıkları yükle
@@ -51,13 +206,41 @@ flutter build apk --release
 flutter build ipa
 ```
 
-## Yapılandırma
+### MDM Üzerinden Dağıtım
+
+1. APK/IPA dosyasını hazırlayın
+2. MDM sisteminize yükleyin
+3. Yapılandırma profilini oluşturun
+4. Dağıtım grubunu seçin
+5. Uygulamayı dağıtın
+
+Detaylar için [docs/MDM_INTEGRATION.md](docs/MDM_INTEGRATION.md) dosyasına bakın.
+
+## ⚙️ Yapılandırma
 
 ### Gerekli Ayarlar
 - Azure DevOps Server URL'si
 - Personal Access Token (PAT) veya AD kimlik bilgileri
 - Collection adı (opsiyonel)
 - **Market URL (opsiyonel):** IIS static dizin URL'si (APK ve IPA dosyalarını indirmek için)
+
+### İlk Kurulum
+
+1. Uygulamayı açın
+2. **Ayarlar** sayfasına gidin
+3. **Server URL** alanına Azure DevOps Server URL'sini girin
+4. Kimlik doğrulama yöntemini seçin (PAT veya AD)
+5. Giriş yapın
+
+### Bildirim Ayarları
+
+1. **Ayarlar** → **Bildirim Ayarları**
+2. İstediğiniz bildirim seçeneklerini aktif edin:
+   - İlk atamada bildirim
+   - Tüm güncellemelerde bildirim
+   - Sadece Hotfix filtresi
+   - Grup bildirimleri (grup adları ekleyin)
+3. Ayarları kaydedin
 
 ### Market Özelliği
 
@@ -99,13 +282,8 @@ Market özelliği, IIS static dizininden APK ve IPA dosyalarını indirmenizi sa
 
 #### Uygulama İçi Yapılandırma
 
-Market kullanımı için IIS altında bir dizin oluşturularak bu HTML adresi uygulamaya girilir. O dizin altına da product ve versionlar ile ayrılmış dizinler oluşturulur ve APK ve IPA dosyaları buraya atılır. Ancak uygulama üzerinden dosya indirilebilmesi için aşağıdaki gibi ana folder altına `web.config` eklenmelidir.
-
-
-**Yapılandırma Adımları:**
-
 1. **Ayarlar** sayfasına gidin
-2. **Market URL** alanına APK ve IPA dosyalarını uygun klasörlerle yükleyeceğiniz bir dizini IIS altında static dosyalar için oluşturmalısınız. Ardından bu repository URL'sini girin
+2. **Market URL** alanına IIS static dizin URL'sini girin
    - Örnek: `https://uygun_iis.com/_static_files/market`
 3. **Kaydet** butonuna tıklayın
 
@@ -118,43 +296,149 @@ Market kullanımı için IIS altında bir dizin oluşturularak bu HTML adresi uy
    - **Android:** Downloads klasörüne kaydedilir
    - **iOS:** Files app'te görünür (Documents dizini)
 
-#### Desteklenen Artifact'lar
+## 📖 Kullanım Kılavuzu
 
-- **Android APK:** `.apk` dosyaları
-- **iOS IPA:** `.ipa` dosyaları
-- **Android AAB:** `.aab` dosyaları (App Bundle) (bu veya başka dosya tipleri için webconfiğe yeni satır ekleyin.)
+### Work Item Yönetimi
 
-#### Notlar
+#### Work Item Görüntüleme
+1. Ana sayfada **Work Items** bölümüne gidin
+2. Work item listesini görüntüleyin
+3. Bir work item'a tıklayarak detaylarını görüntüleyin
 
-- Market özelliği, IIS static dizininden dosyaları listeler ve indirir
-- Git repository veya Azure DevOps Releases API kullanmaz
-- Directory listing (HTML veya JSON) formatını destekler
-- APK, IPA ve AAB dosyaları otomatik olarak filtrelenir
-- Buraya kdar okuyan olursa bir Türk kahvesini içerim.
+#### Custom Field Düzenleme
+1. Work item detay ekranında **Custom Fields** bölümüne gidin
+2. Düzenlemek istediğiniz field'a tıklayın
+3. Değeri değiştirin:
+   - **Selectbox/Combobox:** Dropdown'dan seçin
+   - **Checkbox/Tickbox:** Checkbox'ı işaretleyin/kaldırın
+   - **Date:** Tarih seçiciyi kullanın
+   - **Text/HTML:** Metin alanını düzenleyin
+4. **Kaydet** butonuna tıklayın
 
-Detaylı bilgi için [docs/README.md](docs/README.md#market-özelliği-ile-dağıtım) dosyasına bakın.
+#### Attachment Ekleme
+1. Work item detay ekranında **Attachments** bölümüne gidin
+2. **Attach File** butonuna tıklayın
+3. Dosyayı seçin
+4. Dosya yüklenir ve work item'a eklenir
 
-### MDM Entegrasyonu
-Detaylı bilgi için `docs/MDM_INTEGRATION.md` dosyasına bakın.
+#### Yorum Ekleme
+1. Work item detay ekranında **Discussion** bölümüne gidin
+2. Yorum alanına metninizi yazın
+3. **Add Comment** butonuna tıklayın
+4. Yorum work item'a eklenir
 
-## Güvenlik
+### Query Çalıştırma
 
-- Token'lar FlutterSecureStorage'da şifrelenmiş olarak saklanır
-- Android: EncryptedSharedPreferences
-- iOS: Keychain
-- Tüm API çağrıları HTTPS üzerinden yapılır
+1. Ana sayfada **Queries** ikonuna tıklayın
+2. Query listesini görüntüleyin
+3. Bir query'ye tıklayın
+4. Query sonuçları görüntülenir
+5. Sonuçlardan bir work item'a tıklayarak detaylarını görüntüleyebilirsiniz
 
-Detaylı güvenlik bilgileri için `docs/SECURITY.md` dosyasına bakın.
+### Wiki Görüntüleme
 
-## Dokümantasyon
+1. Ana sayfada **Wiki** bölümüne gidin
+2. Wiki içeriği görüntülenir
+3. Markdown formatı desteklenir
 
-- `docs/SECURITY.md` - Güvenlik dokümantasyonu
-- `docs/INFRASTRUCTURE.md` - Altyapı dokümantasyonu
-- `docs/MDM_INTEGRATION.md` - MDM entegrasyon kılavuzu
-- `docs/README.md` - Genel dokümantasyon
+### Bildirim Yönetimi
 
-## Proje Yapısı
+#### Bildirim Ayarları
+1. **Ayarlar** → **Bildirim Ayarları**
+2. İstediğiniz bildirim seçeneklerini aktif edin:
+   - **İlk Atamada Bildirim:** Sadece size ilk atandığında bildirim alın
+   - **Tüm Güncellemelerde Bildirim:** Atanmış work item'lar güncellendiğinde bildirim alın
+   - **Sadece Hotfix:** Yalnızca Hotfix tipindeki work item'lar için bildirim alın
+   - **Grup Bildirimleri:** Belirtilen gruplara atama yapıldığında bildirim alın
+     - Grup adı eklemek için **+** butonuna tıklayın
+     - Grup adı silmek için **X** butonuna tıklayın
 
+#### Bildirim Geçmişi
+- Bildirim gönderilmiş work item'lar için tekrar bildirim gönderilmez
+- Uygulama yeniden kurulduğunda bile bildirim geçmişi korunur
+
+## 🔒 Güvenlik
+
+### Güvenlik Özellikleri
+
+- ✅ **Token Şifreleme:** `flutter_secure_storage` kullanılıyor (Production'da aktif)
+  - Android: EncryptedSharedPreferences
+  - iOS: Keychain Services
+  - AES-256 şifreleme
+
+- ✅ **Certificate Pinning:** Sertifika pinning uygulandı (Production Ready)
+  - SHA-256 fingerprint doğrulama
+  - Production build'lerde otomatik aktif (`PRODUCTION=true`)
+  - Setup guide: `scripts/setup_certificate_pinning.md`
+
+- ✅ **Root/Jailbreak Tespiti:** Root/jailbreak tespiti eklendi
+  - Uygulama başlangıcında otomatik kontrol
+  - Güvenlik olayları loglanıyor
+
+- ✅ **Otomatik Logout:** Otomatik logout mekanizması eklendi
+  - 30 gün kullanılmadığında otomatik logout
+  - Son aktivite takibi
+  - Uygulama açıldığında kontrol edilir
+
+Detaylı güvenlik bilgileri için [docs/SECURITY.md](docs/SECURITY.md) dosyasına bakın.
+
+## 📚 Dokümantasyon
+
+### Ana Dokümantasyon
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Mimari topoloji dokümantasyonu
+  - Mimari katmanlar
+  - Bileşen diyagramları
+  - Veri akışı
+  - Güvenlik mimarisi
+  - Deployment topolojisi
+
+### Güvenlik ve Altyapı
+- **[SECURITY.md](docs/SECURITY.md)** - Güvenlik dokümantasyonu
+  - Güvenlik mimarisi
+  - Kimlik doğrulama
+  - Veri güvenliği
+  - Ağ güvenliği
+  - Güvenlik açıkları ve önlemler
+
+- **[INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)** - Altyapı dokümantasyonu
+  - Sistem gereksinimleri
+  - Ağ yapılandırması
+  - Sertifika yönetimi
+  - Dağıtım adımları
+  - İzleme ve bakım
+
+- **[MDM_INTEGRATION.md](docs/MDM_INTEGRATION.md)** - MDM entegrasyon kılavuzu
+  - Microsoft Intune entegrasyonu
+  - VMware Workspace ONE entegrasyonu
+  - Yapılandırma profilleri
+  - Uyumluluk politikaları
+
+- **[SECURITY_FEATURES.md](docs/SECURITY_FEATURES.md)** - Güvenlik özellikleri detayları
+
+## 🛠️ Geliştirme
+
+### Bağımlılıklar
+- `flutter_secure_storage` - Güvenli token saklama
+- `dio` - HTTP istekleri
+- `provider` - State yönetimi
+- `shared_preferences` - Yerel depolama
+- `flutter_local_notifications` - Bildirimler
+- `file_picker` - Dosya seçimi
+- `web_socket_channel` - WebSocket bağlantıları
+
+### Build
+```bash
+# Debug APK
+flutter build apk --debug
+
+# Release APK
+flutter build apk --release
+
+# iOS IPA
+flutter build ipa
+```
+
+### Proje Yapısı
 ```
 lib/
 ├── main.dart                    # Uygulama giriş noktası
@@ -176,46 +460,58 @@ lib/
 │   ├── notification_service.dart
 │   ├── background_task_service.dart
 │   ├── realtime_service.dart
-│   └── market_service.dart
-
-assets/
-└── images/
-    └── logo.png                 # Uygulama logosu
+│   ├── market_service.dart
+│   ├── turkish_culture_service.dart
+│   ├── security_service.dart
+│   └── certificate_pinning_service.dart
+└── assets/                      # Assets
+    └── images/
+        └── logo.png
 
 docs/                            # Dokümantasyon
+├── ARCHITECTURE.md
 ├── SECURITY.md
 ├── INFRASTRUCTURE.md
 ├── MDM_INTEGRATION.md
+├── SECURITY_FEATURES.md
 └── README.md
-
-android/                         # Android platform dosyaları
 ```
 
-## Geliştirme
+## 📝 Release Notes
 
-### Bağımlılıklar
-- `flutter_secure_storage` - Güvenli token saklama
-- `dio` - HTTP istekleri
-- `provider` - State yönetimi
-- `shared_preferences` - Yerel depolama
-- `flutter_local_notifications` - Bildirimler
-- `flutter_markdown` - Markdown render
+### v1.1.4+43 (2024-12-20)
 
-### Build
-```bash
-# Debug APK
-flutter build apk --debug
+#### Yeni Özellikler
+- ✅ Türk Kültürü Popup (ana sayfada pull-to-refresh ile rastgele bilgiler)
+- ✅ Work Item Attachments (dosya ekleme ve görüntüleme)
+- ✅ Custom field düzenleme iyileştirmeleri
+- ✅ Discussion/Comments özelliği
+- ✅ Bildirim ayarları özelleştirmesi
 
-# Release APK
-flutter build apk --release
-```
+#### İyileştirmeler
+- ✅ Steps alanı kaldırıldı
+- ✅ HTML desteği (Description ve diğer alanlar)
+- ✅ AD login local user desteği
+- ✅ Bildirim filtreleme mantığı iyileştirildi
 
-## Lisans
+Detaylı release notları için [RELEASE_NOTES.md](RELEASE_NOTES.md) dosyasına bakın.
+
+## 📞 Destek
+
+**Teknik Destek:**
+- Geliştirici: Alpay Bilgiç
+- E-posta: bilgicalpay@gmail.com
+
+**Güvenlik Sorunları:**
+- E-posta: bilgicalpay@gmail.com
+- Repository: https://github.com/bilgicalpay/azuredevops-server-mobile
+
+## 📄 Lisans
 
 Bu uygulama kurumsal kullanım için geliştirilmiştir.
 
 ---
 
 **Geliştirici:** Alpay Bilgiç  
-**Son Güncelleme:** 2024 20 Aralık  
-**Versiyon:** 1.1.3+41
+**Son Güncelleme:** 2024-12-20  
+**Versiyon:** 1.1.4+43

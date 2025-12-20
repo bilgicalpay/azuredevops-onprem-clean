@@ -68,15 +68,21 @@ if command -v xcrun &> /dev/null; then
     fi
 fi
 
+# Auto-increment build number
+echo -e "${GREEN}📝 Auto-incrementing build number...${NC}"
+source "$SCRIPT_DIR/auto_increment_build.sh"
+echo -e "${GREEN}✅ Build number incremented: ${CURRENT_BUILD_NUMBER} -> ${NEW_BUILD_NUMBER}${NC}"
+echo -e "${GREEN}📦 Version: ${VERSION_NAME}+${NEW_BUILD_NUMBER}${NC}"
+
 # Build Android APK
 if [ -n "$ANDROID_DEVICE" ]; then
     echo -e "${GREEN}📦 Building Android APK...${NC}"
-    $FLUTTER_CMD build apk --release
+    $FLUTTER_CMD build apk --release --build-name=${VERSION_NAME} --build-number=${NEW_BUILD_NUMBER} --dart-define=PRODUCTION=true
     
     APK_PATH="$PROJECT_DIR/build/app/outputs/flutter-apk/app-release.apk"
     
     if [ -f "$APK_PATH" ]; then
-        echo -e "${GREEN}📲 Installing APK to Android device ($ANDROID_DEVICE)...${NC}"
+        echo -e "${GREEN}📲 Installing/Updating APK to Android device ($ANDROID_DEVICE) (will update if app exists)...${NC}"
         $ADB_CMD -s "$ANDROID_DEVICE" install -r "$APK_PATH"
         echo -e "${GREEN}✅ Android deployment completed!${NC}"
     else
@@ -98,7 +104,7 @@ if [ -n "$IOS_SIMULATOR" ]; then
     fi
     
     # Build for simulator
-    $FLUTTER_CMD build ios --simulator
+    $FLUTTER_CMD build ios --simulator --build-name=${VERSION_NAME} --build-number=${NEW_BUILD_NUMBER} --dart-define=PRODUCTION=true
     
     # Get the app bundle path
     APP_BUNDLE="$PROJECT_DIR/build/ios/iphonesimulator/Runner.app"

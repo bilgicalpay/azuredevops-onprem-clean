@@ -27,8 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _groupController = TextEditingController();
   bool _isLoading = false;
   int _pollingInterval = 15;
-  bool _notifyOnFirstAssignment = true;
-  bool _notifyOnAllUpdates = true;
+  bool _notifyOnFirstAssignment = false;
+  bool _notifyOnAllUpdates = false;
   bool _notifyOnHotfixOnly = false;
   bool _notifyOnGroupAssignments = false;
   List<String> _notificationGroups = [];
