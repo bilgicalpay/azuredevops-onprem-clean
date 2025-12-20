@@ -2,6 +2,28 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [1.1.3] - 2024-12-20
+
+### ✅ Test Edildi ve Onaylandı
+
+#### Bildirim Ayarları Entegrasyonu
+- ✅ Bildirim ayarları background task service ve realtime service'de test edildi ve onaylandı
+- ✅ Tüm bildirim filtreleri (ilk atama, tüm güncellemeler, sadece Hotfix, grup bildirimleri) çalışıyor
+- ✅ Android ve iOS platformlarında test edildi
+
+### 🔧 İyileştirmeler
+
+#### Deploy Script'leri
+- ✅ Otomatik deploy script'leri eklendi (build_and_deploy_all.sh, quick_deploy.sh)
+- ✅ Android ve iOS için otomatik build ve deploy desteği
+- ✅ Her derleme sonrasında otomatik deploy yapılabilir
+
+#### Git Yönetimi
+- ✅ APK ve IPA dosyaları .gitignore'a eklendi
+- ✅ Büyük binary dosyalar repository'den kaldırıldı
+
+---
+
 ## [1.1.2] - 2024-12-20
 
 ### 🔧 İyileştirmeler

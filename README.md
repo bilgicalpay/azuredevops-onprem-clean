@@ -1,7 +1,7 @@
 # Azure DevOps Server 2022 Mobile App
 
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.1.2  
+**Versiyon:** 1.1.3  
 **Tarih:** 2024.12.20
 
 ## Genel Bakış
@@ -218,4 +218,4 @@ Bu uygulama kurumsal kullanım için geliştirilmiştir.
 
 **Geliştirici:** Alpay Bilgiç  
 **Son Güncelleme:** 2024 20 Aralık  
-**Versiyon:** 1.1.2+40
+**Versiyon:** 1.1.3+41
