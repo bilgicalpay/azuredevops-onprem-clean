@@ -1462,8 +1462,36 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
             debugPrint('🔍 [Steps] ExpectedResult group(1): "${expectedResultMatch.group(1)?.substring(0, expectedResultMatch.group(1)!.length > 100 ? 100 : expectedResultMatch.group(1)!.length) ?? "null"}"');
           }
           
-          // If parameterizedstring not found, try to extract content directly from step tag
-          if (action == null && expectedResult == null) {
+          // If we found action or expectedResult, add the step (even if one is missing)
+          if (action != null || expectedResult != null) {
+            // Decode HTML entities if needed
+            String decodedAction = action ?? '';
+            String decodedExpectedResult = expectedResult ?? '';
+            
+            // Decode common HTML entities
+            decodedAction = decodedAction
+                .replaceAll('&lt;', '<')
+                .replaceAll('&gt;', '>')
+                .replaceAll('&amp;', '&')
+                .replaceAll('&quot;', '"')
+                .replaceAll('&apos;', "'");
+            
+            decodedExpectedResult = decodedExpectedResult
+                .replaceAll('&lt;', '<')
+                .replaceAll('&gt;', '>')
+                .replaceAll('&amp;', '&')
+                .replaceAll('&quot;', '"')
+                .replaceAll('&apos;', "'");
+            
+            debugPrint('✅ [Steps] Adding step: Action="${decodedAction.substring(0, decodedAction.length > 50 ? 50 : decodedAction.length)}...", ExpectedResult="${decodedExpectedResult.substring(0, decodedExpectedResult.length > 50 ? 50 : decodedExpectedResult.length)}..."');
+            
+            _steps.add({
+              'action': decodedAction,
+              'expectedResult': decodedExpectedResult,
+            });
+          }
+          // If no parameterizedstring found, try to extract content directly from step tag
+          else if (action == null && expectedResult == null) {
             debugPrint('⚠️ [Steps] No parameterizedstring found, trying to extract content directly from step');
             // Try to get all text content from step (remove all tags)
             final textContent = stepContent.replaceAll(RegExp(r'<[^>]+>'), '').trim();
@@ -1471,6 +1499,18 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
               debugPrint('🔍 [Steps] Found text content in step: "$textContent"');
               // Assume it's action if no type specified
               action = textContent;
+              
+              String decodedAction = action
+                  .replaceAll('&lt;', '<')
+                  .replaceAll('&gt;', '>')
+                  .replaceAll('&amp;', '&')
+                  .replaceAll('&quot;', '"')
+                  .replaceAll('&apos;', "'");
+              
+              _steps.add({
+                'action': decodedAction,
+                'expectedResult': '',
+              });
             }
           }
           
