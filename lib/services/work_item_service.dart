@@ -1861,24 +1861,89 @@ class WorkItemService {
           ? '$cleanUrl/$collection'
           : cleanUrl;
 
-      final url = '$baseUrl/_apis/wit/workitems/$workItemId/comments?api-version=7.0';
+      // Try multiple endpoints - Azure DevOps Server may use different endpoints
+      List<String> endpoints = [];
       
-      final response = await _dio.post(
-        url,
-        data: {
-          'text': text,
-        },
-        options: Options(
-          headers: {
-            'Authorization': 'Basic ${_encodeToken(token)}',
-            'Content-Type': 'application/json',
-          },
-        ),
-      );
+      // Method 1: Comments endpoint (if available)
+      if (project != null && project.isNotEmpty) {
+        if (collection != null && collection.isNotEmpty) {
+          endpoints.add('$cleanUrl/$collection/$project/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+        }
+        endpoints.add('$cleanUrl/$project/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+      }
+      endpoints.add('$baseUrl/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+      
+      for (final url in endpoints) {
+        try {
+          debugPrint('🔍 [COMMENTS] Trying to add comment via: $url');
+          
+          final response = await _dio.post(
+            url,
+            data: {
+              'text': text,
+            },
+            options: Options(
+              headers: {
+                'Authorization': 'Basic ${_encodeToken(token)}',
+                'Content-Type': 'application/json',
+              },
+              validateStatus: (status) => status! < 500,
+            ),
+          );
 
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      debugPrint('Add work item comment error: $e');
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            debugPrint('✅ [COMMENTS] Comment added successfully via: $url');
+            return true;
+          } else {
+            debugPrint('⚠️ [COMMENTS] Failed with status ${response.statusCode} for: $url');
+            debugPrint('⚠️ [COMMENTS] Response: ${response.data}');
+          }
+        } catch (e) {
+          debugPrint('⚠️ [COMMENTS] Error with endpoint $url: $e');
+          continue;
+        }
+      }
+      
+      // Fallback: Use work item update with System.History field
+      debugPrint('🔄 [COMMENTS] Trying fallback method: Update work item with System.History');
+      try {
+        final updateUrl = '$baseUrl/_apis/wit/workitems/$workItemId?api-version=7.0';
+        
+        // Update work item with comment in System.History field
+        final patchBody = [
+          {
+            'op': 'add',
+            'path': '/fields/System.History',
+            'value': text,
+          }
+        ];
+        
+        final patchResponse = await _dio.patch(
+          updateUrl,
+          data: patchBody,
+          options: Options(
+            headers: {
+              'Authorization': 'Basic ${_encodeToken(token)}',
+              'Content-Type': 'application/json-patch+json',
+            },
+          ),
+        );
+        
+        if (patchResponse.statusCode == 200) {
+          debugPrint('✅ [COMMENTS] Comment added via System.History field');
+          return true;
+        } else {
+          debugPrint('⚠️ [COMMENTS] Failed to add comment via System.History: ${patchResponse.statusCode}');
+          debugPrint('⚠️ [COMMENTS] Response: ${patchResponse.data}');
+        }
+      } catch (e) {
+        debugPrint('❌ [COMMENTS] Fallback method error: $e');
+      }
+      
+      return false;
+    } catch (e, stackTrace) {
+      debugPrint('❌ [COMMENTS] Add work item comment error: $e');
+      debugPrint('❌ [COMMENTS] Stack trace: $stackTrace');
       return false;
     }
   }
