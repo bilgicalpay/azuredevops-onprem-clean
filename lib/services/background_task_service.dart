@@ -631,16 +631,35 @@ class BackgroundTaskService {
       
       // İlk atamada bildirim kontrolü
       if (isNew && wasAssigned) {
-        if (!notifyOnFirstAssignment) {
+        // Sadece ilk atamada bildirim gönder seçeneği aktifse ve bu ilk atama ise, bildirim gönder
+        if (notifyOnFirstAssignment) {
+          print('✅ [BackgroundTaskService] Notifying: First assignment allowed and this is a new assignment');
+          return true;
+        } else {
           print('🔕 [BackgroundTaskService] Skipping notification: First assignment notifications disabled');
           return false;
         }
       }
       
-      // Tüm güncellemelerde bildirim kontrolü
+      // Tüm güncellemelerde bildirim kontrolü (sadece ilk atama değilse)
       if (!isNew && !wasAssigned) {
-        if (!notifyOnAllUpdates) {
+        // Tüm güncellemelerde bildirim gönder seçeneği aktifse, bildirim gönder
+        if (notifyOnAllUpdates) {
+          print('✅ [BackgroundTaskService] Notifying: All updates allowed and this is an update');
+          return true;
+        } else {
           print('🔕 [BackgroundTaskService] Skipping notification: All updates notifications disabled');
+          return false;
+        }
+      }
+      
+      // Eğer ilk atama değil ama assignee değiştiyse, notifyOnAllUpdates kontrolü yap
+      if (!isNew && wasAssigned) {
+        if (notifyOnAllUpdates) {
+          print('✅ [BackgroundTaskService] Notifying: All updates allowed and assignee changed');
+          return true;
+        } else {
+          print('🔕 [BackgroundTaskService] Skipping notification: All updates disabled for assignee change');
           return false;
         }
       }

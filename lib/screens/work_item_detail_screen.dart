@@ -43,8 +43,10 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
   bool _isEditingDescription = false;
   Map<String, List<RelatedWorkItem>> _relatedWorkItemsGrouped = {};
   bool _isLoadingRelated = false;
-  String _relatedWorkItemsError = '';
-  Map<String, dynamic>? _lastApiResponse; // Store last API response for debugging
+  List<WorkItemComment> _comments = [];
+  bool _isLoadingComments = false;
+  bool _isAddingComment = false;
+  final TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
@@ -59,6 +61,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       controller.dispose();
     }
     _descriptionController.dispose();
+    _commentController.dispose();
     super.dispose();
   }
 
@@ -95,12 +98,8 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       ),
     );
 
-    // Store response for debugging
-    _lastApiResponse = response.data as Map<String, dynamic>?;
-
     WorkItem? detailedItem;
     List<dynamic>? relations;
-    String relationsDebugInfo = '';
     
     if (response.statusCode == 200) {
       detailedItem = WorkItem.fromJson(response.data);
@@ -108,33 +107,9 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       // Get relations directly from response
       if (response.data.containsKey('relations')) {
         relations = response.data['relations'] as List?;
-        relationsDebugInfo = 'Found ${relations?.length ?? 0} relations';
         debugPrint('✅ [UI] Found ${relations?.length ?? 0} relations in response');
-        if (relations != null && relations.isNotEmpty) {
-          debugPrint('📋 [UI] First relation: ${relations[0]}');
-          // Store for UI display - show first relation details
-          final firstRel = relations[0] as Map<String, dynamic>;
-          final relType = firstRel['rel'] ?? 'unknown';
-          final relUrl = firstRel['url'] ?? 'no url';
-          relationsDebugInfo = 'DEBUG: ${relations.length} relations found. First: rel=$relType, url=$relUrl';
-        } else {
-          relationsDebugInfo = 'DEBUG: Relations key exists but list is empty or null';
-        }
-      } else {
-        relationsDebugInfo = 'No relations key. Keys: ${response.data.keys.toList()}';
-        debugPrint('⚠️ [UI] No relations key in response. Keys: ${response.data.keys.toList()}');
-        final keys = response.data.keys.toList().take(5).join(", ");
-        relationsDebugInfo = 'DEBUG: No relations key. Response keys: $keys';
       }
-    } else {
-      relationsDebugInfo = 'API Error: ${response.statusCode}';
     }
-    
-    // Set debug info immediately - ALWAYS set it, even if empty
-    debugPrint('🔍 [UI] Setting debug info: $relationsDebugInfo');
-    setState(() {
-      _relatedWorkItemsError = relationsDebugInfo.isNotEmpty ? relationsDebugInfo : 'DEBUG: No relations debug info available';
-    });
 
     if (detailedItem != null) {
       final item = detailedItem; // Local variable for null safety
@@ -146,19 +121,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       
       // If we have relations, process them directly (no extra API call)
       if (relations != null && relations.isNotEmpty) {
-        final relationsCount = relations.length;
-        debugPrint('🔄 [UI] Processing $relationsCount relations directly from response');
-        // Update error message to show we're processing
-        setState(() {
-          _relatedWorkItemsError = 'DEBUG: Processing $relationsCount relations...';
-        });
         _loadRelatedWorkItemsFromRelations(relations);
-      } else {
-        debugPrint('⚠️ [UI] No relations found');
-        setState(() {
-          _relatedWorkItemsError = relationsDebugInfo.isNotEmpty ? relationsDebugInfo : 'DEBUG: No relations in response';
-        });
-        // Don't call fallback - we already have the data
       }
 
       // Load available states
@@ -201,21 +164,35 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           if (entry.key.startsWith('System.')) continue;
           
           final fieldDef = fieldDefs[entry.key];
-          final currentValue = entry.value?.toString() ?? '';
           
-          // Check if field has allowed values (combo box)
-          if (fieldDef != null && fieldDef.isComboBox && fieldDef.allowedValues.isNotEmpty) {
-            // Combo box field
+          // Skip hidden fields
+          if (fieldDef != null && fieldDef.isHidden) {
+            continue;
+          }
+          
+          final currentValue = entry.value?.toString() ?? '';
+          final fieldType = fieldDef?.type ?? '';
+          
+          // Check if it's a boolean field (tickbox)
+          if (entry.value is bool || fieldType == 'boolean') {
+            // Boolean field - store as string for now, will handle in UI
+            _comboBoxValues[entry.key] = (entry.value as bool? ?? false).toString();
+          }
+          // Check if field has allowed values (combo box/selectbox)
+          else if (fieldDef != null && fieldDef.isComboBox && fieldDef.allowedValues.isNotEmpty) {
+            // Combo box/selectbox field
             _comboBoxValues[entry.key] = currentValue.isEmpty ? null : currentValue;
-            print('Combo box field found: ${entry.key} with ${fieldDef.allowedValues.length} values');
-          } else if (entry.value is String || entry.value is num || entry.value is bool) {
-            // Regular text/number/boolean field
+          } else if (entry.value is String || entry.value is num) {
+            // Regular text/number field
             _fieldControllers[entry.key] = TextEditingController(
               text: currentValue,
             );
           }
         }
       }
+      
+      // Load comments
+      _loadComments();
       
       print('Custom fields initialized: ${_fieldControllers.length} text fields, ${_comboBoxValues.length} combo boxes');
     }
@@ -227,16 +204,107 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
     _loadRelatedWorkItems();
   }
 
+  /// Load comments
+  Future<void> _loadComments() async {
+    if (!mounted || _detailedWorkItem == null) return;
+    
+    setState(() => _isLoadingComments = true);
+    
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final storage = Provider.of<StorageService>(context, listen: false);
+      final token = await authService.getAuthToken();
+      
+      if (token == null) {
+        setState(() => _isLoadingComments = false);
+        return;
+      }
+      
+      final comments = await _workItemService.getWorkItemComments(
+        serverUrl: authService.serverUrl!,
+        token: token,
+        workItemId: _detailedWorkItem!.id,
+        collection: storage.getCollection(),
+      );
+      
+      if (mounted) {
+        setState(() {
+          _comments = comments;
+          _isLoadingComments = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading comments: $e');
+      if (mounted) {
+        setState(() => _isLoadingComments = false);
+      }
+    }
+  }
+  
+  /// Add comment
+  Future<void> _addComment() async {
+    if (!mounted || _detailedWorkItem == null || _commentController.text.trim().isEmpty) return;
+    
+    setState(() => _isAddingComment = true);
+    
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final storage = Provider.of<StorageService>(context, listen: false);
+      final token = await authService.getAuthToken();
+      
+      if (token == null) {
+        setState(() => _isAddingComment = false);
+        return;
+      }
+      
+      final success = await _workItemService.addWorkItemComment(
+        serverUrl: authService.serverUrl!,
+        token: token,
+        workItemId: _detailedWorkItem!.id,
+        text: _commentController.text.trim(),
+        collection: storage.getCollection(),
+      );
+      
+      if (mounted) {
+        if (success) {
+          _commentController.clear();
+          await _loadComments();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Yorum eklendi'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Yorum eklenemedi'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() => _isAddingComment = false);
+      }
+    } catch (e) {
+      debugPrint('Error adding comment: $e');
+      if (mounted) {
+        setState(() => _isAddingComment = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   /// Load related work items from relations array (direct from getWorkItemDetails response)
   Future<void> _loadRelatedWorkItemsFromRelations(List<dynamic> relations) async {
     if (!mounted) return;
     
-    debugPrint('🔄 [UI] _loadRelatedWorkItemsFromRelations called with ${relations.length} relations');
-    
-    // Keep existing debug info, don't clear it
     setState(() {
       _isLoadingRelated = true;
-      // Don't clear _relatedWorkItemsError - keep debug info
       _relatedWorkItemsGrouped = {};
     });
 
@@ -247,7 +315,6 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       if (token == null) {
         setState(() {
           _isLoadingRelated = false;
-          _relatedWorkItemsError = 'Authentication token not available';
         });
         return;
       }
@@ -264,25 +331,16 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       debugPrint('✅ [UI] Received $totalCount related work items in ${relatedItemsGrouped.keys.length} categories');
 
       if (mounted) {
-        final totalCount = relatedItemsGrouped.values.fold<int>(0, (sum, list) => sum + list.length);
         setState(() {
           _relatedWorkItemsGrouped = relatedItemsGrouped;
           _isLoadingRelated = false;
-          // Update debug info with result
-          if (totalCount > 0) {
-            _relatedWorkItemsError = 'DEBUG: Loaded $totalCount items in ${relatedItemsGrouped.keys.length} categories: ${relatedItemsGrouped.keys.join(", ")}';
-          } else {
-            _relatedWorkItemsError = 'DEBUG: No items loaded. Relations processed but no work items found.';
-          }
         });
-        debugPrint('✅ [UI] State updated. _relatedWorkItemsGrouped.length = ${_relatedWorkItemsGrouped.length}');
       }
     } catch (e) {
       debugPrint('❌ [UI] Error loading related work items from relations: $e');
       if (mounted) {
         setState(() {
           _isLoadingRelated = false;
-          _relatedWorkItemsError = 'DEBUG: Error - $e';
         });
       }
     }
@@ -291,11 +349,8 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
   Future<void> _loadRelatedWorkItems() async {
     if (!mounted) return;
     
-    debugPrint('🔄 [UI] Starting _loadRelatedWorkItems for work item #${widget.workItem.id}');
-    
     setState(() {
       _isLoadingRelated = true;
-      _relatedWorkItemsError = '';
       _relatedWorkItemsGrouped = {};
     });
 
@@ -306,7 +361,6 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       if (token == null) {
         setState(() {
           _isLoadingRelated = false;
-          _relatedWorkItemsError = 'Authentication token not available';
         });
         return;
       }
@@ -332,7 +386,6 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       if (mounted) {
         setState(() {
           _isLoadingRelated = false;
-          _relatedWorkItemsError = 'Related work items yüklenemedi: $e';
         });
       }
     }
@@ -419,14 +472,31 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       }
     }
 
-    // Update combo box fields
+    // Update combo box fields and boolean fields
     for (var entry in _comboBoxValues.entries) {
-      final currentValue = _detailedWorkItem!.allFields?[entry.key]?.toString();
-      if (entry.value != currentValue && entry.value != null) {
-        updates.add({
-          'path': '/fields/${entry.key}',
-          'value': entry.value!,
-        });
+      final fieldDef = _fieldDefinitions[entry.key];
+      final fieldType = fieldDef?.type ?? '';
+      final currentValue = _detailedWorkItem!.allFields?[entry.key];
+      
+      // Handle boolean fields
+      if (fieldType == 'boolean' || entry.value == 'true' || entry.value == 'false') {
+        final boolValue = entry.value == 'true';
+        final currentBoolValue = currentValue is bool ? currentValue : (currentValue?.toString() == 'true');
+        if (boolValue != currentBoolValue) {
+          updates.add({
+            'path': '/fields/${entry.key}',
+            'value': boolValue,
+          });
+        }
+      } else {
+        // Handle string/selectbox/combobox fields
+        final currentStringValue = currentValue?.toString();
+        if (entry.value != currentStringValue && entry.value != null) {
+          updates.add({
+            'path': '/fields/${entry.key}',
+            'value': entry.value!,
+          });
+        }
       }
     }
 
@@ -679,121 +749,21 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                     child: CircularProgressIndicator(),
                                   ),
                                 )
-                                  // Error state
-                                  else if (_relatedWorkItemsError.isNotEmpty)
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Text(
-                                            _relatedWorkItemsError,
-                                            style: const TextStyle(
-                                              color: Colors.red,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                        // Show raw response data for debugging
-                                        if (_lastApiResponse != null)
-                                          ExpansionTile(
-                                            title: const Text('Raw API Response (Debug)', style: TextStyle(fontSize: 12)),
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: SelectableText(
-                                                  _lastApiResponse.toString(),
-                                                  style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                      ],
-                                    )
                               // Empty state
                               else if (_relatedWorkItemsGrouped.isEmpty)
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Related work item bulunamadı',
-                                        style: TextStyle(
-                                          fontStyle: FontStyle.italic,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ),
-                                    // Debug info
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'DEBUG INFO:',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          Text('_isLoadingRelated: $_isLoadingRelated'),
-                                          Text('_relatedWorkItemsError: ${_relatedWorkItemsError.isEmpty ? "(empty)" : _relatedWorkItemsError}'),
-                                          Text('_relatedWorkItemsGrouped.length: ${_relatedWorkItemsGrouped.length}'),
-                                          const SizedBox(height: 8),
-                                          // Always show Raw API Response link
-                                          if (_lastApiResponse != null)
-                                            ExpansionTile(
-                                              title: const Text('Raw API Response (Debug)', style: TextStyle(fontSize: 12, color: Colors.blue)),
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: SelectableText(
-                                                    _lastApiResponse.toString(),
-                                                    style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                          else
-                                            const Text('API Response not available', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              // Data state - Show all categories
-                              else ...[
-                                // Debug info - Always show
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
+                                const Padding(
+                                  padding: EdgeInsets.all(8.0),
                                   child: Text(
-                                    'DEBUG: ${_relatedWorkItemsGrouped.length} categories, ${_relatedWorkItemsGrouped.values.fold<int>(0, (sum, list) => sum + list.length)} items',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.blue,
-                                      fontWeight: FontWeight.bold,
+                                    'Related work item bulunamadı',
+                                    style: TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.grey,
                                     ),
                                   ),
-                                ),
-                                // Show raw data for debugging
-                                if (_relatedWorkItemsGrouped.isNotEmpty)
-                                  ..._relatedWorkItemsGrouped.entries.map((entry) {
-                                    return Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Category: ${entry.key}, Items: ${entry.value.length}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.green,
-                                        ),
-                                      ),
-                                    );
-                                  }),
-                                // Actual list
+                                )
+                              // Data state
+                              else
                                 ..._buildRelatedWorkItemsList(),
-                              ],
                             ],
                           ),
                         ),
@@ -816,10 +786,25 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                // Combo box fields
+                                // Combo box/selectbox fields and boolean/tickbox fields
                                 ..._comboBoxValues.entries.map((entry) {
                                   final fieldDef = _fieldDefinitions[entry.key];
                                   final allowedValues = fieldDef?.allowedValues ?? [];
+                                  final fieldType = fieldDef?.type ?? '';
+                                  
+                                  // Check if it's a boolean field (tickbox)
+                                  if (fieldType == 'boolean' || entry.value == 'true' || entry.value == 'false') {
+                                    final boolValue = entry.value == 'true';
+                                    return CheckboxListTile(
+                                      title: Text(fieldDef?.name ?? entry.key),
+                                      value: boolValue,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _comboBoxValues[entry.key] = (value ?? false).toString();
+                                        });
+                                      },
+                                    );
+                                  }
                                   
                                   if (allowedValues.isEmpty) {
                                     // Fallback to text field if no allowed values
@@ -840,10 +825,11 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                     );
                                   }
                                   
+                                  // Dropdown for selectbox/combobox
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 16.0),
                                     child: DropdownButtonFormField<String>(
-                                      initialValue: entry.value,
+                                      value: entry.value,
                                       decoration: InputDecoration(
                                         labelText: fieldDef?.name ?? entry.key,
                                         border: const OutlineInputBorder(),
@@ -881,19 +867,135 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                           ),
                         ),
                       ],
+                      
+                      const SizedBox(height: 16),
 
-                      // All Fields (for debugging)
-                      ExpansionTile(
-                        title: const Text('Tüm Alanlar (Debug)'),
-                        children: [
-                          if (_detailedWorkItem!.allFields != null)
-                            ..._detailedWorkItem!.allFields!.entries.map((entry) {
-                              return ListTile(
-                                title: Text(entry.key),
-                                subtitle: Text(entry.value.toString()),
-                              );
-                            }),
-                        ],
+                      // Discussion/Comments
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Discussion',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Comments list
+                              if (_isLoadingComments)
+                                const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              else if (_comments.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Henüz yorum yok',
+                                    style: TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                )
+                              else
+                                ..._comments.map((comment) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 12,
+                                              backgroundColor: Colors.blue,
+                                              child: Text(
+                                                comment.createdBy != null && comment.createdBy!.isNotEmpty
+                                                    ? comment.createdBy![0].toUpperCase()
+                                                    : '?',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    comment.createdBy ?? 'Unknown',
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.w600,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  if (comment.createdDate != null)
+                                                    Text(
+                                                      _formatTimeAgo(comment.createdDate),
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 32.0),
+                                          child: Text(
+                                            comment.text,
+                                            style: const TextStyle(fontSize: 14),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              
+                              const SizedBox(height: 16),
+                              const Divider(),
+                              const SizedBox(height: 8),
+                              
+                              // Add comment
+                              TextField(
+                                controller: _commentController,
+                                maxLines: 3,
+                                decoration: const InputDecoration(
+                                  hintText: 'Yorum ekle...',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton(
+                                  onPressed: _isAddingComment ? null : _addComment,
+                                  child: _isAddingComment
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : const Text('Yorum Ekle'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -957,31 +1059,17 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
 
   /// Build related work items list widget
   List<Widget> _buildRelatedWorkItemsList() {
-    debugPrint('🔄 [UI] _buildRelatedWorkItemsList called. _relatedWorkItemsGrouped.length = ${_relatedWorkItemsGrouped.length}');
-    
     final widgets = <Widget>[];
     
     if (_relatedWorkItemsGrouped.isEmpty) {
-      debugPrint('⚠️ [UI] _relatedWorkItemsGrouped is empty!');
-      return [
-        const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text(
-            'DEBUG: _relatedWorkItemsGrouped is empty',
-            style: TextStyle(color: Colors.red, fontSize: 12),
-          ),
-        ),
-      ];
+      return [];
     }
     
     for (var entry in _relatedWorkItemsGrouped.entries) {
       final category = entry.key;
       final items = entry.value;
       
-      debugPrint('🔄 [UI] Processing category: $category with ${items.length} items');
-      
       if (items.isEmpty) {
-        debugPrint('⚠️ [UI] Category $category has no items, skipping');
         continue;
       }
       

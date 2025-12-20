@@ -1684,6 +1684,13 @@ class WorkItemService {
               final refName = fieldData['referenceName'] as String;
               final allowedValues = (fieldData['allowedValues'] as List?)?.map((v) => v.toString()).toList() ?? [];
               final fieldType = fieldData['type'] as String? ?? '';
+              final isReadOnly = fieldData['readOnly'] as bool? ?? false;
+              final isLocked = fieldData['locked'] as bool? ?? false;
+              final isIdentity = fieldData['identity'] as bool? ?? false;
+              final isQueryable = fieldData['queryable'] as bool? ?? true;
+              
+              // Check if field is hidden: read-only, locked, identity, or not queryable
+              final isHidden = isReadOnly || isLocked || isIdentity || !isQueryable;
               
               // Check if it's a combo box: has allowed values and is string/picklist type
               final isComboBox = allowedValues.isNotEmpty && 
@@ -1698,6 +1705,7 @@ class WorkItemService {
                 type: fieldType,
                 allowedValues: allowedValues,
                 isComboBox: isComboBox,
+                isHidden: isHidden,
               );
             }
             
@@ -1716,6 +1724,91 @@ class WorkItemService {
     } catch (e) {
       debugPrint('Get field definitions error: $e');
       return {};
+    }
+  }
+
+  /// Get work item comments
+  Future<List<WorkItemComment>> getWorkItemComments({
+    required String serverUrl,
+    required String token,
+    required int workItemId,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final url = '$baseUrl/_apis/wit/workitems/$workItemId/comments?api-version=7.0';
+      
+      final response = await _dio.get(
+        url,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final comments = <WorkItemComment>[];
+        final commentsList = response.data['comments'] as List? ?? response.data['value'] as List? ?? [];
+        
+        for (var commentData in commentsList) {
+          comments.add(WorkItemComment.fromJson(commentData));
+        }
+        
+        return comments;
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('Get work item comments error: $e');
+      return [];
+    }
+  }
+
+  /// Add comment to work item
+  Future<bool> addWorkItemComment({
+    required String serverUrl,
+    required String token,
+    required int workItemId,
+    required String text,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final url = '$baseUrl/_apis/wit/workitems/$workItemId/comments?api-version=7.0';
+      
+      final response = await _dio.post(
+        url,
+        data: {
+          'text': text,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint('Add work item comment error: $e');
+      return false;
     }
   }
 }
@@ -1785,6 +1878,7 @@ class FieldDefinition {
   final String type;
   final List<String> allowedValues;
   final bool isComboBox;
+  final bool isHidden;
 
   FieldDefinition({
     required this.referenceName,
@@ -1792,6 +1886,7 @@ class FieldDefinition {
     required this.type,
     required this.allowedValues,
     required this.isComboBox,
+    this.isHidden = false,
   });
 }
 
@@ -1832,6 +1927,43 @@ class SavedQuery {
       wiql: json['wiql'] as String? ?? '',
       url: json['url'] as String?,
       isFolder: json['isFolder'] as bool? ?? false,
+    );
+  }
+}
+
+class WorkItemComment {
+  final int id;
+  final int workItemId;
+  final int rev;
+  final String text;
+  final String? createdBy;
+  final DateTime? createdDate;
+  final DateTime? modifiedDate;
+
+  WorkItemComment({
+    required this.id,
+    required this.workItemId,
+    required this.rev,
+    required this.text,
+    this.createdBy,
+    this.createdDate,
+    this.modifiedDate,
+  });
+
+  factory WorkItemComment.fromJson(Map<String, dynamic> json) {
+    return WorkItemComment(
+      id: json['id'] as int? ?? json['commentId'] as int? ?? 0,
+      workItemId: json['workItemId'] as int? ?? 0,
+      rev: json['rev'] as int? ?? 0,
+      text: json['text'] as String? ?? '',
+      createdBy: json['createdBy']?['displayName'] as String? ?? 
+                 json['createdBy']?['uniqueName'] as String?,
+      createdDate: json['createdDate'] != null 
+          ? DateTime.tryParse(json['createdDate'] as String)
+          : null,
+      modifiedDate: json['modifiedDate'] != null 
+          ? DateTime.tryParse(json['modifiedDate'] as String)
+          : null,
     );
   }
 }
