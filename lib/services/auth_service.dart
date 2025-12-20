@@ -149,6 +149,7 @@ class AuthService extends ChangeNotifier {
 
   /// Active Directory kullanıcı adı/şifre ile giriş yapar
   /// Basic Authentication kullanır.
+  /// Local user formatını destekler: DOMAIN\username veya COMPUTERNAME\username
   /// Güvenlik: AD token (Base64 kodlanmış kullanıcı adı/şifre) FlutterSecureStorage'da şifrelenmiş olarak saklanır
   Future<bool> loginWithAD({
     required String serverUrl,
@@ -165,26 +166,48 @@ class AuthService extends ChangeNotifier {
           ? serverUrl.substring(0, serverUrl.length - 1) 
           : serverUrl;
       
-      // Azure DevOps On-Premise NTLM veya Basic Auth kullanır
-      final testUrl = collection != null && collection.isNotEmpty
-          ? '$cleanUrl/$collection/_apis/projects?api-version=7.0'
-          : '$cleanUrl/_apis/projects?api-version=7.0';
-
-      SecurityService.logApiCall(testUrl, method: 'GET');
+      // Normalize username: DOMAIN\username formatını koru
+      // Azure DevOps Server local user authentication için DOMAIN\username formatını kabul eder
+      String normalizedUsername = username.trim();
       
-      final response = await dio.get(
-        testUrl,
-        options: Options(
-          headers: {
-            'Authorization': 'Basic ${_encodeBasicAuth(username, password)}',
-            'Content-Type': 'application/json',
-          },
-        ),
-      );
+      // Eğer username'de \ yoksa ve domain belirtilmemişse, olduğu gibi kullan
+      // Eğer DOMAIN\username formatındaysa, olduğu gibi kullan (Azure DevOps bunu kabul eder)
+      
+      debugPrint('🔐 [AD Login] Attempting login with username: $normalizedUsername');
+      
+      // Azure DevOps On-Premise Basic Auth kullanır (local user için de)
+      // Birden fazla endpoint deneyelim
+      List<String> testUrls = [];
+      
+      if (collection != null && collection.isNotEmpty) {
+        testUrls.add('$cleanUrl/$collection/_apis/projects?api-version=7.0');
+        testUrls.add('$cleanUrl/$collection/_apis/connectionData?api-version=7.0');
+      }
+      testUrls.add('$cleanUrl/_apis/projects?api-version=7.0');
+      testUrls.add('$cleanUrl/_apis/connectionData?api-version=7.0');
 
-      SecurityService.logApiCall(testUrl, method: 'GET', statusCode: response.statusCode);
+      DioException? lastError;
+      
+      for (final testUrl in testUrls) {
+        try {
+          SecurityService.logApiCall(testUrl, method: 'GET');
+          
+          final response = await dio.get(
+            testUrl,
+            options: Options(
+              headers: {
+                'Authorization': 'Basic ${_encodeBasicAuth(normalizedUsername, password)}',
+                'Content-Type': 'application/json',
+              },
+              validateStatus: (status) => status != null && status < 500, // Don't throw for 4xx
+            ),
+          );
 
-      if (response.statusCode == 200) {
+          SecurityService.logApiCall(testUrl, method: 'GET', statusCode: response.statusCode);
+          
+          debugPrint('🔐 [AD Login] Response status: ${response.statusCode} for URL: $testUrl');
+
+          if (response.statusCode == 200) {
         // Store username and password separately in secure storage (encrypted)
         // Base64 encoding is only done at runtime for API calls, not for storage
         await _storage?.setServerUrl(cleanUrl);
