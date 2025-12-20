@@ -1,7 +1,7 @@
 # Azure DevOps Server 2022 Mobile App
 
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.1.4  
+**Versiyon:** 1.1.4+43  
 **Tarih:** 2024.12.20
 
 ## Genel Bakış
@@ -29,6 +29,8 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
 - ✅ Güvenli token saklama (FlutterSecureStorage)
 - ✅ Belgeler ekranı (Güvenlik, Altyapı, MDM dokümantasyonları)
 - ✅ **Market Özelliği:** IIS static dizininden APK ve IPA dosyalarını indirme
+- ✅ **Türk Kültürü Popup:** Ana sayfada pull-to-refresh yapıldığında rastgele Türk tarihi, bilim ve sanat figürleri ile Türk devletleri hakkında bilgiler gösterilir
+- ✅ **Work Item Attachments:** Work item'lara dosya ekleme ve görüntüleme özelliği
 
 ## Sistem Gereksinimleri
 
@@ -221,4 +223,4 @@ Bu uygulama kurumsal kullanım için geliştirilmiştir.
 
 **Geliştirici:** Alpay Bilgiç  
 **Son Güncelleme:** 2024 20 Aralık  
-**Versiyon:** 1.1.4+42
+**Versiyon:** 1.1.4+43

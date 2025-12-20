@@ -1,4 +1,4 @@
-# Release Notes - v1.1.4 (Build 42)
+# Release Notes - v1.1.4 (Build 43)
 
 **Release Date:** 2024-12-20  
 **Package Name:** io.rdc.azuredevops  
@@ -15,6 +15,20 @@
 - ✅ **iOS:** Ready for deployment
 
 ## ✨ New Features & Improvements
+
+### Türk Kültürü Popup Özelliği 🆕
+- **Rastgele Kültür Bilgileri:** Ana sayfada pull-to-refresh yapıldığında rastgele Türk kültürü bilgileri gösterilir
+- **50+ Tarihi Figür:** İbn-i Sina, Ali Kuşçu, Uluğ Bey, Farabi, Mimar Sinan, Evliya Çelebi, Katip Çelebi, Piri Reis, Cahit Arf, Aziz Sancar, Fazıl Say, Yunus Emre, Mehmet Akif Ersoy, Nazım Hikmet, Osman Hamdi Bey ve daha fazlası
+- **12 Tarihi Türk Devleti:** Göktürk Kağanlığı, Uygur Kağanlığı, Karahanlılar, Gazneliler, Büyük Selçuklu İmparatorluğu, Anadolu Selçuklu Devleti, Osmanlı İmparatorluğu, Timur İmparatorluğu, Babür İmparatorluğu, Altın Orda Devleti, Harezmşahlar, Akkoyunlular
+- **15 Modern Türk Cumhuriyeti:** Türkiye, Azerbaycan, Kazakistan, Kırgızistan, Özbekistan, Türkmenistan, Doğu Türkistan (Uygur Özerk Bölgesi), KKTC, Tataristan, Başkurdistan, Çuvaşistan, Saha (Yakut), Tuva, Altay, Hakasya
+- **Popup Özellikleri:** Kapatılabilir (X butonu), maksimum 250 karakter içerik, bayrak emojileri ve yıllar gösterimi
+
+### Work Item Attachments Özelliği 🆕
+- **Dosya Ekleme:** Work item'lara dosya ekleme özelliği eklendi
+- **Attachment Görüntüleme:** Work item attachment'larını görüntüleme özelliği eklendi
+- **File Picker:** file_picker paketi ile dosya seçimi
+- **Azure DevOps API:** uploadAttachment ve attachFileToWorkItem metodları eklendi
+- **UI Entegrasyonu:** Attachment listesi work item detail ekranında gösterilir
 
 ### Work Item Custom Field İyileştirmeleri 🆕
 - **Gizli Custom Field Filtreleme:** Gizli field'lar (isReadOnly, isLocked, isIdentity, !isQueryable) artık gösterilmiyor
@@ -39,15 +53,24 @@
 ### UI İyileştirmeleri
 - ✅ Related work items debug kısmı temizlendi
 - ✅ Gereksiz debug mesajları ve UI elementleri kaldırıldı
+- ✅ Steps alanı work item detail ekranından kaldırıldı (artık gösterilmiyor)
 - ✅ UI daha temiz ve kullanıcı dostu hale getirildi
 
 ## 🔧 Technical Improvements
 
 ### Work Item Service
 - ✅ getWorkItemComments ve addWorkItemComment metodları eklendi
+- ✅ getWorkItemAttachments, uploadAttachment ve attachFileToWorkItem metodları eklendi
 - ✅ Field definition'da isHidden kontrolü eklendi
 - ✅ Boolean field desteği iyileştirildi
 - ✅ WorkItemComment sınıfı eklendi
+- ✅ Steps parsing ve UI kodu tamamen kaldırıldı
+
+### Dependency Updates
+- ✅ file_picker: ^6.1.1 → ^8.3.7 (Flutter v2 embedding uyumluluğu için)
+- ✅ package_info_plus: ^5.0.1 → ^8.3.1
+- ✅ web_socket_channel: ^2.4.3 → ^3.0.3
+- ✅ web: ^0.4.2 → ^1.1.1
 
 ### Background Services
 - ✅ Bildirim kontrol mantığı iyileştirildi

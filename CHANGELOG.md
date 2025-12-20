@@ -6,6 +6,22 @@ Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
 ### 🆕 Yeni Özellikler
 
+#### Türk Kültürü Popup Özelliği
+- ✅ Ana sayfada pull-to-refresh yapıldığında rastgele Türk kültürü bilgileri gösterilir
+- ✅ 50+ Türk tarihi figürü (bilim, sanat, edebiyat alanlarından)
+- ✅ 12 tarihi Türk devleti (Göktürk, Selçuklu, Osmanlı, vb.)
+- ✅ 15 modern Türk cumhuriyeti ve aktif Türk devleti (Türkiye, Azerbaycan, Kazakistan, Kırgızistan, Özbekistan, Türkmenistan, Uygur Özerk Bölgesi, KKTC, ve Rusya içindeki özerk Türk cumhuriyetleri)
+- ✅ Popup kapatılabilir (X butonu ve "Kapat" butonu)
+- ✅ İçerik maksimum 250 karakter ile sınırlandırılmıştır
+- ✅ TurkishCultureService servisi eklendi
+
+#### Work Item Attachments Özelliği
+- ✅ Work item'lara dosya ekleme özelliği eklendi
+- ✅ Work item attachment'larını görüntüleme özelliği eklendi
+- ✅ File picker entegrasyonu (file_picker paketi)
+- ✅ Azure DevOps API'ye dosya yükleme desteği
+- ✅ Attachment listesi work item detail ekranında gösterilir
+
 #### Work Item Custom Field İyileştirmeleri
 - ✅ Gizli custom field'lar filtrelendi (isHidden kontrolü eklendi)
 - ✅ Selectbox, combobox, tickbox custom field'ları düzenlenebilir hale getirildi
@@ -28,13 +44,22 @@ Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 #### UI İyileştirmeleri
 - ✅ Related work items debug kısmı temizlendi
 - ✅ Gereksiz debug mesajları ve UI elementleri kaldırıldı
+- ✅ Steps alanı work item detail ekranından kaldırıldı (artık gösterilmiyor)
 
 ### 🔧 İyileştirmeler
 
 #### Work Item Service
 - ✅ getWorkItemComments ve addWorkItemComment metodları eklendi
+- ✅ getWorkItemAttachments, uploadAttachment ve attachFileToWorkItem metodları eklendi
 - ✅ Field definition'da isHidden kontrolü eklendi
 - ✅ Boolean field desteği iyileştirildi
+- ✅ Steps parsing ve UI kodu tamamen kaldırıldı
+
+#### Dependency Updates
+- ✅ file_picker: ^6.1.1 → ^8.3.7 (Flutter v2 embedding uyumluluğu için)
+- ✅ package_info_plus: ^5.0.1 → ^8.3.1
+- ✅ web_socket_channel: ^2.4.3 → ^3.0.3
+- ✅ web: ^0.4.2 → ^1.1.1
 
 ---
 
