@@ -51,9 +51,6 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
   bool _isAddingComment = false;
   final TextEditingController _commentController = TextEditingController();
   
-  // Steps data structure
-  List<Map<String, String>> _steps = []; // Each step: {'action': '', 'expectedResult': ''}
-  
   // Attachments data structure
   List<Map<String, dynamic>> _attachments = []; // Each attachment: {'name': '', 'url': '', 'size': 0}
   bool _isUploadingAttachment = false;
@@ -184,7 +181,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           // Skip System fields (they're handled separately)
           if (entry.key.startsWith('System.')) continue;
           
-          // Skip Steps field - it's handled separately in Steps section
+          // Skip Steps field
           if (entry.key == 'Microsoft.VSTS.TCM.Steps' || 
               entry.key == 'System.Steps' || 
               entry.key == 'Steps') {
@@ -252,10 +249,6 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           );
         }
       }
-      
-      // Load Steps field if exists
-      _parseSteps(detailedItem.allFields);
-      debugPrint('📊 [Steps] After parsing: ${_steps.length} steps found');
       
       // Load comments
       _loadComments();
@@ -926,30 +919,6 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Steps Section (Read-only)
-                      if (_steps.isNotEmpty)
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Steps',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                _buildStepsTable(),
-                              ],
-                            ),
-                          ),
-                        ),
-                      if (_steps.isNotEmpty)
                       const SizedBox(height: 16),
 
                       // Related Work Items - YENİDEN YAZILDI

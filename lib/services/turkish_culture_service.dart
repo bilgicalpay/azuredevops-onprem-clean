@@ -73,6 +73,94 @@ class TurkishCultureService {
       'name': 'Osman Hamdi Bey',
       'info': 'Türk ressam, arkeolog ve müzeci. İlk Türk arkeoloğu. "Kaplumbağa Terbiyecisi" gibi ünlü tablolarıyla tanınır.',
     },
+    {
+      'name': 'Harezmi',
+      'info': '9. yüzyıl matematikçi ve astronom. Cebir biliminin kurucusu. "Hisab el-Cebr ve\'l-Mukabele" adlı eseriyle cebir terimini ilk kullandı.',
+    },
+    {
+      'name': 'Biruni',
+      'info': '11. yüzyıl bilim insanı. Astronomi, matematik, coğrafya ve tarih alanlarında çalıştı. Dünya\'nın çevresini hesaplayan ilk bilim insanlarından.',
+    },
+    {
+      'name': 'İbn-i Heysem',
+      'info': 'Optik biliminin kurucusu. "Kitab el-Menazır" adlı eseriyle modern optik biliminin temellerini attı. Kamera obscura prensibini keşfetti.',
+    },
+    {
+      'name': 'Takiyüddin',
+      'info': '16. yüzyıl Osmanlı astronomu ve matematikçisi. İstanbul\'da rasathane kurdu. Trigonometri tabloları hazırladı.',
+    },
+    {
+      'name': 'Gelenbevi İsmail Efendi',
+      'info': '18. yüzyıl Osmanlı matematikçisi. Logaritma ve cebir alanında önemli çalışmalar yaptı. Osmanlı\'da modern matematiğin öncülerinden.',
+    },
+    {
+      'name': 'Salih Zeki',
+      'info': '19. yüzyıl Türk matematikçi ve eğitimci. "Kamus-ı Riyaziyat" adlı matematik ansiklopedisini yazdı. Darülfünun\'da ders verdi.',
+    },
+    {
+      'name': 'Kerim Erim',
+      'info': 'Türk matematikçi. İstanbul Üniversitesi\'nde profesör. Analiz ve diferansiyel geometri alanında önemli çalışmalar yaptı.',
+    },
+    {
+      'name': 'Feza Gürsey',
+      'info': 'Türk teorik fizikçi. Parçacık fiziği ve simetri teorileri üzerine çalıştı. Yale Üniversitesi\'nde profesörlük yaptı.',
+    },
+    {
+      'name': 'Ratip Berker',
+      'info': 'Türk matematikçi ve mühendis. İTÜ\'de rektörlük yaptı. Türkiye\'de mühendislik eğitiminin gelişmesine katkıda bulundu.',
+    },
+    {
+      'name': 'Behram Kurşunoğlu',
+      'info': 'Türk teorik fizikçi. Genel görelilik teorisi üzerine çalıştı. Miami Üniversitesi\'nde profesörlük yaptı.',
+    },
+    {
+      'name': 'Gazi Yaşargil',
+      'info': 'Türk nöroşirürji uzmanı. Mikrocerrahi tekniklerinin öncülerinden. Dünya çapında tanınan beyin cerrahı.',
+    },
+    {
+      'name': 'Erdal İnönü',
+      'info': 'Türk fizikçi ve siyasetçi. Teorik fizik alanında çalıştı. TÜBİTAK başkanlığı ve başbakan yardımcılığı yaptı.',
+    },
+    {
+      'name': 'Asım Orhan Barut',
+      'info': 'Türk teorik fizikçi. Kuantum mekaniği ve parçacık fiziği üzerine çalıştı. Colorado Üniversitesi\'nde profesörlük yaptı.',
+    },
+    {
+      'name': 'Mehmet Öz',
+      'info': 'Türk-Amerikalı kalp cerrahı. Televizyon programlarıyla sağlık konularında halkı bilinçlendirdi. Columbia Üniversitesi\'nde profesör.',
+    },
+    {
+      'name': 'Canan Dağdeviren',
+      'info': 'Türk fizik mühendisi. Esnek elektronik cihazlar geliştirdi. MIT\'de araştırmacı. Forbes\'un "30 Under 30" listesinde yer aldı.',
+    },
+    {
+      'name': 'Orhan Pamuk',
+      'info': '2006 Nobel Edebiyat Ödülü sahibi Türk yazar. "Kara Kitap", "Benim Adım Kırmızı" gibi eserleriyle tanınır.',
+    },
+    {
+      'name': 'Yaşar Kemal',
+      'info': 'Türk yazar. "İnce Memed" serisiyle tanınır. Edebiyat dünyasında önemli bir yere sahip.',
+    },
+    {
+      'name': 'Sabahattin Ali',
+      'info': 'Türk yazar ve şair. "Kuyucaklı Yusuf" ve "Kürk Mantolu Madonna" gibi eserleriyle tanınır.',
+    },
+    {
+      'name': 'Ahmet Hamdi Tanpınar',
+      'info': 'Türk yazar ve şair. "Saatleri Ayarlama Enstitüsü" ve "Huzur" gibi eserleriyle tanınır.',
+    },
+    {
+      'name': 'Zeki Müren',
+      'info': 'Türk sanat müziği sanatçısı. "Sanat Güneşi" unvanıyla anıldı. Türk müziğinin önemli isimlerinden.',
+    },
+    {
+      'name': 'Münir Nurettin Selçuk',
+      'info': 'Türk sanat müziği bestekarı ve yorumcusu. Klasik Türk müziğinin önemli temsilcilerinden.',
+    },
+    {
+      'name': 'Neşet Ertaş',
+      'info': 'Türk halk müziği sanatçısı. "Bozlak" türünün önemli temsilcisi. "Baba" unvanıyla anıldı.',
+    },
   ];
   
   /// Historical Turkish states with years and flag emojis
@@ -151,23 +239,126 @@ class TurkishCultureService {
     },
   ];
   
+  /// Modern Turkish Republics and active Turkish states
+  static final List<Map<String, String>> _modernTurkishStates = [
+    {
+      'name': 'Türkiye Cumhuriyeti',
+      'years': '1923-',
+      'flag': '🇹🇷',
+      'info': 'Mustafa Kemal Atatürk önderliğinde kurulan modern Türk devleti. Laik, demokratik ve sosyal hukuk devleti. NATO ve AB üyesi.',
+    },
+    {
+      'name': 'Azerbaycan Cumhuriyeti',
+      'years': '1991-',
+      'flag': '🇦🇿',
+      'info': 'Kafkasya\'da bağımsız Türk devleti. Bakü başkent. Petrol ve doğalgaz zengini. Türkiye ile kardeş ülke.',
+    },
+    {
+      'name': 'Kazakistan Cumhuriyeti',
+      'years': '1991-',
+      'flag': '🇰🇿',
+      'info': 'Orta Asya\'nın en büyük Türk devleti. Astana başkent. Zengin doğal kaynaklara sahip. Türk Konseyi üyesi.',
+    },
+    {
+      'name': 'Kırgızistan Cumhuriyeti',
+      'years': '1991-',
+      'flag': '🇰🇬',
+      'info': 'Orta Asya\'da bağımsız Türk devleti. Bişkek başkent. Manas Destanı\'nın vatanı. Türk Konseyi üyesi.',
+    },
+    {
+      'name': 'Özbekistan Cumhuriyeti',
+      'years': '1991-',
+      'flag': '🇺🇿',
+      'info': 'Orta Asya\'da nüfusu en fazla Türk devleti. Taşkent başkent. Semerkant ve Buhara gibi tarihi şehirlere sahip.',
+    },
+    {
+      'name': 'Türkmenistan',
+      'years': '1991-',
+      'flag': '🇹🇲',
+      'info': 'Orta Asya\'da bağımsız Türk devleti. Aşkabat başkent. Doğalgaz zengini. Tarafsızlık statüsüne sahip.',
+    },
+    {
+      'name': 'Doğu Türkistan (Uygur Özerk Bölgesi)',
+      'years': '1955-',
+      'flag': '🌙',
+      'info': 'Çin\'in Sincan Uygur Özerk Bölgesi. Uygur Türklerinin anavatanı. Kaşgar ve Hotan gibi tarihi şehirlere sahip.',
+    },
+    {
+      'name': 'Kuzey Kıbrıs Türk Cumhuriyeti',
+      'years': '1983-',
+      'flag': '🇹🇷',
+      'info': 'Kıbrıs adasında kurulan Türk devleti. Lefkoşa başkent. Sadece Türkiye tarafından tanınan devlet.',
+    },
+    {
+      'name': 'Tataristan Cumhuriyeti',
+      'years': '1992-',
+      'flag': '🏛️',
+      'info': 'Rusya Federasyonu içinde özerk Türk cumhuriyeti. Kazan başkent. Tatar Türklerinin anavatanı.',
+    },
+    {
+      'name': 'Başkurdistan Cumhuriyeti',
+      'years': '1992-',
+      'flag': '🐝',
+      'info': 'Rusya Federasyonu içinde özerk Türk cumhuriyeti. Ufa başkent. Başkurt Türklerinin anavatanı.',
+    },
+    {
+      'name': 'Çuvaşistan Cumhuriyeti',
+      'years': '1992-',
+      'flag': '⭐',
+      'info': 'Rusya Federasyonu içinde özerk Türk cumhuriyeti. Çeboksarı başkent. Çuvaş Türklerinin anavatanı.',
+    },
+    {
+      'name': 'Saha (Yakut) Cumhuriyeti',
+      'years': '1992-',
+      'flag': '❄️',
+      'info': 'Rusya Federasyonu içinde en büyük özerk cumhuriyet. Yakutsk başkent. Yakut Türklerinin anavatanı.',
+    },
+    {
+      'name': 'Tuva Cumhuriyeti',
+      'years': '1993-',
+      'flag': '🏔️',
+      'info': 'Rusya Federasyonu içinde özerk Türk cumhuriyeti. Kızıl başkent. Tuva Türklerinin anavatanı.',
+    },
+    {
+      'name': 'Altay Cumhuriyeti',
+      'years': '1992-',
+      'flag': '⛰️',
+      'info': 'Rusya Federasyonu içinde özerk Türk cumhuriyeti. Gorno-Altaysk başkent. Altay Türklerinin anavatanı.',
+    },
+    {
+      'name': 'Hakasya Cumhuriyeti',
+      'years': '1992-',
+      'flag': '🌲',
+      'info': 'Rusya Federasyonu içinde özerk Türk cumhuriyeti. Abakan başkent. Hakas Türklerinin anavatanı.',
+    },
+  ];
+  
   /// Get random Turkish culture information
-  /// Returns either a historical figure or a Turkish state
+  /// Returns either a historical figure, historical Turkish state, or modern Turkish state
   static Map<String, String> getRandomInfo() {
-    // 70% chance for historical figure, 30% for Turkish state
-    if (_random.nextDouble() < 0.7) {
+    final rand = _random.nextDouble();
+    
+    // 50% chance for historical figure, 25% for historical state, 25% for modern state
+    if (rand < 0.5) {
       final figure = _turkishFigures[_random.nextInt(_turkishFigures.length)];
       return {
         'type': 'figure',
         'title': figure['name']!,
         'content': figure['info']!,
       };
-    } else {
+    } else if (rand < 0.75) {
       final state = _turkishStates[_random.nextInt(_turkishStates.length)];
       return {
         'type': 'state',
         'title': '${state['flag']} ${state['name']}',
         'content': '${state['info']!}\n\nYıllar: ${state['years']}',
+      };
+    } else {
+      final modernState = _modernTurkishStates[_random.nextInt(_modernTurkishStates.length)];
+      return {
+        'type': 'modern_state',
+        'title': '${modernState['flag']} ${modernState['name']}',
+        'content': '${modernState['info']!}\n\nYıllar: ${modernState['years']}',
       };
     }
   }
