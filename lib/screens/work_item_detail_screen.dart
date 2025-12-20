@@ -421,45 +421,37 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
     for (var relation in relations) {
       if (relation is Map<String, dynamic>) {
         final rel = relation['rel'] as String?;
-        debugPrint('🔍 [Attachments] Checking relation: rel=$rel');
-        if (rel == 'AttachedFile' || rel == 'System.LinkTypes.FileAttachment' || rel?.contains('FileAttachment') == true) {
-          final url = relation['url'] as String?;
+        final url = relation['url'] as String?;
+        
+        // Check for any file attachment relation
+        if (rel != null && url != null && (rel.contains('File') || rel.contains('Attachment'))) {
           final attributes = relation['attributes'] as Map<String, dynamic>?;
-          final name = attributes?['name'] as String?;
+          String? name = attributes?['name'] as String?;
           final size = attributes?['resourceSize'] as int?;
           
-          debugPrint('🔍 [Attachments] Found attachment: name=$name, url=$url, size=$size');
-          
-          // If name is not in attributes, try to extract from URL
-          String? finalName = name;
-          if (finalName == null || finalName.isEmpty) {
-            if (url != null) {
-              final uriParts = url.split('/');
-              if (uriParts.isNotEmpty) {
-                finalName = uriParts.last;
-              }
+          // Extract name from URL if not in attributes
+          if (name == null || name.isEmpty) {
+            final uriParts = url.split('/');
+            if (uriParts.isNotEmpty) {
+              name = uriParts.last.split('?').first; // Remove query params
             }
           }
           
-          if (url != null && finalName != null && finalName.isNotEmpty) {
+          if (name != null && name.isNotEmpty) {
             _attachments.add({
-              'name': finalName,
+              'name': name,
               'url': url,
               'size': size ?? 0,
             });
-            debugPrint('✅ [Attachments] Added attachment: $finalName');
-          } else {
-            debugPrint('⚠️ [Attachments] Skipping attachment - missing name or url');
+            debugPrint('✅ [Attachments] Added: $name (${size ?? 0} bytes)');
           }
         }
       }
     }
     
-    debugPrint('✅ [Attachments] Found ${_attachments.length} attachments total');
+    debugPrint('✅ [Attachments] Total: ${_attachments.length}');
     if (mounted) {
-      setState(() {
-        // Trigger rebuild to show attachments
-      });
+      setState(() {});
     }
   }
   
