@@ -1444,11 +1444,18 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           
           // Try to find parameterizedstring tags within the step
           // Match both with and without quotes around type attribute
+          // Also try different variations: ExpectedResult, Expected Result, ExpectedResult, etc.
           final actionRegex = RegExp('<parameterizedstring[^>]*type\\s*=\\s*["\']?Action["\']?[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
-          final expectedResultRegex = RegExp('<parameterizedstring[^>]*type\\s*=\\s*["\']?ExpectedResult["\']?[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
+          final expectedResultRegex1 = RegExp('<parameterizedstring[^>]*type\\s*=\\s*["\']?ExpectedResult["\']?[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
+          final expectedResultRegex2 = RegExp('<parameterizedstring[^>]*type\\s*=\\s*["\']?Expected\\s+Result["\']?[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
+          final expectedResultRegex3 = RegExp('<parameterizedstring[^>]*type\\s*=\\s*["\']?Expected["\']?[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
           
           final actionMatch = actionRegex.firstMatch(stepContent);
-          final expectedResultMatch = expectedResultRegex.firstMatch(stepContent);
+          final expectedResultMatch1 = expectedResultRegex1.firstMatch(stepContent);
+          final expectedResultMatch2 = expectedResultRegex2.firstMatch(stepContent);
+          final expectedResultMatch3 = expectedResultRegex3.firstMatch(stepContent);
+          
+          final expectedResultMatch = expectedResultMatch1 ?? expectedResultMatch2 ?? expectedResultMatch3;
           
           String? action = actionMatch?.group(1)?.trim();
           String? expectedResult = expectedResultMatch?.group(1)?.trim();
@@ -1460,6 +1467,17 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           debugPrint('🔍 [Steps] ExpectedResult regex match: ${expectedResultMatch != null}');
           if (expectedResultMatch != null) {
             debugPrint('🔍 [Steps] ExpectedResult group(1): "${expectedResultMatch.group(1)?.substring(0, expectedResultMatch.group(1)!.length > 100 ? 100 : expectedResultMatch.group(1)!.length) ?? "null"}"');
+          } else {
+            debugPrint('⚠️ [Steps] ExpectedResult not found. Trying to find all parameterizedstring tags...');
+            // Try to find all parameterizedstring tags to see what we have
+            final allParamStrings = RegExp('<parameterizedstring[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
+            final allMatches = allParamStrings.allMatches(stepContent);
+            debugPrint('🔍 [Steps] Found ${allMatches.length} parameterizedstring tags in step');
+            for (var match in allMatches) {
+              final typeAttr = RegExp('type\\s*=\\s*["\']?([^"\']+)["\']?', caseSensitive: false).firstMatch(match.group(0) ?? '');
+              final type = typeAttr?.group(1) ?? 'unknown';
+              debugPrint('🔍 [Steps] Found parameterizedstring with type: "$type", content: "${match.group(1)?.substring(0, match.group(1)!.length > 50 ? 50 : match.group(1)!.length) ?? "null"}"');
+            }
           }
           
           // If we found action or expectedResult, add the step (even if one is missing)
