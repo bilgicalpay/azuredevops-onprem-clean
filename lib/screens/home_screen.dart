@@ -25,7 +25,6 @@ import 'wiki_viewer_screen.dart';
 import 'documents_screen.dart';
 import 'market_screen.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'dart:math';
 import '../services/turkish_culture_service.dart';
 
 /// Ana ekran widget'ı
