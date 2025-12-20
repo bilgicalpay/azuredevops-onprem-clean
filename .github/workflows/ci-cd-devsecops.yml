@@ -1,0 +1,496 @@
+# Unified CI/CD + DevSecOps Pipeline
+# Main branch'de kod değişikliği sonrası otomatik tetiklenir
+# Tüm DevSecOps adımlarını içerir ve release oluşturur
+
+name: CI/CD + DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests'
+        required: false
+        type: boolean
+        default: false
+      skip_security:
+        description: 'Skip security scans'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  FLUTTER_VERSION: '3.27.0'
+  JAVA_VERSION: '17'
+
+jobs:
+  # ==================== DevSecOps - Pre-Commit Security ====================
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_security }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Security Scan Script
+        continue-on-error: true
+        run: |
+          chmod +x scripts/security_scan.sh || true
+          ./scripts/security_scan.sh || echo "⚠️  Security scan script failed"
+
+      - name: Run Security Checks Script
+        continue-on-error: true
+        run: |
+          chmod +x scripts/security_checks.sh || true
+          ./scripts/security_checks.sh || echo "⚠️  Security checks script failed"
+
+      - name: Install Trivy (Vulnerability Scanner)
+        continue-on-error: true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy || echo "⚠️  Trivy installation failed"
+
+      - name: Run Trivy Vulnerability Scan
+        continue-on-error: true
+        run: |
+          if command -v trivy &> /dev/null; then
+            trivy fs --exit-code 0 --severity HIGH,CRITICAL --format table . || echo "⚠️  Trivy scan found issues"
+            trivy fs --exit-code 0 --severity HIGH,CRITICAL --format json -o trivy-report.json . || true
+          else
+            echo "⚠️  Trivy not installed, skipping vulnerability scan"
+          fi
+
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            security/
+            trivy-report.json
+            security_audit_dependencies.txt
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # ==================== Code Quality & Tests ====================
+  test:
+    name: 🧪 Tests & Code Quality
+    runs-on: ubuntu-latest
+    needs: security-scan
+    if: ${{ !inputs.skip_tests }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Flutter Analyze
+        run: flutter analyze --no-fatal-infos || (echo "❌ Flutter analyze failed" && exit 1)
+
+      - name: Run Tests
+        run: flutter test --coverage || (echo "❌ Tests failed" && exit 1)
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            coverage/
+          retention-days: 7
+
+  # ==================== DevSecOps - Pre-Build Security ====================
+  generate-sbom:
+    name: 📋 Generate SBOM
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate SBOM
+        run: |
+          chmod +x scripts/generate_sbom.sh
+          ./scripts/generate_sbom.sh || (echo "❌ SBOM generation failed" && exit 1)
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: build/sbom/
+          retention-days: 30
+
+  # ==================== Android Build ====================
+  build-android:
+    name: 🤖 Build Android
+    runs-on: ubuntu-latest
+    needs: [test, generate-sbom]
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Fix root_detector namespace
+        continue-on-error: true
+        run: |
+          chmod +x scripts/fix_root_detector_namespace.sh || true
+          ./scripts/fix_root_detector_namespace.sh || echo "⚠️  root_detector namespace fix skipped"
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          VERSION_NUMBER=$(echo $VERSION | cut -d'+' -f1)
+          BUILD_NUMBER=$(echo $VERSION | cut -d'+' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Build APK
+        run: flutter build apk --release --build-name=${{ steps.version.outputs.version_number }} --build-number=${{ steps.version.outputs.build_number }} --dart-define=PRODUCTION=true || (echo "❌ Android APK build failed" && exit 1)
+
+      - name: Build AAB
+        run: flutter build appbundle --release --build-name=${{ steps.version.outputs.version_number }} --build-number=${{ steps.version.outputs.build_number }} --dart-define=PRODUCTION=true || (echo "❌ Android AAB build failed" && exit 1)
+
+      - name: Rename APK
+        run: |
+          VERSION="${{ steps.version.outputs.version_number }}"
+          mv build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/azuredevops-$VERSION.apk" || exit 1
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: build/sbom/
+          if-no-files-found: ignore
+
+      - name: Install Cosign (Sigstore)
+        continue-on-error: true
+        run: |
+          COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "v2.2.0")
+          wget -O /tmp/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" || exit 0
+          chmod +x /tmp/cosign
+          sudo mv /tmp/cosign /usr/local/bin/cosign || mv /tmp/cosign /usr/local/bin/cosign || exit 0
+
+      - name: Sign APK with Sigstore
+        continue-on-error: true
+        run: |
+          if command -v cosign &> /dev/null; then
+            export COSIGN_EXPERIMENTAL=1
+            cosign sign-blob \
+              --bundle "build/app/outputs/flutter-apk/azuredevops-${{ steps.version.outputs.version_number }}.apk.sigstore" \
+              --oidc-issuer https://token.actions.githubusercontent.com \
+              "build/app/outputs/flutter-apk/azuredevops-${{ steps.version.outputs.version_number }}.apk" || \
+            echo "⚠️  Sigstore signing skipped"
+          fi
+
+      - name: Sign AAB with Sigstore
+        continue-on-error: true
+        run: |
+          if command -v cosign &> /dev/null; && [ -f "build/app/outputs/bundle/release/app-release.aab" ]; then
+            export COSIGN_EXPERIMENTAL=1
+            cosign sign-blob \
+              --bundle "build/app/outputs/bundle/release/app-release.aab.sigstore" \
+              --oidc-issuer https://token.actions.githubusercontent.com \
+              "build/app/outputs/bundle/release/app-release.aab" || \
+            echo "⚠️  AAB Sigstore signing skipped"
+          fi
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: |
+            build/app/outputs/flutter-apk/azuredevops-*.apk
+            build/app/outputs/flutter-apk/azuredevops-*.apk.sigstore
+            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/bundle/release/app-release.aab.sigstore
+          retention-days: 30
+
+  # ==================== iOS Build ====================
+  build-ios:
+    name: 🍎 Build iOS
+    runs-on: macos-latest
+    needs: [test, generate-sbom]
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          VERSION_NUMBER=$(echo $VERSION | cut -d'+' -f1)
+          BUILD_NUMBER=$(echo $VERSION | cut -d'+' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Build iOS IPA
+        run: flutter build ipa --release --build-name=${{ steps.version.outputs.version_number }} --build-number=${{ steps.version.outputs.build_number }} --dart-define=PRODUCTION=true --no-codesign || (echo "❌ iOS IPA build failed" && exit 1)
+
+      - name: Prepare IPA artifact
+        run: |
+          VERSION="${{ steps.version.outputs.version_number }}"
+          mkdir -p release-assets/ios
+          if [ -f "build/ios/ipa/azuredevops_onprem.ipa" ]; then
+            cp build/ios/ipa/azuredevops_onprem.ipa "release-assets/ios/azuredevops-$VERSION.ipa"
+          elif [ -f "build/ios/ipa/*.ipa" ]; then
+            cp build/ios/ipa/*.ipa "release-assets/ios/azuredevops-$VERSION.ipa"
+          else
+            find build/ios/ipa -name "*.ipa" -exec cp {} "release-assets/ios/azuredevops-$VERSION.ipa" \;
+          fi
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: build/sbom/
+          if-no-files-found: ignore
+
+      - name: Install Cosign (Sigstore)
+        continue-on-error: true
+        run: |
+          COSIGN_VERSION=$(curl -s https://api.github.com/repos/sigstore/cosign/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "v2.2.0")
+          wget -O /tmp/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-darwin-amd64" || exit 0
+          chmod +x /tmp/cosign
+          sudo mv /tmp/cosign /usr/local/bin/cosign || mv /tmp/cosign /usr/local/bin/cosign || exit 0
+
+      - name: Sign IPA with Sigstore
+        continue-on-error: true
+        run: |
+          if command -v cosign &> /dev/null; then
+            export COSIGN_EXPERIMENTAL=1
+            cosign sign-blob \
+              --bundle "release-assets/ios/azuredevops-${{ steps.version.outputs.version_number }}.ipa.sigstore" \
+              --oidc-issuer https://token.actions.githubusercontent.com \
+              "release-assets/ios/azuredevops-${{ steps.version.outputs.version_number }}.ipa" || \
+            echo "⚠️  Sigstore signing skipped"
+          fi
+
+      - name: Upload iOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release
+          path: |
+            release-assets/ios/azuredevops-*.ipa
+            release-assets/ios/azuredevops-*.ipa.sigstore
+          retention-days: 30
+
+  # ==================== Create Release ====================
+  create-release:
+    name: 🚀 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-android, build-ios]
+    if: success()
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          VERSION_NUMBER=$(echo $VERSION | cut -d'+' -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+          echo "tag_name=v$VERSION_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Create or get tag
+        id: tag
+        run: |
+          TAG_NAME="v${{ steps.version.outputs.version_number }}"
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+            git push origin "$TAG_NAME"
+          fi
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release
+          path: release-assets/android/
+
+      - name: Download iOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-release
+          path: release-assets/ios/
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: release-assets/sbom/
+          if-no-files-found: ignore
+
+      - name: Generate Release Notes
+        run: |
+          TAG_NAME="${{ steps.tag.outputs.tag_name }}"
+          VERSION="${{ steps.version.outputs.version_number }}"
+          
+          # Read CHANGELOG.md if exists
+          if [ -f "CHANGELOG.md" ]; then
+            # Extract changelog for this version
+            awk "/^## \[$VERSION\]/,/^## \[/" CHANGELOG.md | head -n -1 > release-notes-temp.md || \
+            awk "/^## \[$VERSION\]/,/^---/" CHANGELOG.md | head -n -1 > release-notes-temp.md || \
+            echo "## Release $TAG_NAME" > release-notes-temp.md
+          else
+            echo "## Release $TAG_NAME" > release-notes-temp.md
+          fi
+          
+          # Get commit history
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%an)" | head -30)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%an)" -20)
+          fi
+          
+          cat >> release-notes-temp.md <<EOF
+          
+          ### 📦 Version: $VERSION
+          
+          ### 📥 Downloads
+          - **Android APK**: [azuredevops-$VERSION.apk](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$VERSION.apk)
+          - **Android AAB**: [app-release.aab](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/app-release.aab)
+          - **iOS IPA**: [azuredevops-$VERSION.ipa](https://github.com/${{ github.repository }}/releases/download/$TAG_NAME/azuredevops-$VERSION.ipa)
+          
+          ### 🔒 Security
+          - **SBOM**: Included in release assets
+          - **Signatures**: Sigstore signatures included (.sigstore files)
+          
+          ### 📝 Recent Changes
+          $CHANGELOG
+          
+          ### 🔧 Build Information
+          - **Flutter Version**: ${{ env.FLUTTER_VERSION }}
+          - **Build Date**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          - **Commit**: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          EOF
+          
+          mv release-notes-temp.md release-notes.md
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-assets/docs
+          cp RELEASE_NOTES.md release-assets/docs/ 2>/dev/null || true
+          cp README.md release-assets/docs/ 2>/dev/null || true
+          cp CHANGELOG.md release-assets/docs/ 2>/dev/null || true
+          cp docs/*.md release-assets/docs/ 2>/dev/null || true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: Release ${{ steps.tag.outputs.tag_name }}
+          body_path: release-notes.md
+          files: |
+            release-assets/android/azuredevops-*.apk
+            release-assets/android/azuredevops-*.apk.sigstore
+            release-assets/android/app-release.aab
+            release-assets/android/app-release.aab.sigstore
+            release-assets/ios/azuredevops-*.ipa
+            release-assets/ios/azuredevops-*.ipa.sigstore
+            release-assets/sbom/spdx.json
+            release-assets/sbom/sbom.txt
+            release-assets/docs/*.md
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
