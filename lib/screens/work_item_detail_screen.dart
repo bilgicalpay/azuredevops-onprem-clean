@@ -1516,9 +1516,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
             if (textContent.isNotEmpty) {
               debugPrint('🔍 [Steps] Found text content in step: "$textContent"');
               // Assume it's action if no type specified
-              action = textContent;
-              
-              String decodedAction = action
+              String decodedAction = textContent
                   .replaceAll('&lt;', '<')
                   .replaceAll('&gt;', '>')
                   .replaceAll('&amp;', '&')
@@ -1531,72 +1529,6 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
               });
             }
           }
-          
-          // If no parameterizedstring found, try to parse by step type attribute
-          if (action == null && expectedResult == null) {
-            debugPrint('⚠️ [Steps] No parameterizedstring found, trying step type attribute');
-            final stepTypeRegex = RegExp(r'<step[^>]*type="([^"]*)"[^>]*>(.*?)</step>', dotAll: true);
-            final typeMatches = stepTypeRegex.allMatches(stepsHtml);
-            
-            String? currentAction;
-            String? currentExpectedResult;
-            
-            for (var match in typeMatches) {
-              final stepType = match.group(1)?.toLowerCase() ?? '';
-              final stepContent2 = match.group(2)?.trim() ?? '';
-              
-              if (stepType.contains('action')) {
-                currentAction = stepContent2;
-              } else if (stepType.contains('expected')) {
-                currentExpectedResult = stepContent2;
-                // When we get ExpectedResult, we have a complete step pair
-                if (currentAction != null) {
-                  _steps.add({
-                    'action': currentAction,
-                    'expectedResult': currentExpectedResult,
-                  });
-                  currentAction = null;
-                  currentExpectedResult = null;
-                }
-              }
-            }
-            
-            // If we have leftover action, add it
-            if (currentAction != null) {
-              _steps.add({
-                'action': currentAction,
-                'expectedResult': currentExpectedResult ?? '',
-              });
-            }
-          } else {
-            // We found parameterizedstring, add the step
-            // Decode HTML entities if needed
-            String decodedAction = action ?? '';
-            String decodedExpectedResult = expectedResult ?? '';
-            
-            // Decode common HTML entities
-            decodedAction = decodedAction
-                .replaceAll('&lt;', '<')
-                .replaceAll('&gt;', '>')
-                .replaceAll('&amp;', '&')
-                .replaceAll('&quot;', '"')
-                .replaceAll('&apos;', "'");
-            
-            decodedExpectedResult = decodedExpectedResult
-                .replaceAll('&lt;', '<')
-                .replaceAll('&gt;', '>')
-                .replaceAll('&amp;', '&')
-                .replaceAll('&quot;', '"')
-                .replaceAll('&apos;', "'");
-            
-            debugPrint('✅ [Steps] Adding step: Action="${decodedAction.substring(0, decodedAction.length > 50 ? 50 : decodedAction.length)}...", ExpectedResult="${decodedExpectedResult.substring(0, decodedExpectedResult.length > 50 ? 50 : decodedExpectedResult.length)}..."');
-            
-            _steps.add({
-              'action': decodedAction,
-              'expectedResult': decodedExpectedResult,
-            });
-          }
-          
         }
         
         // If still no steps found, try simple parsing
