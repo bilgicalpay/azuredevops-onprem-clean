@@ -401,7 +401,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
         });
       }
     } catch (e) {
-      debugPrint('❌ [UI] Error loading related work items from relations: $e');
+    debugPrint('❌ [UI] Error loading related work items from relations: $e');
       if (mounted) {
         setState(() {
           _isLoadingRelated = false;
@@ -409,7 +409,39 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       }
     }
   }
-
+  
+  /// Load attachments from relations array
+  void _loadAttachmentsFromRelations(List<dynamic> relations) {
+    _attachments = [];
+    
+    for (var relation in relations) {
+      if (relation is Map<String, dynamic>) {
+        final rel = relation['rel'] as String?;
+        if (rel == 'AttachedFile' || rel == 'System.LinkTypes.FileAttachment') {
+          final url = relation['url'] as String?;
+          final attributes = relation['attributes'] as Map<String, dynamic>?;
+          final name = attributes?['name'] as String?;
+          final size = attributes?['resourceSize'] as int?;
+          
+          if (url != null && name != null) {
+            _attachments.add({
+              'name': name,
+              'url': url,
+              'size': size ?? 0,
+            });
+          }
+        }
+      }
+    }
+    
+    debugPrint('✅ [Attachments] Found ${_attachments.length} attachments');
+    if (mounted) {
+      setState(() {
+        // Trigger rebuild to show attachments
+      });
+    }
+  }
+  
   Future<void> _loadRelatedWorkItems() async {
     if (!mounted) return;
     
@@ -1506,23 +1538,6 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
             });
           }
           
-          // If we have action but no expectedResult from parameterizedstring, still add the step
-          if (action != null && expectedResult == null && _steps.isEmpty) {
-            String decodedAction = action.trim();
-            decodedAction = decodedAction
-                .replaceAll('&lt;', '<')
-                .replaceAll('&gt;', '>')
-                .replaceAll('&amp;', '&')
-                .replaceAll('&quot;', '"')
-                .replaceAll('&apos;', "'");
-            
-            debugPrint('✅ [Steps] Adding step with action only: Action="${decodedAction.substring(0, decodedAction.length > 50 ? 50 : decodedAction.length)}..."');
-            
-            _steps.add({
-              'action': decodedAction,
-              'expectedResult': '',
-            });
-          }
         }
         
         // If still no steps found, try simple parsing
