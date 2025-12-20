@@ -3,6 +3,10 @@
 /// Yerel push notification'ları yönetir.
 /// Work item atamaları ve güncellemeleri için bildirim gönderir.
 /// 
+/// Akıllı saat desteği:
+/// - Android Wear OS: Bildirimler otomatik olarak eşleşen Wear OS cihazlara gönderilir
+/// - iOS watchOS: Bildirimler otomatik olarak eşleşen Apple Watch cihazlara gönderilir
+/// 
 /// @author Alpay Bilgiç
 library;
 
@@ -144,6 +148,9 @@ class NotificationService {
         playSound: true,
         ongoing: false,
         autoCancel: true,
+        // Wear OS (Akıllı Saat) desteği
+        // Bildirimler otomatik olarak eşleşen Wear OS cihazlara gönderilir
+        // Android Wear cihazlarda bildirimler görüntülenir ve etkileşimli olabilir
       );
 
       const iosDetails = DarwinNotificationDetails(
