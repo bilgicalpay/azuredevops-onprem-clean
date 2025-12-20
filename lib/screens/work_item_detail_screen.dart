@@ -1671,6 +1671,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                 border: Border(
                   bottom: BorderSide(color: Colors.grey[300]!),
                 ),
+                color: Colors.white, // Açık arka plan rengi
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1680,6 +1681,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12.0),
                       decoration: BoxDecoration(
+                        color: Colors.white, // Açık arka plan rengi
                         border: Border(
                           right: BorderSide(color: Colors.grey[300]!),
                         ),
@@ -1688,6 +1690,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                         '${index + 1}.',
                         style: const TextStyle(
                           fontSize: 14,
+                          color: Colors.black87,
                         ),
                       ),
                     ),
@@ -1697,6 +1700,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12.0),
                       decoration: BoxDecoration(
+                        color: Colors.white, // Açık arka plan rengi
                         border: Border(
                           right: BorderSide(color: Colors.grey[300]!),
                         ),
@@ -1721,13 +1725,22 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                 ),
                               },
                             )
-                          : const SizedBox.shrink(),
+                          : const Text(
+                              '',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
                     ),
                   ),
                   Expanded(
                     flex: 3,
-                    child: Padding(
+                    child: Container(
                       padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white, // Açık arka plan rengi
+                      ),
                       child: _steps[index]['expectedResult'] != null && _steps[index]['expectedResult']!.isNotEmpty
                           ? Html(
                               data: _steps[index]['expectedResult']!,
@@ -1748,7 +1761,13 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                 ),
                               },
                             )
-                          : const SizedBox.shrink(),
+                          : const Text(
+                              '',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
                     ),
                   ),
                 ],
