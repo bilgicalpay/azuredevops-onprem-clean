@@ -711,6 +711,16 @@ class BackgroundTaskService {
       final notifyOnGroupAssignments = _storageService!.getNotifyOnGroupAssignments();
       final notificationGroups = await _storageService!.getNotificationGroups();
       
+      // ÖNEMLİ: Eğer sadece "ilk atamada bildirim" aktifse (ve "tüm güncellemelerde bildirim" aktif değilse),
+      // ve bu work item daha önce "first_assignment_notified" olarak işaretlenmişse,
+      // bir daha asla bildirim gönderme
+      if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+        if (await _isFirstAssignmentNotified(workItem.id)) {
+          print('🔒 [BackgroundTaskService] Skipping notification: First assignment only mode and work item #${workItem.id} was already notified');
+          return false;
+        }
+      }
+      
       // Sadece Hotfix filtresi
       if (notifyOnHotfixOnly && workItem.type.toLowerCase() != 'hotfix') {
         print('🔕 [BackgroundTaskService] Skipping notification: Only Hotfix allowed, but type is ${workItem.type}');
@@ -731,6 +741,11 @@ class BackgroundTaskService {
       
       // Tüm güncellemelerde bildirim kontrolü (sadece ilk atama değilse)
       if (!isNew && !wasAssigned) {
+        // Eğer sadece "ilk atamada bildirim" aktifse, güncellemelerde bildirim gönderme
+        if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+          print('🔕 [BackgroundTaskService] Skipping notification: First assignment only mode, no updates allowed');
+          return false;
+        }
         // Tüm güncellemelerde bildirim gönder seçeneği aktifse, bildirim gönder
         if (notifyOnAllUpdates) {
           print('✅ [BackgroundTaskService] Notifying: All updates allowed and this is an update');
@@ -743,6 +758,11 @@ class BackgroundTaskService {
       
       // Eğer ilk atama değil ama assignee değiştiyse, notifyOnAllUpdates kontrolü yap
       if (!isNew && wasAssigned) {
+        // Eğer sadece "ilk atamada bildirim" aktifse, assignee değişikliklerinde de bildirim gönderme
+        if (notifyOnFirstAssignment && !notifyOnAllUpdates) {
+          print('🔕 [BackgroundTaskService] Skipping notification: First assignment only mode, no updates allowed for assignee change');
+          return false;
+        }
         if (notifyOnAllUpdates) {
           print('✅ [BackgroundTaskService] Notifying: All updates allowed and assignee changed');
           return true;
