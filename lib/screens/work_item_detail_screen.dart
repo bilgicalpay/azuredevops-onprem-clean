@@ -1392,57 +1392,73 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
     try {
       if (isXmlFormat) {
         // Parse XML format: <steps><step id="..." type="Action">...</step><step id="..." type="ExpectedResult">...</step></steps>
+        // Or: <steps><step id="1"><parameterizedstring type="Action">...</parameterizedstring><parameterizedstring type="ExpectedResult">...</parameterizedstring></step></steps>
         debugPrint('🔍 [Steps] Detected XML format');
-        final stepRegex = RegExp(r'<step[^>]*type="([^"]*)"[^>]*>(.*?)</step>', dotAll: true);
-        final matches = stepRegex.allMatches(stepsHtml);
         
-        String? currentAction;
-        String? currentExpectedResult;
+        // First, try to parse with parameterizedstring (more common format)
+        final stepRegex = RegExp(r'<step[^>]*>(.*?)</step>', dotAll: true);
+        final stepMatches = stepRegex.allMatches(stepsHtml);
         
-        for (var match in matches) {
-          final stepType = match.group(1)?.toLowerCase() ?? '';
-          final stepContent = match.group(2)?.trim() ?? '';
+        for (var stepMatch in stepMatches) {
+          final stepContent = stepMatch.group(1) ?? '';
           
-          if (stepType.contains('action')) {
-            currentAction = stepContent;
-          } else if (stepType.contains('expected')) {
-            currentExpectedResult = stepContent;
-            // When we get ExpectedResult, we have a complete step pair
+          // Try to find parameterizedstring tags within the step
+          final actionRegex = RegExp(r'<parameterizedstring[^>]*type="Action"[^>]*>(.*?)</parameterizedstring>', dotAll: true);
+          final expectedResultRegex = RegExp(r'<parameterizedstring[^>]*type="ExpectedResult"[^>]*>(.*?)</parameterizedstring>', dotAll: true);
+          
+          final actionMatch = actionRegex.firstMatch(stepContent);
+          final expectedResultMatch = expectedResultRegex.firstMatch(stepContent);
+          
+          String? action = actionMatch?.group(1)?.trim();
+          String? expectedResult = expectedResultMatch?.group(1)?.trim();
+          
+          // If no parameterizedstring found, try to parse by step type attribute
+          if (action == null && expectedResult == null) {
+            final stepTypeRegex = RegExp(r'<step[^>]*type="([^"]*)"[^>]*>(.*?)</step>', dotAll: true);
+            final typeMatches = stepTypeRegex.allMatches(stepsHtml);
+            
+            String? currentAction;
+            String? currentExpectedResult;
+            
+            for (var match in typeMatches) {
+              final stepType = match.group(1)?.toLowerCase() ?? '';
+              final stepContent2 = match.group(2)?.trim() ?? '';
+              
+              if (stepType.contains('action')) {
+                currentAction = stepContent2;
+              } else if (stepType.contains('expected')) {
+                currentExpectedResult = stepContent2;
+                // When we get ExpectedResult, we have a complete step pair
+                if (currentAction != null) {
+                  _steps.add({
+                    'action': currentAction,
+                    'expectedResult': currentExpectedResult,
+                  });
+                  currentAction = null;
+                  currentExpectedResult = null;
+                }
+              }
+            }
+            
+            // If we have leftover action, add it
             if (currentAction != null) {
               _steps.add({
                 'action': currentAction,
-                'expectedResult': currentExpectedResult,
+                'expectedResult': currentExpectedResult ?? '',
               });
-              currentAction = null;
-              currentExpectedResult = null;
             }
           } else {
-            // Unknown step type, treat as action if we don't have one
-            if (currentAction == null) {
-              currentAction = stepContent;
-            } else {
-              // We have an action, this might be expected result
-              currentExpectedResult = stepContent;
-              _steps.add({
-                'action': currentAction,
-                'expectedResult': currentExpectedResult,
-              });
-              currentAction = null;
-              currentExpectedResult = null;
-            }
+            // We found parameterizedstring, add the step
+            _steps.add({
+              'action': action ?? '',
+              'expectedResult': expectedResult ?? '',
+            });
           }
         }
         
-        // If we have leftover action, add it
-        if (currentAction != null) {
-          _steps.add({
-            'action': currentAction,
-            'expectedResult': currentExpectedResult ?? '',
-          });
-        }
-        
-        // If no steps found with type attribute, try parsing by order (alternating Action/ExpectedResult)
+        // If still no steps found, try simple parsing
         if (_steps.isEmpty) {
+          debugPrint('⚠️ [Steps] No steps found with parameterizedstring, trying simple parsing');
           final simpleStepRegex = RegExp(r'<step[^>]*>(.*?)</step>', dotAll: true);
           final simpleMatches = simpleStepRegex.allMatches(stepsHtml);
           final stepContents = simpleMatches.map((m) => m.group(1)?.trim() ?? '').where((s) => s.isNotEmpty).toList();
