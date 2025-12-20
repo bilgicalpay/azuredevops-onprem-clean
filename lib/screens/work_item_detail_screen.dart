@@ -798,40 +798,20 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Steps Section
-                      if (_steps.isNotEmpty || _isEditingSteps)
+                      // Steps Section (Read-only)
+                      if (_steps.isNotEmpty)
                         Card(
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'Steps',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        if (_isEditingSteps)
-                                          IconButton(
-                                            icon: const Icon(Icons.add),
-                                            onPressed: _addStep,
-                                            tooltip: 'Add Step',
-                                          ),
-                                        IconButton(
-                                          icon: Icon(_isEditingSteps ? Icons.save : Icons.edit),
-                                          onPressed: _toggleStepsEditing,
-                                          tooltip: _isEditingSteps ? 'Save Steps' : 'Edit Steps',
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                const Text(
+                                  'Steps',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                                 const SizedBox(height: 16),
                                 _buildStepsTable(),
@@ -839,7 +819,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                             ),
                           ),
                         ),
-                      if (_steps.isNotEmpty || _isEditingSteps)
+                      if (_steps.isNotEmpty)
                         const SizedBox(height: 16),
 
                       // Related Work Items - YENİDEN YAZILDI
@@ -1802,163 +1782,4 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
     );
   }
   
-  /// Toggle Steps editing mode
-  void _toggleStepsEditing() {
-    if (_isEditingSteps) {
-      // Save Steps
-      _saveSteps();
-    } else {
-      // Start editing
-      setState(() {
-        _isEditingSteps = true;
-        // If no steps exist, add one empty step
-        if (_steps.isEmpty) {
-          _steps.add({
-            'action': '',
-            'expectedResult': '',
-          });
-        }
-      });
-    }
-  }
-  
-  /// Add a new step
-  void _addStep() {
-    setState(() {
-      _steps.add({
-        'action': '',
-        'expectedResult': '',
-      });
-    });
-  }
-  
-  /// Delete a step
-  void _deleteStep(int index) {
-    setState(() {
-      _steps.removeAt(index);
-    });
-  }
-  
-  /// Save Steps back to work item
-  Future<void> _saveSteps() async {
-    if (!mounted || _detailedWorkItem == null) return;
-    
-    setState(() => _isUpdating = true);
-    
-    try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final storage = Provider.of<StorageService>(context, listen: false);
-      final token = await authService.getAuthToken();
-      
-      if (token == null) {
-        throw Exception('No authentication token available');
-      }
-      
-      // Convert steps to HTML format
-      final stepsHtml = _stepsToHtml();
-      
-      // Update work item with Steps field
-      final cleanUrl = authService.serverUrl!.endsWith('/') 
-          ? authService.serverUrl!.substring(0, authService.serverUrl!.length - 1) 
-          : authService.serverUrl!;
-      
-      final baseUrl = storage.getCollection() != null && storage.getCollection()!.isNotEmpty
-          ? '$cleanUrl/${storage.getCollection()}'
-          : cleanUrl;
-      
-      final url = '$baseUrl/_apis/wit/workitems/${_detailedWorkItem!.id}?api-version=7.0';
-      
-      final patchBody = [
-        {
-          'op': 'add',
-          'path': '/fields/Microsoft.VSTS.TCM.Steps',
-          'value': stepsHtml,
-        }
-      ];
-      
-      final response = await _workItemService.dio.patch(
-        url,
-        data: patchBody,
-        options: Options(
-          headers: {
-            'Authorization': 'Basic ${_workItemService.encodeToken(token)}',
-            'Content-Type': 'application/json-patch+json',
-          },
-        ),
-      );
-      
-      if (response.statusCode == 200) {
-        // Reload work item details
-        await _loadWorkItemDetails();
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Steps saved successfully')),
-          );
-        }
-      } else {
-        throw Exception('Failed to save Steps: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Error saving Steps: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving Steps: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isUpdating = false;
-          _isEditingSteps = false;
-        });
-      }
-    }
-  }
-  
-  /// Convert steps list to HTML format
-  String _stepsToHtml() {
-    if (_steps.isEmpty) {
-      return '';
-    }
-    
-    // Build HTML structure: <div><div>Action</div><div>Expected result</div></div>...
-    final buffer = StringBuffer();
-    buffer.write('<div>');
-    
-    // Header row (optional, but Azure DevOps usually includes it)
-    buffer.write('<div><div>Action</div><div>Expected result</div></div>');
-    
-    // Data rows
-    for (var step in _steps) {
-      final action = step['action'] ?? '';
-      final expectedResult = step['expectedResult'] ?? '';
-      
-      // If action/expectedResult already contains HTML tags, use as-is
-      // Otherwise, escape HTML entities
-      String processedAction = action;
-      String processedExpected = expectedResult;
-      
-      // Check if content already has HTML tags
-      final hasHtmlTags = RegExp(r'<[^>]+>').hasMatch(action) || RegExp(r'<[^>]+>').hasMatch(expectedResult);
-      
-      if (!hasHtmlTags) {
-        // No HTML tags, escape entities
-        processedAction = action
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;');
-        processedExpected = expectedResult
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;');
-      }
-      // If has HTML tags, use as-is (already HTML formatted)
-      
-      buffer.write('<div><div>$processedAction</div><div>$processedExpected</div></div>');
-    }
-    
-    buffer.write('</div>');
-    return buffer.toString();
-  }
 }
