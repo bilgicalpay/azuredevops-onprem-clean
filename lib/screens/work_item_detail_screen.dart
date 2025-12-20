@@ -48,6 +48,10 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
   bool _isLoadingComments = false;
   bool _isAddingComment = false;
   final TextEditingController _commentController = TextEditingController();
+  
+  // Steps data structure
+  List<Map<String, String>> _steps = []; // Each step: {'action': '', 'expectedResult': ''}
+  bool _isEditingSteps = false;
 
   @override
   void initState() {
@@ -235,6 +239,9 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           );
         }
       }
+      
+      // Load Steps field if exists
+      _parseSteps(detailedItem.allFields);
       
       // Load comments
       _loadComments();
@@ -784,6 +791,50 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Steps Section
+                      if (_steps.isNotEmpty || _isEditingSteps)
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Steps',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        if (_isEditingSteps)
+                                          IconButton(
+                                            icon: const Icon(Icons.add),
+                                            onPressed: _addStep,
+                                            tooltip: 'Add Step',
+                                          ),
+                                        IconButton(
+                                          icon: Icon(_isEditingSteps ? Icons.save : Icons.edit),
+                                          onPressed: _toggleStepsEditing,
+                                          tooltip: _isEditingSteps ? 'Save Steps' : 'Edit Steps',
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildStepsTable(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (_steps.isNotEmpty || _isEditingSteps)
+                        const SizedBox(height: 16),
+
                       // Related Work Items - YENİDEN YAZILDI
                       Card(
                         child: Padding(
@@ -1311,5 +1362,469 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
     }
     
     return widgets;
+  }
+  
+  /// Parse Steps HTML from work item fields
+  void _parseSteps(Map<String, dynamic>? allFields) {
+    _steps = [];
+    
+    if (allFields == null) return;
+    
+    // Try different possible field names for Steps
+    final stepsFields = [
+      'Microsoft.VSTS.TCM.Steps',
+      'System.Steps',
+      'Steps',
+    ];
+    
+    String? stepsHtml;
+    for (final fieldName in stepsFields) {
+      if (allFields.containsKey(fieldName)) {
+        stepsHtml = allFields[fieldName]?.toString();
+        if (stepsHtml != null && stepsHtml.isNotEmpty) {
+          break;
+        }
+      }
+    }
+    
+    if (stepsHtml == null || stepsHtml.isEmpty) {
+      return;
+    }
+    
+    // Parse HTML - Steps are typically in div structure
+    // Example: <div><div>Action</div><div>Expected result</div></div><div><div>Step 1 action</div><div>Step 1 expected</div></div>...
+    try {
+      // Remove HTML tags and extract text
+      // Simple regex-based parsing (can be improved with html package if needed)
+      final regex = RegExp(r'<div[^>]*>(.*?)</div>', dotAll: true);
+      final matches = regex.allMatches(stepsHtml);
+      
+      List<String> cells = [];
+      for (var match in matches) {
+        final content = match.group(1)?.trim() ?? '';
+        // Remove nested divs and get text
+        final text = content
+            .replaceAll(RegExp(r'<[^>]+>'), '')
+            .replaceAll('&nbsp;', ' ')
+            .replaceAll('&amp;', '&')
+            .replaceAll('&lt;', '<')
+            .replaceAll('&gt;', '>')
+            .trim();
+        if (text.isNotEmpty) {
+          cells.add(text);
+        }
+      }
+      
+      // Steps are typically in pairs: Action, Expected result
+      // Skip header row if exists (first two cells might be "Action" and "Expected result")
+      int startIndex = 0;
+      if (cells.length >= 2 && 
+          (cells[0].toLowerCase().contains('action') || 
+           cells[1].toLowerCase().contains('expected'))) {
+        startIndex = 2;
+      }
+      
+      // Parse pairs
+      for (int i = startIndex; i < cells.length; i += 2) {
+        if (i + 1 < cells.length) {
+          _steps.add({
+            'action': cells[i],
+            'expectedResult': cells[i + 1],
+          });
+        } else {
+          // Single cell (action only)
+          _steps.add({
+            'action': cells[i],
+            'expectedResult': '',
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error parsing Steps: $e');
+      // If parsing fails, show as single text field
+      _steps = [{
+        'action': stepsHtml.replaceAll(RegExp(r'<[^>]+>'), ' ').trim(),
+        'expectedResult': '',
+      }];
+    }
+  }
+  
+  /// Build Steps table widget
+  Widget _buildStepsTable() {
+    if (_steps.isEmpty && !_isEditingSteps) {
+      return const Text(
+        'No steps defined',
+        style: TextStyle(
+          fontStyle: FontStyle.italic,
+          color: Colors.grey,
+        ),
+      );
+    }
+    
+    // If editing, show editable table
+    if (_isEditingSteps) {
+      return Column(
+        children: [
+          // Header row
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(4),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(
+                      '#',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(
+                      'Action',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(
+                      'Expected Result',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 40), // Space for delete button
+              ],
+            ),
+          ),
+          // Data rows
+          ...List.generate(_steps.length, (index) {
+            return Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey[300]!),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Text('${index + 1}'),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        controller: TextEditingController(text: _steps[index]['action']),
+                        maxLines: null,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.all(8.0),
+                        ),
+                        onChanged: (value) {
+                          _steps[index]['action'] = value;
+                        },
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        controller: TextEditingController(text: _steps[index]['expectedResult']),
+                        maxLines: null,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.all(8.0),
+                        ),
+                        onChanged: (value) {
+                          _steps[index]['expectedResult'] = value;
+                        },
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteStep(index),
+                    tooltip: 'Delete Step',
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      );
+    }
+    
+    // If not editing, show read-only table
+    return Column(
+      children: [
+        // Header row
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(4),
+              topRight: Radius.circular(4),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Text(
+                    '#',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Text(
+                    'Action',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Text(
+                    'Expected Result',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Data rows
+        ...List.generate(_steps.length, (index) {
+          return Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Colors.grey[300]!),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text('${index + 1}'),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(_steps[index]['action'] ?? ''),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(_steps[index]['expectedResult'] ?? ''),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+  
+  /// Toggle Steps editing mode
+  void _toggleStepsEditing() {
+    if (_isEditingSteps) {
+      // Save Steps
+      _saveSteps();
+    } else {
+      // Start editing
+      setState(() {
+        _isEditingSteps = true;
+        // If no steps exist, add one empty step
+        if (_steps.isEmpty) {
+          _steps.add({
+            'action': '',
+            'expectedResult': '',
+          });
+        }
+      });
+    }
+  }
+  
+  /// Add a new step
+  void _addStep() {
+    setState(() {
+      _steps.add({
+        'action': '',
+        'expectedResult': '',
+      });
+    });
+  }
+  
+  /// Delete a step
+  void _deleteStep(int index) {
+    setState(() {
+      _steps.removeAt(index);
+    });
+  }
+  
+  /// Save Steps back to work item
+  Future<void> _saveSteps() async {
+    if (!mounted || _detailedWorkItem == null) return;
+    
+    setState(() => _isUpdating = true);
+    
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final storage = Provider.of<StorageService>(context, listen: false);
+      final token = await authService.getAuthToken();
+      
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+      
+      // Convert steps to HTML format
+      final stepsHtml = _stepsToHtml();
+      
+      // Update work item with Steps field
+      final cleanUrl = authService.serverUrl!.endsWith('/') 
+          ? authService.serverUrl!.substring(0, authService.serverUrl!.length - 1) 
+          : authService.serverUrl!;
+      
+      final baseUrl = storage.getCollection() != null && storage.getCollection()!.isNotEmpty
+          ? '$cleanUrl/${storage.getCollection()}'
+          : cleanUrl;
+      
+      final url = '$baseUrl/_apis/wit/workitems/${_detailedWorkItem!.id}?api-version=7.0';
+      
+      final patchBody = [
+        {
+          'op': 'add',
+          'path': '/fields/Microsoft.VSTS.TCM.Steps',
+          'value': stepsHtml,
+        }
+      ];
+      
+      final response = await _workItemService.dio.patch(
+        url,
+        data: patchBody,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_workItemService.encodeToken(token)}',
+            'Content-Type': 'application/json-patch+json',
+          },
+        ),
+      );
+      
+      if (response.statusCode == 200) {
+        // Reload work item details
+        await _loadWorkItemDetails();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Steps saved successfully')),
+          );
+        }
+      } else {
+        throw Exception('Failed to save Steps: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error saving Steps: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving Steps: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdating = false;
+          _isEditingSteps = false;
+        });
+      }
+    }
+  }
+  
+  /// Convert steps list to HTML format
+  String _stepsToHtml() {
+    if (_steps.isEmpty) {
+      return '';
+    }
+    
+    // Build HTML structure: <div><div>Action</div><div>Expected result</div></div>...
+    final buffer = StringBuffer();
+    buffer.write('<div>');
+    
+    // Header row (optional, but Azure DevOps usually includes it)
+    buffer.write('<div><div>Action</div><div>Expected result</div></div>');
+    
+    // Data rows
+    for (var step in _steps) {
+      final action = step['action'] ?? '';
+      final expectedResult = step['expectedResult'] ?? '';
+      
+      // Escape HTML entities
+      final escapedAction = action
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;');
+      final escapedExpected = expectedResult
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;');
+      
+      buffer.write('<div><div>$escapedAction</div><div>$escapedExpected</div></div>');
+    }
+    
+    buffer.write('</div>');
+    return buffer.toString();
   }
 }
