@@ -73,6 +73,9 @@ dependencies:
   
   # Güvenlik
   root_detector: ^0.0.2  # Root/jailbreak detection için alternatif paket
+  
+  # File picker for attachments
+  file_picker: ^6.1.1
 
 dev_dependencies:
   flutter_test:

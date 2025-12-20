@@ -8,6 +8,7 @@
 library;
 
 import 'dart:convert' show base64, utf8;
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'certificate_pinning_service.dart';
@@ -1944,6 +1945,109 @@ class WorkItemService {
     } catch (e, stackTrace) {
       debugPrint('❌ [COMMENTS] Add work item comment error: $e');
       debugPrint('❌ [COMMENTS] Stack trace: $stackTrace');
+      return false;
+    }
+  }
+  
+  /// Upload attachment to Azure DevOps and attach it to a work item
+  Future<String?> uploadAttachment({
+    required String serverUrl,
+    required String token,
+    required String filePath,
+    required String fileName,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      // Step 1: Upload file to Azure DevOps
+      final uploadUrl = '$baseUrl/_apis/wit/attachments?fileName=$fileName&api-version=7.0';
+      
+      final file = File(filePath);
+      final fileBytes = await file.readAsBytes();
+      
+      final uploadResponse = await _dio.post(
+        uploadUrl,
+        data: fileBytes,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/octet-stream',
+          },
+        ),
+      );
+
+      if (uploadResponse.statusCode == 200 || uploadResponse.statusCode == 201) {
+        final attachmentUrl = uploadResponse.data['url'] as String?;
+        debugPrint('✅ [ATTACHMENT] File uploaded successfully: $attachmentUrl');
+        return attachmentUrl;
+      } else {
+        debugPrint('❌ [ATTACHMENT] Upload failed with status: ${uploadResponse.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ [ATTACHMENT] Upload error: $e');
+      return null;
+    }
+  }
+  
+  /// Attach uploaded file to work item
+  Future<bool> attachFileToWorkItem({
+    required String serverUrl,
+    required String token,
+    required int workItemId,
+    required String attachmentUrl,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final url = '$baseUrl/_apis/wit/workitems/$workItemId?api-version=7.0';
+      
+      final patchBody = [
+        {
+          'op': 'add',
+          'path': '/relations/-',
+          'value': {
+            'rel': 'AttachedFile',
+            'url': attachmentUrl,
+          },
+        }
+      ];
+
+      final response = await _dio.patch(
+        url,
+        data: patchBody,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json-patch+json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [ATTACHMENT] File attached to work item successfully');
+        return true;
+      } else {
+        debugPrint('❌ [ATTACHMENT] Failed to attach file: ${response.statusCode}');
+        debugPrint('❌ [ATTACHMENT] Response: ${response.data}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('❌ [ATTACHMENT] Attach file error: $e');
       return false;
     }
   }

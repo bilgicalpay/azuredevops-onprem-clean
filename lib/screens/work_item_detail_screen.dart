@@ -12,6 +12,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/work_item_service.dart';
@@ -54,6 +56,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
   
   // Attachments data structure
   List<Map<String, dynamic>> _attachments = []; // Each attachment: {'name': '', 'url': '', 'size': 0}
+  bool _isUploadingAttachment = false;
 
   @override
   void initState() {
@@ -418,28 +421,127 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
     for (var relation in relations) {
       if (relation is Map<String, dynamic>) {
         final rel = relation['rel'] as String?;
-        if (rel == 'AttachedFile' || rel == 'System.LinkTypes.FileAttachment') {
+        debugPrint('🔍 [Attachments] Checking relation: rel=$rel');
+        if (rel == 'AttachedFile' || rel == 'System.LinkTypes.FileAttachment' || rel?.contains('FileAttachment') == true) {
           final url = relation['url'] as String?;
           final attributes = relation['attributes'] as Map<String, dynamic>?;
           final name = attributes?['name'] as String?;
           final size = attributes?['resourceSize'] as int?;
           
-          if (url != null && name != null) {
+          debugPrint('🔍 [Attachments] Found attachment: name=$name, url=$url, size=$size');
+          
+          // If name is not in attributes, try to extract from URL
+          String? finalName = name;
+          if (finalName == null || finalName.isEmpty) {
+            if (url != null) {
+              final uriParts = url.split('/');
+              if (uriParts.isNotEmpty) {
+                finalName = uriParts.last;
+              }
+            }
+          }
+          
+          if (url != null && finalName != null && finalName.isNotEmpty) {
             _attachments.add({
-              'name': name,
+              'name': finalName,
               'url': url,
               'size': size ?? 0,
             });
+            debugPrint('✅ [Attachments] Added attachment: $finalName');
+          } else {
+            debugPrint('⚠️ [Attachments] Skipping attachment - missing name or url');
           }
         }
       }
     }
     
-    debugPrint('✅ [Attachments] Found ${_attachments.length} attachments');
+    debugPrint('✅ [Attachments] Found ${_attachments.length} attachments total');
     if (mounted) {
       setState(() {
         // Trigger rebuild to show attachments
       });
+    }
+  }
+  
+  /// Upload and attach file to work item
+  Future<void> _uploadAttachment() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final file = result.files.first;
+      if (file.path == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Dosya seçilemedi')),
+        );
+        return;
+      }
+
+      setState(() {
+        _isUploadingAttachment = true;
+      });
+
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final storage = Provider.of<StorageService>(context, listen: false);
+      final token = await authService.getAuthToken();
+      
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      // Step 1: Upload file
+      final attachmentUrl = await _workItemService.uploadAttachment(
+        serverUrl: authService.serverUrl!,
+        token: token,
+        filePath: file.path!,
+        fileName: file.name,
+        collection: storage.getCollection(),
+      );
+
+      if (attachmentUrl == null) {
+        throw Exception('File upload failed');
+      }
+
+      // Step 2: Attach to work item
+      final success = await _workItemService.attachFileToWorkItem(
+        serverUrl: authService.serverUrl!,
+        token: token,
+        workItemId: widget.workItem.id,
+        attachmentUrl: attachmentUrl,
+        collection: storage.getCollection(),
+      );
+
+      if (success) {
+        // Reload work item details to show new attachment
+        await _loadWorkItemDetails();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Dosya başarıyla eklendi')),
+          );
+        }
+      } else {
+        throw Exception('Failed to attach file to work item');
+      }
+    } catch (e) {
+      debugPrint('❌ [Attachments] Upload error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingAttachment = false;
+        });
+      }
     }
   }
   
@@ -1186,6 +1288,111 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                           ),
                         ),
                       ),
+                      
+                      // Attachments Section
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Attachments',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: _isUploadingAttachment
+                                        ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          )
+                                        : const Icon(Icons.attach_file),
+                                    onPressed: _isUploadingAttachment ? null : _uploadAttachment,
+                                    tooltip: 'Dosya Ekle',
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              if (_attachments.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Henüz ek dosya yok',
+                                    style: TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                )
+                              else
+                                ..._attachments.map((attachment) {
+                                  final name = attachment['name'] as String? ?? 'Unknown';
+                                  final size = attachment['size'] as int? ?? 0;
+                                  final url = attachment['url'] as String?;
+                                  
+                                  String sizeText = '';
+                                  if (size > 0) {
+                                    if (size < 1024) {
+                                      sizeText = '$size B';
+                                    } else if (size < 1024 * 1024) {
+                                      sizeText = '${(size / 1024).toStringAsFixed(1)} KB';
+                                    } else {
+                                      sizeText = '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
+                                    }
+                                  }
+                                  
+                                  return ListTile(
+                                    leading: const Icon(Icons.attach_file),
+                                    title: Text(name),
+                                    subtitle: sizeText.isNotEmpty ? Text(sizeText) : null,
+                                    onTap: url != null ? () async {
+                                      // Open attachment URL
+                                      final authService = Provider.of<AuthService>(context, listen: false);
+                                      final storage = Provider.of<StorageService>(context, listen: false);
+                                      final token = await authService.getAuthToken();
+                                      
+                                      if (token != null) {
+                                        // Download and open file
+                                        try {
+                                          final cleanUrl = authService.serverUrl!.endsWith('/') 
+                                              ? authService.serverUrl!.substring(0, authService.serverUrl!.length - 1) 
+                                              : authService.serverUrl!;
+                                          
+                                          final baseUrl = storage.getCollection() != null && storage.getCollection()!.isNotEmpty
+                                              ? '$cleanUrl/${storage.getCollection()}'
+                                              : cleanUrl;
+                                          
+                                          // Construct full URL with auth
+                                          final fullUrl = url.startsWith('http') ? url : '$baseUrl$url';
+                                          
+                                          // Use url_launcher to open the file
+                                          // Note: This requires proper authentication headers
+                                          debugPrint('🔗 [Attachments] Opening attachment: $fullUrl');
+                                          // For now, just show a message
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Dosya açılıyor: $name')),
+                                          );
+                                        } catch (e) {
+                                          debugPrint('❌ [Attachments] Error opening attachment: $e');
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Dosya açılamadı: $e')),
+                                          );
+                                        }
+                                      }
+                                    } : null,
+                                  );
+                                }),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1450,6 +1657,14 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           final expectedResultRegex2 = RegExp('<parameterizedstring[^>]*type\\s*=\\s*["\']?Expected\\s+Result["\']?[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
           final expectedResultRegex3 = RegExp('<parameterizedstring[^>]*type\\s*=\\s*["\']?Expected["\']?[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
           
+          // Also try to find all parameterizedstring tags and match by type attribute
+          final allParamStrings = RegExp('<parameterizedstring[^>]*>(.*?)</parameterizedstring>', dotAll: true, caseSensitive: false);
+          final allMatches = allParamStrings.allMatches(stepContent);
+          
+          String? action;
+          String? expectedResult;
+          
+          // First try direct regex
           final actionMatch = actionRegex.firstMatch(stepContent);
           final expectedResultMatch1 = expectedResultRegex1.firstMatch(stepContent);
           final expectedResultMatch2 = expectedResultRegex2.firstMatch(stepContent);
@@ -1457,8 +1672,26 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
           
           final expectedResultMatch = expectedResultMatch1 ?? expectedResultMatch2 ?? expectedResultMatch3;
           
-          String? action = actionMatch?.group(1)?.trim();
-          String? expectedResult = expectedResultMatch?.group(1)?.trim();
+          action = actionMatch?.group(1)?.trim();
+          expectedResult = expectedResultMatch?.group(1)?.trim();
+          
+          // If not found, try to find by iterating all parameterizedstring tags
+          if (action == null || expectedResult == null) {
+            for (var match in allMatches) {
+              final fullTag = match.group(0) ?? '';
+              final typeAttr = RegExp('type\\s*=\\s*["\']?([^"\']+)["\']?', caseSensitive: false).firstMatch(fullTag);
+              final type = typeAttr?.group(1)?.toLowerCase() ?? '';
+              final content = match.group(1)?.trim() ?? '';
+              
+              if (type.contains('action') && action == null) {
+                action = content;
+                debugPrint('🔍 [Steps] Found Action from allMatches: type=$type');
+              } else if ((type.contains('expected') || type.contains('result')) && expectedResult == null) {
+                expectedResult = content;
+                debugPrint('🔍 [Steps] Found ExpectedResult from allMatches: type=$type');
+              }
+            }
+          }
           
           debugPrint('🔍 [Steps] Action regex match: ${actionMatch != null}');
           if (actionMatch != null) {
