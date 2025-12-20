@@ -1728,11 +1728,13 @@ class WorkItemService {
   }
 
   /// Get work item comments
+  /// Azure DevOps Server 2022 may use history or comments endpoint
   Future<List<WorkItemComment>> getWorkItemComments({
     required String serverUrl,
     required String token,
     required int workItemId,
     String? collection,
+    String? project,
   }) async {
     try {
       final cleanUrl = serverUrl.endsWith('/') 
@@ -1743,43 +1745,112 @@ class WorkItemService {
           ? '$cleanUrl/$collection'
           : cleanUrl;
 
-      final url = '$baseUrl/_apis/wit/workitems/$workItemId/comments?api-version=7.0';
+      // Try multiple endpoints
+      List<String> endpoints = [];
       
-      final response = await _dio.get(
-        url,
-        options: Options(
-          headers: {
-            'Authorization': 'Basic ${_encodeToken(token)}',
-            'Content-Type': 'application/json',
-          },
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final comments = <WorkItemComment>[];
-        final commentsList = response.data['comments'] as List? ?? response.data['value'] as List? ?? [];
-        
-        for (var commentData in commentsList) {
-          comments.add(WorkItemComment.fromJson(commentData));
+      if (project != null && project.isNotEmpty) {
+        if (collection != null && collection.isNotEmpty) {
+          endpoints.add('$cleanUrl/$collection/$project/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
         }
+        endpoints.add('$cleanUrl/$project/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+      }
+      endpoints.add('$baseUrl/_apis/wit/workitems/$workItemId/comments?api-version=7.0');
+      
+      for (final url in endpoints) {
+        try {
+          debugPrint('🔍 [COMMENTS] Trying to get comments from: $url');
+          
+          final response = await _dio.get(
+            url,
+            options: Options(
+              headers: {
+                'Authorization': 'Basic ${_encodeToken(token)}',
+                'Content-Type': 'application/json',
+              },
+              validateStatus: (status) => status! < 500,
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            final comments = <WorkItemComment>[];
+            final commentsList = response.data['comments'] as List? ?? response.data['value'] as List? ?? [];
+            
+            for (var commentData in commentsList) {
+              comments.add(WorkItemComment.fromJson(commentData));
+            }
+            
+            debugPrint('✅ [COMMENTS] Loaded ${comments.length} comments from: $url');
+            return comments;
+          } else {
+            debugPrint('⚠️ [COMMENTS] Failed with status ${response.statusCode} for: $url');
+          }
+        } catch (e) {
+          debugPrint('⚠️ [COMMENTS] Error with endpoint $url: $e');
+          continue;
+        }
+      }
+      
+      // Fallback: Try to get from work item history
+      debugPrint('🔄 [COMMENTS] Trying fallback: Get from work item history');
+      try {
+        final historyUrl = '$baseUrl/_apis/wit/workitems/$workItemId/updates?api-version=7.0';
+        final historyResponse = await _dio.get(
+          historyUrl,
+          options: Options(
+            headers: {
+              'Authorization': 'Basic ${_encodeToken(token)}',
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
         
-        return comments;
+        if (historyResponse.statusCode == 200) {
+          final comments = <WorkItemComment>[];
+          final updates = historyResponse.data['value'] as List? ?? [];
+          
+          for (var update in updates) {
+            final fields = update['fields'] as Map<String, dynamic>?;
+            if (fields != null && fields.containsKey('System.History')) {
+              final historyText = fields['System.History']?['newValue'] as String?;
+              if (historyText != null && historyText.isNotEmpty) {
+                comments.add(WorkItemComment(
+                  id: update['id'] as int? ?? 0,
+                  workItemId: workItemId,
+                  rev: update['rev'] as int? ?? 0,
+                  text: historyText,
+                  createdBy: update['revisedBy']?['displayName'] as String?,
+                  createdDate: update['revisedDate'] != null 
+                      ? DateTime.tryParse(update['revisedDate'] as String)
+                      : null,
+                ));
+              }
+            }
+          }
+          
+          debugPrint('✅ [COMMENTS] Loaded ${comments.length} comments from history');
+          return comments;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [COMMENTS] Error getting from history: $e');
       }
 
       return [];
-    } catch (e) {
-      debugPrint('Get work item comments error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [COMMENTS] Get work item comments error: $e');
+      debugPrint('❌ [COMMENTS] Stack trace: $stackTrace');
       return [];
     }
   }
 
   /// Add comment to work item
+  /// Azure DevOps Server 2022 uses work item history/updates for comments
   Future<bool> addWorkItemComment({
     required String serverUrl,
     required String token,
     required int workItemId,
     required String text,
     String? collection,
+    String? project,
   }) async {
     try {
       final cleanUrl = serverUrl.endsWith('/') 

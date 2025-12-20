@@ -225,6 +225,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
         token: token,
         workItemId: _detailedWorkItem!.id,
         collection: storage.getCollection(),
+        project: _detailedWorkItem!.project,
       );
       
       if (mounted) {
@@ -263,6 +264,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
         workItemId: _detailedWorkItem!.id,
         text: _commentController.text.trim(),
         collection: storage.getCollection(),
+        project: _detailedWorkItem!.project,
       );
       
       if (mounted) {
