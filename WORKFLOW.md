@@ -14,6 +14,18 @@ Azure DevOps Server 2022 on-premise kurulumları için Flutter ile geliştirilmi
 
 **Her değişiklik yaptıktan sonra MUTLAKA:**
 
+#### 1.1 DevSecOps - Pre-Commit Security Checks
+```bash
+# Güvenlik taraması yap
+./scripts/security_scan.sh
+
+# Dependency güvenlik kontrolleri
+./scripts/security_checks.sh
+
+# Eğer kritik güvenlik sorunları varsa, commit öncesi düzelt
+```
+
+#### 1.2 Git Commit ve Push
 ```bash
 # 1. Tüm değişiklikleri stage'e ekle
 git add -A
@@ -68,6 +80,21 @@ git push origin develop
 
 **Her fonksiyonel değişiklik sonrası test için:**
 
+#### 3.0 DevSecOps - Pre-Build Security
+```bash
+# SBOM (Software Bill of Materials) oluştur
+./scripts/generate_sbom.sh
+
+# Güvenlik taraması (dependency vulnerabilities)
+./scripts/security_scan.sh
+
+# Security checks (code analysis)
+./scripts/security_checks.sh
+
+# SBOM dosyalarını kontrol et
+ls -lh build/sbom/
+```
+
 #### 3.1 Android Build ve Deploy
 ```bash
 # Build
@@ -101,7 +128,20 @@ xcrun simctl launch "$BOOTED_SIM" io.rdc.azuredevops
 
 **Test başarılı ise (kullanıcı "Test OK" dediğinde):**
 
-#### 4.1 Release Dosyalarını Hazırla
+#### 4.1 DevSecOps - Pre-Release Security
+```bash
+# Son güvenlik taraması
+./scripts/security_scan.sh
+./scripts/security_checks.sh
+
+# SBOM oluştur (release için)
+./scripts/generate_sbom.sh
+
+# Security audit raporu oluştur (eğer script varsa)
+# ./scripts/security_audit.sh
+```
+
+#### 4.2 Release Dosyalarını Hazırla
 ```bash
 # Release klasörü oluştur
 mkdir -p release_assets/vX.Y.Z
@@ -109,17 +149,25 @@ mkdir -p release_assets/vX.Y.Z
 # APK'yı kopyala
 cp build/app/outputs/flutter-apk/app-release.apk release_assets/vX.Y.Z/azuredevops-X.Y.Z.apk
 
+# APK'yı imzala (Sigstore)
+./scripts/sign_artifact.sh release_assets/vX.Y.Z/azuredevops-X.Y.Z.apk
+
 # iOS IPA build (eğer gerekiyorsa)
 # flutter build ipa --build-name=X.Y.Z --build-number=BUILD
-# IPA'yı kopyala (eğer varsa)
+# IPA'yı kopyala ve imzala (eğer varsa)
+# cp build/ios/ipa/*.ipa release_assets/vX.Y.Z/azuredevops-X.Y.Z.ipa
+# ./scripts/sign_artifact.sh release_assets/vX.Y.Z/azuredevops-X.Y.Z.ipa
+
+# SBOM dosyalarını kopyala
+cp -r build/sbom release_assets/vX.Y.Z/
 ```
 
-#### 4.2 RELEASE_NOTES.md Oluştur/Güncelle
+#### 4.3 RELEASE_NOTES.md Oluştur/Güncelle
 - Yeni versiyon için detaylı release notes oluştur
 - Tüm değişiklikleri, özellikleri, düzeltmeleri listele
 - Platform desteği, migration notes, vb. ekle
 
-#### 4.3 Main Branch'a Merge
+#### 4.4 Main Branch'a Merge
 ```bash
 # Develop'dan main'e merge
 git checkout main
@@ -127,7 +175,7 @@ git merge develop
 git push origin main
 ```
 
-#### 4.4 GitHub Release Oluştur
+#### 4.5 GitHub Release Oluştur
 ```bash
 # Tag oluştur
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
@@ -138,8 +186,21 @@ gh release create vX.Y.Z \
   --title "vX.Y.Z Release" \
   --notes-file RELEASE_NOTES.md \
   release_assets/vX.Y.Z/azuredevops-X.Y.Z.apk \
-  release_assets/vX.Y.Z/azuredevops-X.Y.Z.ipa
+  release_assets/vX.Y.Z/azuredevops-X.Y.Z.apk.sigstore \
+  release_assets/vX.Y.Z/azuredevops-X.Y.Z.ipa \
+  release_assets/vX.Y.Z/azuredevops-X.Y.Z.ipa.sigstore \
+  release_assets/vX.Y.Z/sbom/spdx.json \
+  release_assets/vX.Y.Z/sbom/sbom.txt
 ```
+
+**DevSecOps - Release Assets:**
+- ✅ APK (imzalı)
+- ✅ APK.sigstore (imza)
+- ✅ IPA (imzalı, eğer varsa)
+- ✅ IPA.sigstore (imza, eğer varsa)
+- ✅ SBOM (SPDX format)
+- ✅ SBOM (Text format)
+- ✅ RELEASE_NOTES.md
 
 **VEYA GitHub web interface'den:**
 1. Releases → Draft a new release
@@ -155,26 +216,32 @@ gh release create vX.Y.Z \
 
 ### Senaryo 1: Küçük Değişiklik (Bug Fix, Refactor)
 1. ✅ Kod değişikliği yap
-2. ✅ `git add -A && git commit -m "fix: ..." && git push origin develop`
-3. ✅ Test et (build ve deploy)
-4. ✅ Test OK ise → Release sürecine geç
+2. ✅ **DevSecOps:** Security scan ve checks çalıştır
+3. ✅ `git add -A && git commit -m "fix: ..." && git push origin develop`
+4. ✅ Test et (build ve deploy)
+5. ✅ Test OK ise → Release sürecine geç
 
 ### Senaryo 2: Fonksiyonel Özellik Ekleme
 1. ✅ Kod değişikliği yap
-2. ✅ Versiyon artır (semantic versioning)
-3. ✅ README.md güncelle (özellikler listesine ekle)
-4. ✅ CHANGELOG.md güncelle
-5. ✅ `git add -A && git commit -m "feat: ..." && git push origin develop`
-6. ✅ Build ve deploy (Android + iOS)
-7. ✅ Test et
-8. ✅ Test OK ise → Release sürecine geç
+2. ✅ **DevSecOps:** Security scan ve checks çalıştır
+3. ✅ Versiyon artır (semantic versioning)
+4. ✅ README.md güncelle (özellikler listesine ekle)
+5. ✅ CHANGELOG.md güncelle
+6. ✅ `git add -A && git commit -m "feat: ..." && git push origin develop`
+7. ✅ **DevSecOps:** SBOM oluştur
+8. ✅ Build ve deploy (Android + iOS)
+9. ✅ Test et
+10. ✅ Test OK ise → Release sürecine geç
 
 ### Senaryo 3: Release Hazırlığı
-1. ✅ RELEASE_NOTES.md oluştur
-2. ✅ Release dosyalarını hazırla (APK, IPA)
-3. ✅ Main branch'a merge
-4. ✅ GitHub release oluştur
-5. ✅ APK ve IPA'yı release'e ekle
+1. ✅ **DevSecOps:** Final security scan ve audit
+2. ✅ **DevSecOps:** SBOM oluştur (release için)
+3. ✅ RELEASE_NOTES.md oluştur
+4. ✅ Release dosyalarını hazırla (APK, IPA)
+5. ✅ **DevSecOps:** Artifact'ları imzala (Sigstore)
+6. ✅ Main branch'a merge
+7. ✅ GitHub release oluştur
+8. ✅ APK, IPA, SBOM ve imzaları release'e ekle
 
 ---
 
@@ -200,21 +267,63 @@ gh release create vX.Y.Z \
 ## 🚫 YAPILMAMASI GEREKENLER
 
 - ❌ Değişiklik yapıp commit etmeden bırakmak
+- ❌ Security scan yapmadan commit etmek
 - ❌ Fonksiyonel değişiklik yapıp versiyon artırmamak
 - ❌ README ve CHANGELOG'u güncellemeden release yapmak
+- ❌ SBOM oluşturmadan release yapmak
+- ❌ Artifact'ları imzalamadan release yapmak
 - ❌ Test etmeden release yapmak
-- ❌ APK/IPA'yı release'e eklemeden release yayınlamak
+- ❌ APK/IPA/SBOM/Signatures'ı release'e eklemeden release yayınlamak
 - ❌ Develop branch'a push etmeden main'e merge etmek
+- ❌ Kritik güvenlik sorunları varken release yapmak
+
+---
+
+## 🔒 DevSecOps Adımları (Zorunlu)
+
+### Pre-Commit (Her Değişiklik Öncesi)
+- ✅ Security scan çalıştır (`security_scan.sh`)
+- ✅ Security checks çalıştır (`security_checks.sh`)
+- ✅ Dependency vulnerability kontrolü
+- ✅ Kritik güvenlik sorunları varsa düzelt
+
+### Pre-Build (Build Öncesi)
+- ✅ SBOM oluştur (`generate_sbom.sh`)
+- ✅ Security scan (dependency vulnerabilities)
+- ✅ Security checks (code analysis)
+- ✅ SBOM dosyalarını kontrol et
+
+### Pre-Release (Release Öncesi)
+- ✅ Final security scan ve audit
+- ✅ SBOM oluştur (release versiyonu için)
+- ✅ Artifact'ları imzala (Sigstore - `sign_artifact.sh`)
+- ✅ Security documentation güncelle
+
+### Release Assets (GitHub Release'e Eklenecek)
+- ✅ APK (imzalı)
+- ✅ APK.sigstore (imza dosyası)
+- ✅ IPA (imzalı, eğer varsa)
+- ✅ IPA.sigstore (imza dosyası, eğer varsa)
+- ✅ SBOM (SPDX format - `build/sbom/spdx.json`)
+- ✅ SBOM (Text format - `build/sbom/sbom.txt`)
+- ✅ RELEASE_NOTES.md
+- ✅ Security audit raporu (eğer varsa)
+
+### Security Script'leri
+- `scripts/security_scan.sh` - Dependency ve kod güvenlik taraması
+- `scripts/security_checks.sh` - Güvenlik kontrolleri
+- `scripts/generate_sbom.sh` - SBOM oluşturma
+- `scripts/sign_artifact.sh` - Artifact imzalama (Sigstore)
 
 ---
 
 ## ✅ HER ZAMAN HATIRLA
 
-1. **Her değişiklik = Git commit + push to develop**
-2. **Fonksiyonel değişiklik = Version bump + README + CHANGELOG**
-3. **Test öncesi = Build + Deploy (Android + iOS)**
-4. **Test OK = Release hazırlığı + Main merge + GitHub release**
-5. **Release = APK + IPA + RELEASE_NOTES + GitHub release**
+1. **Her değişiklik = Security scan + Git commit + push to develop**
+2. **Fonksiyonel değişiklik = Version bump + README + CHANGELOG + SBOM**
+3. **Test öncesi = Security checks + Build + Deploy (Android + iOS)**
+4. **Test OK = Security audit + Release hazırlığı + Artifact signing + Main merge + GitHub release**
+5. **Release = APK + IPA + Signatures + SBOM + RELEASE_NOTES + GitHub release**
 
 **Bu workflow SORULMADAN otomatik uygulanmalıdır.**
 
