@@ -274,25 +274,96 @@ class _MarketScreenState extends State<MarketScreen> {
       _downloadingArtifact = artifact.name;
     });
 
+    // Show progress dialog
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Dosya İndiriliyor'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              artifact.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            if (artifact.size != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _formatSize(artifact.size),
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
+            const SizedBox(height: 16),
+            const Text(
+              'Lütfen bekleyin...',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+
     try {
-      await _marketService!.downloadArtifact(artifact);
+      print('📥 [MarketScreen] Starting download: ${artifact.name}');
+      print('📥 [MarketScreen] URL: ${artifact.downloadUrl}');
+      print('📥 [MarketScreen] Folder path: $_currentFolderPath');
+      
+      await _marketService!.downloadArtifact(artifact, folderPath: _currentFolderPath);
+      
+      print('✅ [MarketScreen] Download completed: ${artifact.name}');
       
       if (mounted) {
+        Navigator.pop(context); // Close progress dialog
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${artifact.name} indirme başlatıldı...'),
+            content: Text('${artifact.name} başarıyla indirildi!\nİndirilenler > RDC_AzureDevOps klasöründe'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Tamam',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ [MarketScreen] Download error: $e');
+      print('❌ [MarketScreen] Stack trace: $stackTrace');
+      
       if (mounted) {
+        Navigator.pop(context); // Close progress dialog
+        
+        String errorMessage = 'İndirme hatası: ';
+        final errorString = e.toString();
+        if (errorString.contains('Connection closed')) {
+          errorMessage += 'Bağlantı kesildi. Lütfen tekrar deneyin.';
+        } else if (errorString.contains('timeout')) {
+          errorMessage += 'Zaman aşımı. Lütfen tekrar deneyin.';
+        } else if (errorString.contains('Could not copy to Downloads')) {
+          errorMessage += 'Dosya indirildi ancak Downloads klasörüne kopyalanamadı. Detaylar için logları kontrol edin.';
+        } else {
+          errorMessage += errorString;
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('İndirme hatası: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Tekrar Dene',
+              textColor: Colors.white,
+              onPressed: () {
+                _downloadArtifact(artifact);
+              },
+            ),
           ),
         );
       }
@@ -314,7 +385,7 @@ class _MarketScreenState extends State<MarketScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentFolderPath != null && _currentFolderPath!.isNotEmpty ? 'Market: $_currentFolderPath' : 'Market'),
+        title: Text(_currentFolderPath != null && _currentFolderPath!.isNotEmpty ? 'Market: $_currentFolderPath' : 'Market: Uygulama Listesi'),
         leading: _currentFolderPath != null && _currentFolderPath!.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),

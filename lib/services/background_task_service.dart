@@ -31,7 +31,10 @@ class BackgroundTaskService {
   final Map<int, String?> _workItemAssignees = {}; // Track assignees to detect assignee changes
   final Map<int, DateTime?> _workItemChangedDates = {}; // Track changed dates for better change detection
   Set<int> _knownWorkItemIds = {};
-  final Set<int> _notifiedWorkItemIds = {}; // Track which work items we've already notified about
+  Set<int> _notifiedWorkItemIds = {}; // Track which work items we've already notified about
+  
+  // SharedPreferences key for persistent notified work item IDs
+  static const String _notifiedIdsKey = 'notified_work_item_ids';
 
   /// Initialize the service (called on app start)
   Future<void> init() async {
@@ -137,14 +140,26 @@ class BackgroundTaskService {
           _workItemAssignees[workItem.id] = currentAssignee;
           _workItemChangedDates[workItem.id] = currentChangedDate;
           
-          // Always notify for new work items
+          // ÖNEMLİ: Bu work item için daha önce bildirim gönderilmiş mi kontrol et
+          // Uygulama yeniden kurulsa bile bu bilgi kalıcı olarak saklanır
+          if (_wasNotified(workItem.id)) {
+            // Son bildirim gönderilen revision'ı kontrol et
+            final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
+            if (lastNotifiedRev != null && lastNotifiedRev >= currentRev) {
+              // Bu work item için zaten bildirim gönderilmiş ve değişiklik yok
+              print('📌 [BackgroundTaskService] Work item #${workItem.id} already notified previously (rev: $lastNotifiedRev), skipping');
+              continue; // Bildirim gönderme, sonraki work item'a geç
+            }
+          }
+          
+          // Yeni work item veya değişiklik var - bildirim gönder
           print('🆕 [BackgroundTaskService] New work item detected: #${workItem.id} - ${workItem.title}');
           await _notificationService.showWorkItemNotification(
             workItemId: workItem.id,
             title: workItem.title,
             body: 'Size yeni bir work item atandı: ${workItem.type}',
           );
-          _notifiedWorkItemIds.add(workItem.id);
+          await _markAsNotified(workItem.id); // Kalıcı olarak kaydet
           await _saveLastNotifiedRevision(workItem.id, currentRev);
           print('✅ [BackgroundTaskService] Notification sent for work item #${workItem.id}');
         } else {
@@ -205,7 +220,7 @@ class BackgroundTaskService {
             );
             
             await _saveLastNotifiedRevision(workItem.id, currentRev);
-            _notifiedWorkItemIds.add(workItem.id);
+            await _markAsNotified(workItem.id); // Kalıcı olarak kaydet
             print('✅ [BackgroundTaskService] Notification sent for work item #${workItem.id}: $notificationBody');
           }
           
@@ -258,6 +273,43 @@ class BackgroundTaskService {
       print('Error saving notified revision: $e');
     }
   }
+  
+  /// Load notified work item IDs from persistent storage
+  Future<void> _loadNotifiedWorkItemIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final idsJson = prefs.getString(_notifiedIdsKey);
+      if (idsJson != null && idsJson.isNotEmpty) {
+        final List<dynamic> ids = jsonDecode(idsJson);
+        _notifiedWorkItemIds = ids.map((e) => e as int).toSet();
+        print('📂 [BackgroundTaskService] Loaded ${_notifiedWorkItemIds.length} notified work item IDs from storage');
+      }
+    } catch (e) {
+      print('⚠️ [BackgroundTaskService] Error loading notified work item IDs: $e');
+    }
+  }
+  
+  /// Save notified work item IDs to persistent storage
+  Future<void> _saveNotifiedWorkItemIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_notifiedIdsKey, jsonEncode(_notifiedWorkItemIds.toList()));
+      print('💾 [BackgroundTaskService] Saved ${_notifiedWorkItemIds.length} notified work item IDs to storage');
+    } catch (e) {
+      print('⚠️ [BackgroundTaskService] Error saving notified work item IDs: $e');
+    }
+  }
+  
+  /// Add work item ID to notified set and persist
+  Future<void> _markAsNotified(int workItemId) async {
+    _notifiedWorkItemIds.add(workItemId);
+    await _saveNotifiedWorkItemIds();
+  }
+  
+  /// Check if work item was already notified
+  bool _wasNotified(int workItemId) {
+    return _notifiedWorkItemIds.contains(workItemId);
+  }
 
   /// Reset tracking data
   void reset() {
@@ -271,6 +323,9 @@ class BackgroundTaskService {
   /// Initialize tracking data from storage (called on app start)
   Future<void> initializeTracking() async {
     try {
+      // ÖNCE: Kalıcı olarak saklanan bildirim gönderilmiş ID'leri yükle
+      await _loadNotifiedWorkItemIds();
+      
       final prefs = await SharedPreferences.getInstance();
       final serverUrl = prefs.getString('server_url');
       final collection = prefs.getString('collection');
@@ -291,27 +346,27 @@ class BackgroundTaskService {
       );
 
       // Initialize tracking without sending notifications
-      // Only mark as "known" - don't mark as "notified" so new items can still trigger notifications
       for (var workItem in workItems) {
         _knownWorkItemIds.add(workItem.id);
         _workItemRevisions[workItem.id] = workItem.rev ?? 0;
         _workItemAssignees[workItem.id] = workItem.assignedTo;
         _workItemChangedDates[workItem.id] = workItem.changedDate;
         
-        // Load last notified revision from storage
-        final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
-        if (lastNotifiedRev != null && lastNotifiedRev >= (workItem.rev ?? 0)) {
-          // This work item was already notified for this or a later revision
-          // Mark as notified to prevent duplicate notifications
-          _notifiedWorkItemIds.add(workItem.id);
+        // Eğer bu work item daha önce bildirim gönderilmişse (kalıcı listede varsa)
+        // tekrar bildirim gönderme
+        if (_wasNotified(workItem.id)) {
+          // Son bildirim gönderilen revision'ı kontrol et
+          final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
+          if (lastNotifiedRev != null && lastNotifiedRev >= (workItem.rev ?? 0)) {
+            // Bu work item için zaten bildirim gönderilmiş ve değişiklik yok
+            print('📌 [BackgroundTaskService] Work item #${workItem.id} already notified (rev: $lastNotifiedRev)');
+          }
         }
-        // If no stored revision or current rev is newer, don't mark as notified
-        // This allows new notifications for items that were created before app start
       }
 
-      print('Background: Initialized tracking for ${workItems.length} work items (${_notifiedWorkItemIds.length} already notified)');
+      print('✅ [BackgroundTaskService] Initialized tracking for ${workItems.length} work items (${_notifiedWorkItemIds.length} already notified in storage)');
     } catch (e) {
-      print('Error initializing tracking: $e');
+      print('❌ [BackgroundTaskService] Error initializing tracking: $e');
     }
   }
 

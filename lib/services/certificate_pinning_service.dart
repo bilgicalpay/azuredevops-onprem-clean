@@ -29,6 +29,11 @@ class CertificatePinningService {
   static Dio createSecureDio() {
     final dio = Dio();
     
+    // Configure timeouts for better reliability (especially for large files)
+    dio.options.connectTimeout = const Duration(seconds: 60);
+    dio.options.receiveTimeout = const Duration(minutes: 20); // 20 minutes for very large file downloads (60MB+)
+    dio.options.sendTimeout = const Duration(seconds: 60);
+    
     // Only enable certificate pinning in production or if explicitly enabled
     final isProduction = const bool.fromEnvironment('PRODUCTION', defaultValue: false);
     final enablePinning = const bool.fromEnvironment('ENABLE_CERT_PINNING', defaultValue: false);
