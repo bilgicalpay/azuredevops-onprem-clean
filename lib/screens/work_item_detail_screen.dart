@@ -1667,6 +1667,15 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                   margin: Margins.zero,
                                   padding: HtmlPaddings.zero,
                                   fontSize: FontSize(14),
+                                  color: Colors.black87,
+                                ),
+                                "p": Style(
+                                  margin: Margins.zero,
+                                  padding: HtmlPaddings.zero,
+                                  color: Colors.black87,
+                                ),
+                                "*": Style(
+                                  color: Colors.black87,
                                 ),
                               },
                             )
