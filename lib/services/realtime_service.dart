@@ -9,6 +9,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'work_item_service.dart';
 import 'notification_service.dart';
 import 'auth_service.dart';
@@ -33,6 +34,10 @@ class RealtimeService {
   final NotificationService _notificationService = NotificationService();
   StorageService? _storageService;
   Set<int> _knownWorkItemIds = {};
+  Set<int> _notifiedWorkItemIds = {}; // Track which work items we've already notified about
+  
+  // SharedPreferences key for persistent notified work item IDs
+  static const String _notifiedIdsKey = 'notified_work_item_ids';
   
   // Callbacks
   Function(List<int>)? onNewWorkItems;
@@ -243,6 +248,63 @@ class RealtimeService {
   final Map<int, String?> _workItemAssignees = {}; // Track assignees to detect assignee changes
   final Map<int, DateTime?> _workItemChangedDates = {}; // Track changed dates for better change detection
   
+  /// Load notified work item IDs from persistent storage
+  Future<void> _loadNotifiedWorkItemIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final idsJson = prefs.getString(_notifiedIdsKey);
+      if (idsJson != null && idsJson.isNotEmpty) {
+        final List<dynamic> ids = jsonDecode(idsJson);
+        _notifiedWorkItemIds = ids.map((e) => e as int).toSet();
+        print('📂 [RealtimeService] Loaded ${_notifiedWorkItemIds.length} notified work item IDs from storage');
+      }
+    } catch (e) {
+      print('⚠️ [RealtimeService] Error loading notified work item IDs: $e');
+    }
+  }
+  
+  /// Save notified work item IDs to persistent storage
+  Future<void> _saveNotifiedWorkItemIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_notifiedIdsKey, jsonEncode(_notifiedWorkItemIds.toList()));
+      print('💾 [RealtimeService] Saved ${_notifiedWorkItemIds.length} notified work item IDs to storage');
+    } catch (e) {
+      print('⚠️ [RealtimeService] Error saving notified work item IDs: $e');
+    }
+  }
+  
+  /// Add work item ID to notified set and persist
+  Future<void> _markAsNotified(int workItemId) async {
+    _notifiedWorkItemIds.add(workItemId);
+    await _saveNotifiedWorkItemIds();
+  }
+  
+  /// Check if work item was already notified
+  bool _wasNotified(int workItemId) {
+    return _notifiedWorkItemIds.contains(workItemId);
+  }
+  
+  /// Get last notified revision for a work item
+  Future<int?> _getLastNotifiedRevision(int workItemId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt('notified_rev_$workItemId');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Save last notified revision for a work item
+  Future<void> _saveLastNotifiedRevision(int workItemId, int revision) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('notified_rev_$workItemId', revision);
+    } catch (e) {
+      print('Error saving notified revision: $e');
+    }
+  }
+  
   /// Optimized polling fallback - works in background
   Future<void> _startOptimizedPolling(
     AuthService authService,
@@ -308,6 +370,9 @@ class RealtimeService {
     StorageService storageService,
   ) async {
     try {
+      // ÖNCE: Kalıcı olarak saklanan bildirim gönderilmiş ID'leri yükle
+      await _loadNotifiedWorkItemIds();
+      
       final token = await authService.getAuthToken();
       if (authService.serverUrl == null || token == null) {
         print('⚠️ [RealtimeService] Cannot initialize: missing auth');
@@ -326,9 +391,20 @@ class RealtimeService {
         _workItemRevisions[workItem.id] = workItem.rev ?? 0;
         _workItemAssignees[workItem.id] = workItem.assignedTo;
         _workItemChangedDates[workItem.id] = workItem.changedDate;
+        
+        // Eğer bu work item daha önce bildirim gönderilmişse (kalıcı listede varsa)
+        // tekrar bildirim gönderme
+        if (_wasNotified(workItem.id)) {
+          // Son bildirim gönderilen revision'ı kontrol et
+          final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
+          if (lastNotifiedRev != null && lastNotifiedRev >= (workItem.rev ?? 0)) {
+            // Bu work item için zaten bildirim gönderilmiş ve değişiklik yok
+            print('📌 [RealtimeService] Work item #${workItem.id} already notified (rev: $lastNotifiedRev)');
+          }
+        }
       }
 
-      print('✅ [RealtimeService] Tracking initialized for ${workItems.length} work items');
+      print('✅ [RealtimeService] Tracking initialized for ${workItems.length} work items (${_notifiedWorkItemIds.length} already notified in storage)');
     } catch (e) {
       print('❌ [RealtimeService] Error initializing tracking: $e');
     }
@@ -370,23 +446,40 @@ class RealtimeService {
         
         if (!_knownWorkItemIds.contains(workItem.id)) {
           // New work item - just assigned to user
-          print('🆕 [RealtimeService] New work item detected: #${workItem.id} - ${workItem.title}');
-          newIds.add(workItem.id);
           _knownWorkItemIds.add(workItem.id);
           _workItemRevisions[workItem.id] = currentRev;
           _workItemAssignees[workItem.id] = currentAssignee;
           _workItemChangedDates[workItem.id] = currentChangedDate;
           
-          // Bildirim ayarlarını kontrol et
-          if (await _shouldNotifyForWorkItem(workItem, isNew: true, wasAssigned: true)) {
-            await _notificationService.showWorkItemNotification(
-              workItemId: workItem.id,
-              title: workItem.title,
-              body: 'Size yeni bir work item atandı: ${workItem.type}',
-            );
-          } else {
-            print('🔕 [RealtimeService] Notification skipped for work item #${workItem.id} based on settings');
+          // ÖNEMLİ: Bu work item için daha önce bildirim gönderilmiş mi kontrol et
+          // Uygulama yeniden kurulsa bile bu bilgi kalıcı olarak saklanır
+          if (_wasNotified(workItem.id)) {
+            // Son bildirim gönderilen revision'ı kontrol et
+            final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
+            if (lastNotifiedRev != null && lastNotifiedRev >= currentRev) {
+              // Bu work item için zaten bildirim gönderilmiş ve değişiklik yok
+              print('📌 [RealtimeService] Work item #${workItem.id} already notified previously (rev: $lastNotifiedRev), skipping');
+              continue; // Bildirim gönderme, sonraki work item'a geç
+            }
           }
+          
+          // Bildirim ayarlarını kontrol et
+          if (!await _shouldNotifyForWorkItem(workItem, isNew: true, wasAssigned: true)) {
+            print('🔕 [RealtimeService] Notification skipped for work item #${workItem.id} based on settings');
+            continue;
+          }
+          
+          // Yeni work item veya değişiklik var - bildirim gönder
+          print('🆕 [RealtimeService] New work item detected: #${workItem.id} - ${workItem.title}');
+          newIds.add(workItem.id);
+          await _notificationService.showWorkItemNotification(
+            workItemId: workItem.id,
+            title: workItem.title,
+            body: 'Size yeni bir work item atandı: ${workItem.type}',
+          );
+          await _markAsNotified(workItem.id); // Kalıcı olarak kaydet
+          await _saveLastNotifiedRevision(workItem.id, currentRev);
+          print('✅ [RealtimeService] Notification sent for work item #${workItem.id}');
         } else {
           // Check for changes
           bool hasChanged = false;
@@ -429,23 +522,55 @@ class RealtimeService {
           }
           
           if (hasChanged) {
+            // ÖNEMLİ: Bu work item için daha önce bildirim gönderilmiş mi kontrol et
+            final lastNotifiedRev = await _getLastNotifiedRevision(workItem.id);
+            if (lastNotifiedRev != null && lastNotifiedRev >= currentRev) {
+              // Bu work item için zaten bildirim gönderilmiş ve değişiklik yok
+              print('📌 [RealtimeService] Work item #${workItem.id} already notified for this revision (rev: $lastNotifiedRev), skipping');
+              // Update tracking even if notification skipped
+              if (knownRev == null) {
+                _workItemRevisions[workItem.id] = currentRev;
+              }
+              if (knownAssignee == null) {
+                _workItemAssignees[workItem.id] = currentAssignee;
+              }
+              if (knownChangedDate == null && currentChangedDate != null) {
+                _workItemChangedDates[workItem.id] = currentChangedDate;
+              }
+              continue;
+            }
+            
             changedIds.add(workItem.id);
             print('🔄 [RealtimeService] Work item #${workItem.id} changed, checking notification settings');
             
             // Bildirim ayarlarını kontrol et
             final wasAssigned = knownAssignee == null && currentAssignee != null;
-            if (await _shouldNotifyForWorkItem(workItem, isNew: false, wasAssigned: wasAssigned)) {
-              // Send notification with appropriate message
-              await _notificationService.showWorkItemNotification(
-                workItemId: workItem.id,
-                title: workItem.title,
-                body: changeMessage.isNotEmpty 
-                    ? changeMessage 
-                    : 'Work item güncellendi: ${workItem.state}',
-              );
-            } else {
+            if (!await _shouldNotifyForWorkItem(workItem, isNew: false, wasAssigned: wasAssigned)) {
               print('🔕 [RealtimeService] Notification skipped for work item #${workItem.id} based on settings');
+              // Update tracking even if notification skipped
+              if (knownRev == null) {
+                _workItemRevisions[workItem.id] = currentRev;
+              }
+              if (knownAssignee == null) {
+                _workItemAssignees[workItem.id] = currentAssignee;
+              }
+              if (knownChangedDate == null && currentChangedDate != null) {
+                _workItemChangedDates[workItem.id] = currentChangedDate;
+              }
+              continue;
             }
+            
+            // Send notification with appropriate message
+            await _notificationService.showWorkItemNotification(
+              workItemId: workItem.id,
+              title: workItem.title,
+              body: changeMessage.isNotEmpty 
+                  ? changeMessage 
+                  : 'Work item güncellendi: ${workItem.state}',
+            );
+            await _saveLastNotifiedRevision(workItem.id, currentRev);
+            await _markAsNotified(workItem.id); // Kalıcı olarak kaydet
+            print('✅ [RealtimeService] Notification sent for work item #${workItem.id}: $changeMessage');
           }
           
           // Update tracking even if no change detected (to keep data fresh)
@@ -515,6 +640,7 @@ class RealtimeService {
     _workItemRevisions.clear();
     _workItemAssignees.clear();
     _workItemChangedDates.clear();
+    _notifiedWorkItemIds.clear();
   }
   
   /// Check if notification should be sent based on user settings

@@ -23,10 +23,17 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 FLUTTER_CMD="/Users/alpaybilgic/flutter/bin/flutter"
 ADB_CMD="/Users/alpaybilgic/Library/Android/sdk/platform-tools/adb"
 
+# Auto-increment build number
+echo ""
+echo -e "${GREEN}📝 Auto-incrementing build number...${NC}"
+source "$SCRIPT_DIR/auto_increment_build.sh"
+echo -e "${GREEN}✅ Build number incremented: ${CURRENT_BUILD_NUMBER} -> ${NEW_BUILD_NUMBER}${NC}"
+echo -e "${GREEN}📦 Version: ${VERSION_NAME}+${NEW_BUILD_NUMBER}${NC}"
+
 # Build Android
 echo ""
 echo -e "${GREEN}📦 Building Android APK...${NC}"
-$FLUTTER_CMD build apk --release
+$FLUTTER_CMD build apk --release --build-name=${VERSION_NAME} --build-number=${NEW_BUILD_NUMBER} --dart-define=PRODUCTION=true
 
 # Deploy Android
 echo ""
@@ -50,7 +57,7 @@ fi
 # Build iOS
 echo ""
 echo -e "${GREEN}🍎 Building iOS for Simulator...${NC}"
-$FLUTTER_CMD build ios --simulator
+$FLUTTER_CMD build ios --simulator --build-name=${VERSION_NAME} --build-number=${NEW_BUILD_NUMBER} --dart-define=PRODUCTION=true
 
 # Deploy iOS
 echo ""
