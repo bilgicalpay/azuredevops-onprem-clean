@@ -1,0 +1,219 @@
+{
+  "@@locale": "ru",
+  "appTitle": "Azure DevOps",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "Настройки",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "wikiSettings": "Настройки Wiki",
+  "@wikiSettings": {
+    "description": "Wiki settings section title"
+  },
+  "wikiSettingsDescription": "Введите URL файла Azure DevOps wiki. Содержимое wiki будет отображаться на главной странице.",
+  "@wikiSettingsDescription": {
+    "description": "Wiki settings description"
+  },
+  "wikiUrl": "URL Wiki",
+  "@wikiUrl": {
+    "description": "Wiki URL input label"
+  },
+  "save": "Сохранить",
+  "@save": {
+    "description": "Save button text"
+  },
+  "marketSettings": "Настройки Маркета",
+  "@marketSettings": {
+    "description": "Market settings section title"
+  },
+  "marketSettingsDescription": "Введите URL статического каталога IIS. Файлы APK и IPA будут перечислены и доступны для загрузки из этого каталога.",
+  "@marketSettingsDescription": {
+    "description": "Market settings description"
+  },
+  "marketUrl": "URL Маркета",
+  "@marketUrl": {
+    "description": "Market URL input label"
+  },
+  "notificationSettings": "Настройки Уведомлений",
+  "@notificationSettings": {
+    "description": "Notification settings section title"
+  },
+  "controlFrequency": "Частота Проверки",
+  "@controlFrequency": {
+    "description": "Control frequency section title"
+  },
+  "pollingInterval": "Интервал Опроса (секунды)",
+  "@pollingInterval": {
+    "description": "Polling interval input label"
+  },
+  "pollingIntervalHelper": "От 5 до 300 секунд",
+  "@pollingIntervalHelper": {
+    "description": "Polling interval helper text"
+  },
+  "fast": "Быстро (10с)",
+  "@fast": {
+    "description": "Fast polling interval button"
+  },
+  "normal": "Обычно (15с)",
+  "@normal": {
+    "description": "Normal polling interval button"
+  },
+  "slow": "Медленно (30с)",
+  "@slow": {
+    "description": "Slow polling interval button"
+  },
+  "notificationTypes": "Типы Уведомлений",
+  "@notificationTypes": {
+    "description": "Notification types section title"
+  },
+  "notifyOnFirstAssignment": "Уведомление при Первом Назначении",
+  "@notifyOnFirstAssignment": {
+    "description": "Notify on first assignment toggle title"
+  },
+  "notifyOnFirstAssignmentDescription": "Отправлять уведомление только при первом назначении мне",
+  "@notifyOnFirstAssignmentDescription": {
+    "description": "Notify on first assignment description"
+  },
+  "notifyOnAllUpdates": "Уведомление при Всех Обновлениях",
+  "@notifyOnAllUpdates": {
+    "description": "Notify on all updates toggle title"
+  },
+  "notifyOnAllUpdatesDescription": "Отправлять уведомление при обновлении рабочих элементов, назначенных мне",
+  "@notifyOnAllUpdatesDescription": {
+    "description": "Notify on all updates description"
+  },
+  "notifyOnHotfixOnly": "Только Hotfix",
+  "@notifyOnHotfixOnly": {
+    "description": "Notify on hotfix only toggle title"
+  },
+  "notifyOnHotfixOnlyDescription": "Уведомление только для рабочих элементов типа Hotfix",
+  "@notifyOnHotfixOnlyDescription": {
+    "description": "Notify on hotfix only description"
+  },
+  "notifyOnGroupAssignments": "Уведомление при Назначении Группам",
+  "@notifyOnGroupAssignments": {
+    "description": "Notify on group assignments toggle title"
+  },
+  "notifyOnGroupAssignmentsDescription": "Отправлять уведомление при назначении указанным группам",
+  "@notifyOnGroupAssignmentsDescription": {
+    "description": "Notify on group assignments description"
+  },
+  "groupName": "Имя Группы",
+  "@groupName": {
+    "description": "Group name input label"
+  },
+  "groupNameHint": "Например: Разработчики, Команда QA",
+  "@groupNameHint": {
+    "description": "Group name input hint"
+  },
+  "smartwatchNotifications": "Уведомления на Умные Часы",
+  "@smartwatchNotifications": {
+    "description": "Smartwatch notifications toggle title"
+  },
+  "smartwatchNotificationsDescription": "Отправлять уведомления на умные часы (только при первом назначении)",
+  "@smartwatchNotificationsDescription": {
+    "description": "Smartwatch notifications description"
+  },
+  "onCallMode": "Режим Дежурства",
+  "@onCallMode": {
+    "description": "On-call mode section title"
+  },
+  "onCallModeDescription": "В режиме дежурства уведомления становятся более агрессивными, а непрочитанные уведомления обновляются 3 раза.",
+  "@onCallModeDescription": {
+    "description": "On-call mode description"
+  },
+  "onCallModePhone": "Режим Дежурства для Телефона",
+  "@onCallModePhone": {
+    "description": "On-call mode for phone toggle title"
+  },
+  "onCallModePhoneDescription": "Агрессивные уведомления на телефоне",
+  "@onCallModePhoneDescription": {
+    "description": "On-call mode for phone description"
+  },
+  "onCallModeWatch": "Режим Дежурства для Умных Часов",
+  "@onCallModeWatch": {
+    "description": "On-call mode for watch toggle title"
+  },
+  "onCallModeWatchDescription": "Агрессивные уведомления на умных часах",
+  "@onCallModeWatchDescription": {
+    "description": "On-call mode for watch description"
+  },
+  "vacationMode": "Режим Отпуска",
+  "@vacationMode": {
+    "description": "Vacation mode section title"
+  },
+  "vacationModeDescription": "В режиме отпуска уведомления не приходят.",
+  "@vacationModeDescription": {
+    "description": "Vacation mode description"
+  },
+  "vacationModePhone": "Режим Отпуска для Телефона",
+  "@vacationModePhone": {
+    "description": "Vacation mode for phone toggle title"
+  },
+  "vacationModePhoneDescription": "Отключить уведомления на телефоне",
+  "@vacationModePhoneDescription": {
+    "description": "Vacation mode for phone description"
+  },
+  "vacationModeWatch": "Режим Отпуска для Умных Часов",
+  "@vacationModeWatch": {
+    "description": "Vacation mode for watch toggle title"
+  },
+  "vacationModeWatchDescription": "Отключить уведомления на умных часах",
+  "@vacationModeWatchDescription": {
+    "description": "Vacation mode for watch description"
+  },
+  "serverUrl": "URL Сервера",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  "collection": "Коллекция",
+  "@collection": {
+    "description": "Collection label"
+  },
+  "language": "Язык",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "selectLanguage": "Выберите Язык",
+  "@selectLanguage": {
+    "description": "Select language dropdown label"
+  },
+  "languageDescription": "Выберите предпочитаемый язык. Приложение будет использовать язык вашего устройства по умолчанию.",
+  "@languageDescription": {
+    "description": "Language settings description"
+  },
+  "close": "Закрыть",
+  "@close": {
+    "description": "Close button text"
+  },
+  "settingsSaved": "Настройки сохранены",
+  "@settingsSaved": {
+    "description": "Settings saved message"
+  },
+  "invalidUrl": "Пожалуйста, введите действительный URL",
+  "@invalidUrl": {
+    "description": "Invalid URL error message"
+  },
+  "invalidPollingInterval": "Интервал опроса должен быть от 5 до 300 секунд",
+  "@invalidPollingInterval": {
+    "description": "Invalid polling interval error message"
+  },
+  "noGroupsAdded": "Группы еще не добавлены. Добавьте имя группы выше.",
+  "@noGroupsAdded": {
+    "description": "No groups added message"
+  },
+  "donate": "Пожертвовать",
+  "@donate": {
+    "description": "Donate button text"
+  },
+  "donateDescription": "Поддержите разработку этого приложения",
+  "@donateDescription": {
+    "description": "Donate section description"
+  },
+  "donateButton": "Купите мне кофе",
+  "@donateButton": {
+    "description": "Donate button label"
+  }
+}

@@ -3,9 +3,15 @@
 # Bu uygulama Azure DevOps Server 2022 on-premise kurulumları için mobil erişim sağlar
 name: azuredevops_onprem
 description: "RDC Partner AzureDevOps - Azure DevOps Server 2022 Mobile App"
+version: 1.2.0+55
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# License information
+# See LICENSE file for full license terms
+# This software is provided under a custom open source license
+# Commercial use requires explicit permission from the copyright holder
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -19,7 +25,6 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.4+43
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -32,6 +37,8 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
 
   # UI ve temel paketler
@@ -52,7 +59,7 @@ dependencies:
   permission_handler: ^11.3.1  # Android runtime permissions için
   
   # Tarih/saat ve uluslararasılaştırma
-  intl: ^0.18.1
+  intl: ^0.20.2
   
   # URL açma ve paket bilgileri
   url_launcher: ^6.2.2
@@ -93,6 +100,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

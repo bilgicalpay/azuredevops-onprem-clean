@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Azuredevops Onprem</string>
+	<string>AzureDevOps Mobile</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -69,6 +69,8 @@
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>cydia</string>
+		<string>https</string>
+		<string>http</string>
 	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>

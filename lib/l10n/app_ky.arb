@@ -1,0 +1,220 @@
+{
+  "@@locale": "ky",
+  "appTitle": "Azure DevOps",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "Жөндөөлөр",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "wikiSettings": "Wiki Жөндөөлөрү",
+  "@wikiSettings": {
+    "description": "Wiki settings section title"
+  },
+  "wikiSettingsDescription": "Azure DevOps wiki файлынын URL дарегин киргизиңиз. Бул wiki мазмуну башкы бетте көрсөтүлөт.",
+  "@wikiSettingsDescription": {
+    "description": "Wiki settings description"
+  },
+  "wikiUrl": "Wiki URL",
+  "@wikiUrl": {
+    "description": "Wiki URL input label"
+  },
+  "save": "Сактоо",
+  "@save": {
+    "description": "Save button text"
+  },
+  "marketSettings": "Базар Жөндөөлөрү",
+  "@marketSettings": {
+    "description": "Market settings section title"
+  },
+  "marketSettingsDescription": "IIS статикалык директориясынын URL дарегин киргизиңиз. APK жана IPA файлдары бул директориядан тизмеленет жана жүктөлөт.",
+  "@marketSettingsDescription": {
+    "description": "Market settings description"
+  },
+  "marketUrl": "Базар URL",
+  "@marketUrl": {
+    "description": "Market URL input label"
+  },
+  "notificationSettings": "Эскертүүлөр Жөндөөлөрү",
+  "@notificationSettings": {
+    "description": "Notification settings section title"
+  },
+  "controlFrequency": "Көзөмөлдөө Жыштыгы",
+  "@controlFrequency": {
+    "description": "Control frequency section title"
+  },
+  "pollingInterval": "Суроо Аралыгы (секунд)",
+  "@pollingInterval": {
+    "description": "Polling interval input label"
+  },
+  "pollingIntervalHelper": "5-300 секунд арасы",
+  "@pollingIntervalHelper": {
+    "description": "Polling interval helper text"
+  },
+  "fast": "Тез (10s)",
+  "@fast": {
+    "description": "Fast polling interval button"
+  },
+  "normal": "Кадимки (15s)",
+  "@normal": {
+    "description": "Normal polling interval button"
+  },
+  "slow": "Жай (30s)",
+  "@slow": {
+    "description": "Slow polling interval button"
+  },
+  "notificationTypes": "Эскертүү Түрлөрү",
+  "@notificationTypes": {
+    "description": "Notification types section title"
+  },
+  "notifyOnFirstAssignment": "Биринчи Тайындоодо Эскертүү",
+  "@notifyOnFirstAssignment": {
+    "description": "Notify on first assignment toggle title"
+  },
+  "notifyOnFirstAssignmentDescription": "Мага биринчи жолу тайындалганда гана эскертүү жөнөтүңүз",
+  "@notifyOnFirstAssignmentDescription": {
+    "description": "Notify on first assignment description"
+  },
+  "notifyOnAllUpdates": "Бардык Жаңылоолордо Эскертүү",
+  "@notifyOnAllUpdates": {
+    "description": "Notify on all updates toggle title"
+  },
+  "notifyOnAllUpdatesDescription": "Мага тайындалган жумуш элементтери жаңыланганда эскертүү жөнөтүңүз",
+  "@notifyOnAllUpdatesDescription": {
+    "description": "Notify on all updates description"
+  },
+  "notifyOnHotfixOnly": "Жалгыз Hotfix",
+  "@notifyOnHotfixOnly": {
+    "description": "Notify on hotfix only toggle title"
+  },
+  "notifyOnHotfixOnlyDescription": "Жалгыз Hotfix түрүндөгү жумуш элементтери үчүн эскертүү",
+  "@notifyOnHotfixOnlyDescription": {
+    "description": "Notify on hotfix only description"
+  },
+  "notifyOnGroupAssignments": "Топ Тайындоолорунда Эскертүү",
+  "@notifyOnGroupAssignments": {
+    "description": "Notify on group assignments toggle title"
+  },
+  "notifyOnGroupAssignmentsDescription": "Көрсөтүлгөн топторго тайындоо жасоодо эскертүү жөнөтүңүз",
+  "@notifyOnGroupAssignmentsDescription": {
+    "description": "Notify on group assignments description"
+  },
+  "groupName": "Топ Аты",
+  "@groupName": {
+    "description": "Group name input label"
+  },
+  "groupNameHint": "Мисалы: Өнүктүрүүчүлөр, QA Тобу",
+  "@groupNameHint": {
+    "description": "Group name input hint"
+  },
+  "smartwatchNotifications": "Акылдуу Саат Эскертүүлөрү",
+  "@smartwatchNotifications": {
+    "description": "Smartwatch notifications toggle title"
+  },
+  "smartwatchNotificationsDescription": "Акылдуу сааттарга эскертүү жөнөтүңүз (жалгыз биринчи тайындоодо)",
+  "@smartwatchNotificationsDescription": {
+    "description": "Smartwatch notifications description"
+  },
+  "onCallMode": "Кызмат Режими",
+  "@onCallMode": {
+    "description": "On-call mode section title"
+  },
+  "onCallModeDescription": "Кызмат режиминде эскертүүлөр күчтүүрөөк болот жана окулбаган эскертүүлөр 3 жолу жаңыланат.",
+  "@onCallModeDescription": {
+    "description": "On-call mode description"
+  },
+  "onCallModePhone": "Телефон үчүн Кызмат Режими",
+  "@onCallModePhone": {
+    "description": "On-call mode for phone toggle title"
+  },
+  "onCallModePhoneDescription": "Телефондо күчтүү эскертүүлөр",
+  "@onCallModePhoneDescription": {
+    "description": "On-call mode for phone description"
+  },
+  "onCallModeWatch": "Акылдуу Саат үчүн Кызмат Режими",
+  "@onCallModeWatch": {
+    "description": "On-call mode for watch toggle title"
+  },
+  "onCallModeWatchDescription": "Акылдуу саатта күчтүү эскертүүлөр",
+  "@onCallModeWatchDescription": {
+    "description": "On-call mode for watch description"
+  },
+  "vacationMode": "Эс Алуу Режими",
+  "@vacationMode": {
+    "description": "Vacation mode section title"
+  },
+  "vacationModeDescription": "Эс алуу режиминде эч кандай эскертүү кабыл алынбайт.",
+  "@vacationModeDescription": {
+    "description": "Vacation mode description"
+  },
+  "vacationModePhone": "Телефон үчүн Эс Алуу Режими",
+  "@vacationModePhone": {
+    "description": "Vacation mode for phone toggle title"
+  },
+  "vacationModePhoneDescription": "Телефондо эскертүүлөрдү өчүрүңүз",
+  "@vacationModePhoneDescription": {
+    "description": "Vacation mode for phone description"
+  },
+  "vacationModeWatch": "Акылдуу Саат үчүн Эс Алуу Режими",
+  "@vacationModeWatch": {
+    "description": "Vacation mode for watch toggle title"
+  },
+  "vacationModeWatchDescription": "Акылдуу саатта эскертүүлөрдү өчүрүңүз",
+  "@vacationModeWatchDescription": {
+    "description": "Vacation mode for watch description"
+  },
+  "serverUrl": "Сервер URL",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  "collection": "Жыйнак",
+  "@collection": {
+    "description": "Collection label"
+  },
+  "language": "Тил",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "selectLanguage": "Тилди Тандаңыз",
+  "@selectLanguage": {
+    "description": "Select language dropdown label"
+  },
+  "languageDescription": "Өзүңүздүн каалаган тилиңизди тандаңыз. Колдонмо ыңгайлаштырылган жобого ылайык түзүлүштүн тилин колдонот.",
+  "@languageDescription": {
+    "description": "Language settings description"
+  },
+  "close": "Жабуу",
+  "@close": {
+    "description": "Close button text"
+  },
+  "settingsSaved": "Жөндөөлөр сакталды",
+  "@settingsSaved": {
+    "description": "Settings saved message"
+  },
+  "invalidUrl": "Сураныч, туура URL дарегин киргизиңиз",
+  "@invalidUrl": {
+    "description": "Invalid URL error message"
+  },
+  "invalidPollingInterval": "Суроо аралыгы 5-300 секунд арасында болушу керек",
+  "@invalidPollingInterval": {
+    "description": "Invalid polling interval error message"
+  },
+  "noGroupsAdded": "Азырынча эч кандай топ кошулган жок. Жогорудан топ атын кошуңуз.",
+  "@noGroupsAdded": {
+    "description": "No groups added message"
+  },
+  "donate": "Жардам Берүү",
+  "@donate": {
+    "description": "Donate button text"
+  },
+  "donateDescription": "Бул колдонмонун өнүгүүсүн колдоңуз",
+  "@donateDescription": {
+    "description": "Donate section description"
+  },
+  "donateButton": "Мага Бир Кофе Сатып Бер",
+  "@donateButton": {
+    "description": "Donate button label"
+  }
+}
+

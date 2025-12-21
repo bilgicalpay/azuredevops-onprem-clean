@@ -1,6 +1,6 @@
 # Release Notes - v1.1.4 (Build 43)
 
-**Release Date:** 2024-12-20  
+**Release Date:** 21-12-2025  
 **Package Name:** io.rdc.azuredevops  
 **Developer:** Alpay Bilgiç (bilgicalpay@gmail.com)
 

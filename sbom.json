@@ -1,0 +1,20 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-12-20T20:52:47Z",
+    "tools": [
+      {
+        "vendor": "Flutter",
+        "name": "pub deps"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "name": "azuredevops-onprem",
+      "version": "1.1.4+43"
+    }
+  },
+  "components": []
+}

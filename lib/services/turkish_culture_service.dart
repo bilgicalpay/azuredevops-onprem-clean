@@ -11,6 +11,9 @@ import 'dart:math';
 class TurkishCultureService {
   static final Random _random = Random();
   
+  // Track shown information to avoid duplicates
+  static final Set<String> _shownInfoKeys = <String>{};
+  
   /// Turkish historical figures and achievements in science and art
   static final List<Map<String, String>> _turkishFigures = [
     {
@@ -132,10 +135,6 @@ class TurkishCultureService {
     {
       'name': 'Canan Dağdeviren',
       'info': 'Türk fizik mühendisi. Esnek elektronik cihazlar geliştirdi. MIT\'de araştırmacı. Forbes\'un "30 Under 30" listesinde yer aldı.',
-    },
-    {
-      'name': 'Orhan Pamuk',
-      'info': '2006 Nobel Edebiyat Ödülü sahibi Türk yazar. "Kara Kitap", "Benim Adım Kırmızı" gibi eserleriyle tanınır.',
     },
     {
       'name': 'Yaşar Kemal',
@@ -335,32 +334,129 @@ class TurkishCultureService {
   
   /// Get random Turkish culture information
   /// Returns either a historical figure, historical Turkish state, or modern Turkish state
+  /// Ensures no duplicate information is shown until all have been shown
   static Map<String, String> getRandomInfo() {
     final rand = _random.nextDouble();
     
+    // Check if all info has been shown, if so reset
+    final totalInfoCount = _turkishFigures.length + _turkishStates.length + _modernTurkishStates.length;
+    if (_shownInfoKeys.length >= totalInfoCount) {
+      _shownInfoKeys.clear();
+    }
+    
+    Map<String, String>? selectedInfo;
+    String? infoKey;
+    int attempts = 0;
+    const maxAttempts = 100; // Prevent infinite loop
+    
     // 50% chance for historical figure, 25% for historical state, 25% for modern state
-    if (rand < 0.5) {
+    while (selectedInfo == null && attempts < maxAttempts) {
+      attempts++;
+      
+      if (rand < 0.5) {
+        // Try to get a figure that hasn't been shown
+        final availableFigures = _turkishFigures.where((f) {
+          final key = 'figure_${f['name']}';
+          return !_shownInfoKeys.contains(key);
+        }).toList();
+        
+        if (availableFigures.isEmpty) {
+          // All figures shown, reset and try again
+          _shownInfoKeys.removeWhere((key) => key.startsWith('figure_'));
+          if (_turkishFigures.isNotEmpty) {
+            final figure = _turkishFigures[_random.nextInt(_turkishFigures.length)];
+            infoKey = 'figure_${figure['name']}';
+            selectedInfo = {
+              'type': 'figure',
+              'title': figure['name']!,
+              'content': figure['info']!,
+            };
+          }
+        } else {
+          final figure = availableFigures[_random.nextInt(availableFigures.length)];
+          infoKey = 'figure_${figure['name']}';
+          selectedInfo = {
+            'type': 'figure',
+            'title': figure['name']!,
+            'content': figure['info']!,
+          };
+        }
+      } else if (rand < 0.75) {
+        // Try to get a historical state that hasn't been shown
+        final availableStates = _turkishStates.where((s) {
+          final key = 'state_${s['name']}';
+          return !_shownInfoKeys.contains(key);
+        }).toList();
+        
+        if (availableStates.isEmpty) {
+          // All states shown, reset and try again
+          _shownInfoKeys.removeWhere((key) => key.startsWith('state_'));
+          if (_turkishStates.isNotEmpty) {
+            final state = _turkishStates[_random.nextInt(_turkishStates.length)];
+            infoKey = 'state_${state['name']}';
+            selectedInfo = {
+              'type': 'state',
+              'title': '${state['flag']} ${state['name']}',
+              'content': '${state['info']!}\n\nYıllar: ${state['years']}',
+            };
+          }
+        } else {
+          final state = availableStates[_random.nextInt(availableStates.length)];
+          infoKey = 'state_${state['name']}';
+          selectedInfo = {
+            'type': 'state',
+            'title': '${state['flag']} ${state['name']}',
+            'content': '${state['info']!}\n\nYıllar: ${state['years']}',
+          };
+        }
+      } else {
+        // Try to get a modern state that hasn't been shown
+        final availableModernStates = _modernTurkishStates.where((s) {
+          final key = 'modern_state_${s['name']}';
+          return !_shownInfoKeys.contains(key);
+        }).toList();
+        
+        if (availableModernStates.isEmpty) {
+          // All modern states shown, reset and try again
+          _shownInfoKeys.removeWhere((key) => key.startsWith('modern_state_'));
+          if (_modernTurkishStates.isNotEmpty) {
+            final modernState = _modernTurkishStates[_random.nextInt(_modernTurkishStates.length)];
+            infoKey = 'modern_state_${modernState['name']}';
+            selectedInfo = {
+              'type': 'modern_state',
+              'title': '${modernState['flag']} ${modernState['name']}',
+              'content': '${modernState['info']!}\n\nYıllar: ${modernState['years']}',
+            };
+          }
+        } else {
+          final modernState = availableModernStates[_random.nextInt(availableModernStates.length)];
+          infoKey = 'modern_state_${modernState['name']}';
+          selectedInfo = {
+            'type': 'modern_state',
+            'title': '${modernState['flag']} ${modernState['name']}',
+            'content': '${modernState['info']!}\n\nYıllar: ${modernState['years']}',
+          };
+        }
+      }
+    }
+    
+    // Fallback if no info was selected (shouldn't happen)
+    if (selectedInfo == null) {
       final figure = _turkishFigures[_random.nextInt(_turkishFigures.length)];
-      return {
+      infoKey = 'figure_${figure['name']}';
+      selectedInfo = {
         'type': 'figure',
         'title': figure['name']!,
         'content': figure['info']!,
       };
-    } else if (rand < 0.75) {
-      final state = _turkishStates[_random.nextInt(_turkishStates.length)];
-      return {
-        'type': 'state',
-        'title': '${state['flag']} ${state['name']}',
-        'content': '${state['info']!}\n\nYıllar: ${state['years']}',
-      };
-    } else {
-      final modernState = _modernTurkishStates[_random.nextInt(_modernTurkishStates.length)];
-      return {
-        'type': 'modern_state',
-        'title': '${modernState['flag']} ${modernState['name']}',
-        'content': '${modernState['info']!}\n\nYıllar: ${modernState['years']}',
-      };
     }
+    
+    // Mark this info as shown
+    if (infoKey != null) {
+      _shownInfoKeys.add(infoKey);
+    }
+    
+    return selectedInfo;
   }
 }
 

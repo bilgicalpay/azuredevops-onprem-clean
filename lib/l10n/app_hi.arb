@@ -1,0 +1,219 @@
+{
+  "@@locale": "hi",
+  "appTitle": "Azure DevOps",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "सेटिंग्स",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "wikiSettings": "विकी सेटिंग्स",
+  "@wikiSettings": {
+    "description": "Wiki settings section title"
+  },
+  "wikiSettingsDescription": "Azure DevOps विकी फ़ाइल का URL दर्ज करें। यह विकी सामग्री होम पेज पर प्रदर्शित की जाएगी।",
+  "@wikiSettingsDescription": {
+    "description": "Wiki settings description"
+  },
+  "wikiUrl": "विकी URL",
+  "@wikiUrl": {
+    "description": "Wiki URL input label"
+  },
+  "save": "सहेजें",
+  "@save": {
+    "description": "Save button text"
+  },
+  "marketSettings": "मार्केट सेटिंग्स",
+  "@marketSettings": {
+    "description": "Market settings section title"
+  },
+  "marketSettingsDescription": "IIS स्थिर निर्देशिका URL दर्ज करें। APK और IPA फ़ाइलें इस निर्देशिका से सूचीबद्ध और डाउनलोड करने योग्य होंगी।",
+  "@marketSettingsDescription": {
+    "description": "Market settings description"
+  },
+  "marketUrl": "मार्केट URL",
+  "@marketUrl": {
+    "description": "Market URL input label"
+  },
+  "notificationSettings": "सूचना सेटिंग्स",
+  "@notificationSettings": {
+    "description": "Notification settings section title"
+  },
+  "controlFrequency": "नियंत्रण आवृत्ति",
+  "@controlFrequency": {
+    "description": "Control frequency section title"
+  },
+  "pollingInterval": "पोलिंग अंतराल (सेकंड)",
+  "@pollingInterval": {
+    "description": "Polling interval input label"
+  },
+  "pollingIntervalHelper": "5-300 सेकंड के बीच",
+  "@pollingIntervalHelper": {
+    "description": "Polling interval helper text"
+  },
+  "fast": "तेज़ (10s)",
+  "@fast": {
+    "description": "Fast polling interval button"
+  },
+  "normal": "सामान्य (15s)",
+  "@normal": {
+    "description": "Normal polling interval button"
+  },
+  "slow": "धीमा (30s)",
+  "@slow": {
+    "description": "Slow polling interval button"
+  },
+  "notificationTypes": "सूचना प्रकार",
+  "@notificationTypes": {
+    "description": "Notification types section title"
+  },
+  "notifyOnFirstAssignment": "पहले असाइनमेंट पर सूचना",
+  "@notifyOnFirstAssignment": {
+    "description": "Notify on first assignment toggle title"
+  },
+  "notifyOnFirstAssignmentDescription": "केवल पहली बार मुझे असाइन किए जाने पर सूचना भेजें",
+  "@notifyOnFirstAssignmentDescription": {
+    "description": "Notify on first assignment description"
+  },
+  "notifyOnAllUpdates": "सभी अपडेट पर सूचना",
+  "@notifyOnAllUpdates": {
+    "description": "Notify on all updates toggle title"
+  },
+  "notifyOnAllUpdatesDescription": "मुझे असाइन किए गए कार्य आइटम अपडेट होने पर सूचना भेजें",
+  "@notifyOnAllUpdatesDescription": {
+    "description": "Notify on all updates description"
+  },
+  "notifyOnHotfixOnly": "केवल Hotfix",
+  "@notifyOnHotfixOnly": {
+    "description": "Notify on hotfix only toggle title"
+  },
+  "notifyOnHotfixOnlyDescription": "केवल Hotfix प्रकार के कार्य आइटम के लिए सूचना",
+  "@notifyOnHotfixOnlyDescription": {
+    "description": "Notify on hotfix only description"
+  },
+  "notifyOnGroupAssignments": "समूह असाइनमेंट पर सूचना",
+  "@notifyOnGroupAssignments": {
+    "description": "Notify on group assignments toggle title"
+  },
+  "notifyOnGroupAssignmentsDescription": "निर्दिष्ट समूहों को असाइनमेंट किए जाने पर सूचना भेजें",
+  "@notifyOnGroupAssignmentsDescription": {
+    "description": "Notify on group assignments description"
+  },
+  "groupName": "समूह नाम",
+  "@groupName": {
+    "description": "Group name input label"
+  },
+  "groupNameHint": "उदाहरण: डेवलपर्स, QA टीम",
+  "@groupNameHint": {
+    "description": "Group name input hint"
+  },
+  "smartwatchNotifications": "स्मार्टवॉच सूचनाएं",
+  "@smartwatchNotifications": {
+    "description": "Smartwatch notifications toggle title"
+  },
+  "smartwatchNotificationsDescription": "स्मार्टवॉच पर सूचनाएं भेजें (केवल पहले असाइनमेंट पर)",
+  "@smartwatchNotificationsDescription": {
+    "description": "Smartwatch notifications description"
+  },
+  "onCallMode": "ऑन-कॉल मोड",
+  "@onCallMode": {
+    "description": "On-call mode section title"
+  },
+  "onCallModeDescription": "ऑन-कॉल मोड में, सूचनाएं अधिक आक्रामक हो जाती हैं और अपठित सूचनाएं 3 बार ताज़ा की जाती हैं।",
+  "@onCallModeDescription": {
+    "description": "On-call mode description"
+  },
+  "onCallModePhone": "फोन के लिए ऑन-कॉल मोड",
+  "@onCallModePhone": {
+    "description": "On-call mode for phone toggle title"
+  },
+  "onCallModePhoneDescription": "फोन पर आक्रामक सूचनाएं",
+  "@onCallModePhoneDescription": {
+    "description": "On-call mode for phone description"
+  },
+  "onCallModeWatch": "स्मार्टवॉच के लिए ऑन-कॉल मोड",
+  "@onCallModeWatch": {
+    "description": "On-call mode for watch toggle title"
+  },
+  "onCallModeWatchDescription": "स्मार्टवॉच पर आक्रामक सूचनाएं",
+  "@onCallModeWatchDescription": {
+    "description": "On-call mode for watch description"
+  },
+  "vacationMode": "छुट्टी मोड",
+  "@vacationMode": {
+    "description": "Vacation mode section title"
+  },
+  "vacationModeDescription": "छुट्टी मोड में कोई सूचना प्राप्त नहीं होती है।",
+  "@vacationModeDescription": {
+    "description": "Vacation mode description"
+  },
+  "vacationModePhone": "फोन के लिए छुट्टी मोड",
+  "@vacationModePhone": {
+    "description": "Vacation mode for phone toggle title"
+  },
+  "vacationModePhoneDescription": "फोन पर सूचनाएं अक्षम करें",
+  "@vacationModePhoneDescription": {
+    "description": "Vacation mode for phone description"
+  },
+  "vacationModeWatch": "स्मार्टवॉच के लिए छुट्टी मोड",
+  "@vacationModeWatch": {
+    "description": "Vacation mode for watch toggle title"
+  },
+  "vacationModeWatchDescription": "स्मार्टवॉच पर सूचनाएं अक्षम करें",
+  "@vacationModeWatchDescription": {
+    "description": "Vacation mode for watch description"
+  },
+  "serverUrl": "सर्वर URL",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  "collection": "संग्रह",
+  "@collection": {
+    "description": "Collection label"
+  },
+  "language": "भाषा",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "selectLanguage": "भाषा चुनें",
+  "@selectLanguage": {
+    "description": "Select language dropdown label"
+  },
+  "languageDescription": "अपनी पसंदीदा भाषा चुनें। ऐप डिफ़ॉल्ट रूप से आपकी डिवाइस भाषा का उपयोग करेगा।",
+  "@languageDescription": {
+    "description": "Language settings description"
+  },
+  "close": "बंद करें",
+  "@close": {
+    "description": "Close button text"
+  },
+  "settingsSaved": "सेटिंग्स सहेजी गईं",
+  "@settingsSaved": {
+    "description": "Settings saved message"
+  },
+  "invalidUrl": "कृपया एक वैध URL दर्ज करें",
+  "@invalidUrl": {
+    "description": "Invalid URL error message"
+  },
+  "invalidPollingInterval": "पोलिंग अंतराल 5-300 सेकंड के बीच होना चाहिए",
+  "@invalidPollingInterval": {
+    "description": "Invalid polling interval error message"
+  },
+  "noGroupsAdded": "अभी तक कोई समूह नहीं जोड़ा गया है। ऊपर से समूह नाम जोड़ें।",
+  "@noGroupsAdded": {
+    "description": "No groups added message"
+  },
+  "donate": "दान करें",
+  "@donate": {
+    "description": "Donate button text"
+  },
+  "donateDescription": "इस ऐप के विकास का समर्थन करें",
+  "@donateDescription": {
+    "description": "Donate section description"
+  },
+  "donateButton": "मुझे एक कॉफी खरीदें",
+  "@donateButton": {
+    "description": "Donate button label"
+  }
+}

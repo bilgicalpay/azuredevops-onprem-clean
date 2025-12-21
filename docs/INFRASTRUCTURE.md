@@ -3,7 +3,7 @@
 **Uygulama:** Azure DevOps Server 2022 Mobile App  
 **Geliştirici:** Alpay Bilgiç  
 **Versiyon:** 1.1.4+43  
-**Tarih:** 2024-12-20
+**Tarih:** 21-12-2025
 
 ## İçindekiler
 
@@ -527,6 +527,6 @@ adb logcat | grep azuredevops
 
 ---
 
-**Son Güncelleme:** 2024-12-20  
+**Son Güncelleme:** 21-12-2025  
 **Dokümantasyon Versiyonu:** 1.1.4
 

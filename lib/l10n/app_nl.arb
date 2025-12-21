@@ -1,0 +1,219 @@
+{
+  "@@locale": "nl",
+  "appTitle": "Azure DevOps",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "Instellingen",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "wikiSettings": "Wiki Instellingen",
+  "@wikiSettings": {
+    "description": "Wiki settings section title"
+  },
+  "wikiSettingsDescription": "Voer de URL van het Azure DevOps wiki-bestand in. Deze wiki-inhoud wordt op de startpagina weergegeven.",
+  "@wikiSettingsDescription": {
+    "description": "Wiki settings description"
+  },
+  "wikiUrl": "Wiki URL",
+  "@wikiUrl": {
+    "description": "Wiki URL input label"
+  },
+  "save": "Opslaan",
+  "@save": {
+    "description": "Save button text"
+  },
+  "marketSettings": "Markt Instellingen",
+  "@marketSettings": {
+    "description": "Market settings section title"
+  },
+  "marketSettingsDescription": "Voer de URL van de IIS statische directory in. APK- en IPA-bestanden worden uit deze directory weergegeven en gedownload.",
+  "@marketSettingsDescription": {
+    "description": "Market settings description"
+  },
+  "marketUrl": "Markt URL",
+  "@marketUrl": {
+    "description": "Market URL input label"
+  },
+  "notificationSettings": "Melding Instellingen",
+  "@notificationSettings": {
+    "description": "Notification settings section title"
+  },
+  "controlFrequency": "Controle Frequentie",
+  "@controlFrequency": {
+    "description": "Control frequency section title"
+  },
+  "pollingInterval": "Polling Interval (seconden)",
+  "@pollingInterval": {
+    "description": "Polling interval input label"
+  },
+  "pollingIntervalHelper": "Tussen 5-300 seconden",
+  "@pollingIntervalHelper": {
+    "description": "Polling interval helper text"
+  },
+  "fast": "Snel (10s)",
+  "@fast": {
+    "description": "Fast polling interval button"
+  },
+  "normal": "Normaal (15s)",
+  "@normal": {
+    "description": "Normal polling interval button"
+  },
+  "slow": "Langzaam (30s)",
+  "@slow": {
+    "description": "Slow polling interval button"
+  },
+  "notificationTypes": "Melding Typen",
+  "@notificationTypes": {
+    "description": "Notification types section title"
+  },
+  "notifyOnFirstAssignment": "Melding bij Eerste Toewijzing",
+  "@notifyOnFirstAssignment": {
+    "description": "Notify on first assignment toggle title"
+  },
+  "notifyOnFirstAssignmentDescription": "Melding alleen verzenden bij eerste toewijzing aan mij",
+  "@notifyOnFirstAssignmentDescription": {
+    "description": "Notify on first assignment description"
+  },
+  "notifyOnAllUpdates": "Melding bij Alle Updates",
+  "@notifyOnAllUpdates": {
+    "description": "Notify on all updates toggle title"
+  },
+  "notifyOnAllUpdatesDescription": "Melding verzenden wanneer aan mij toegewezen werkitems worden bijgewerkt",
+  "@notifyOnAllUpdatesDescription": {
+    "description": "Notify on all updates description"
+  },
+  "notifyOnHotfixOnly": "Alleen Hotfix",
+  "@notifyOnHotfixOnly": {
+    "description": "Notify on hotfix only toggle title"
+  },
+  "notifyOnHotfixOnlyDescription": "Melding alleen voor werkitems van het type Hotfix",
+  "@notifyOnHotfixOnlyDescription": {
+    "description": "Notify on hotfix only description"
+  },
+  "notifyOnGroupAssignments": "Melding bij Groepstoewijzingen",
+  "@notifyOnGroupAssignments": {
+    "description": "Notify on group assignments toggle title"
+  },
+  "notifyOnGroupAssignmentsDescription": "Melding verzenden wanneer toewijzingen worden gemaakt aan opgegeven groepen",
+  "@notifyOnGroupAssignmentsDescription": {
+    "description": "Notify on group assignments description"
+  },
+  "groupName": "Groepsnaam",
+  "@groupName": {
+    "description": "Group name input label"
+  },
+  "groupNameHint": "Bijv: Ontwikkelaars, QA Team",
+  "@groupNameHint": {
+    "description": "Group name input hint"
+  },
+  "smartwatchNotifications": "Smartwatch Meldingen",
+  "@smartwatchNotifications": {
+    "description": "Smartwatch notifications toggle title"
+  },
+  "smartwatchNotificationsDescription": "Meldingen naar smartwatches verzenden (alleen bij eerste toewijzing)",
+  "@smartwatchNotificationsDescription": {
+    "description": "Smartwatch notifications description"
+  },
+  "onCallMode": "Dienstmodus",
+  "@onCallMode": {
+    "description": "On-call mode section title"
+  },
+  "onCallModeDescription": "In dienstmodus worden meldingen agressiever en ongelezen meldingen worden 3 keer vernieuwd.",
+  "@onCallModeDescription": {
+    "description": "On-call mode description"
+  },
+  "onCallModePhone": "Dienstmodus voor Telefoon",
+  "@onCallModePhone": {
+    "description": "On-call mode for phone toggle title"
+  },
+  "onCallModePhoneDescription": "Agressieve meldingen op telefoon",
+  "@onCallModePhoneDescription": {
+    "description": "On-call mode for phone description"
+  },
+  "onCallModeWatch": "Dienstmodus voor Smartwatch",
+  "@onCallModeWatch": {
+    "description": "On-call mode for watch toggle title"
+  },
+  "onCallModeWatchDescription": "Agressieve meldingen op smartwatch",
+  "@onCallModeWatchDescription": {
+    "description": "On-call mode for watch description"
+  },
+  "vacationMode": "Vakantiemodus",
+  "@vacationMode": {
+    "description": "Vacation mode section title"
+  },
+  "vacationModeDescription": "In vakantiemodus worden geen meldingen ontvangen.",
+  "@vacationModeDescription": {
+    "description": "Vacation mode description"
+  },
+  "vacationModePhone": "Vakantiemodus voor Telefoon",
+  "@vacationModePhone": {
+    "description": "Vacation mode for phone toggle title"
+  },
+  "vacationModePhoneDescription": "Meldingen op telefoon uitschakelen",
+  "@vacationModePhoneDescription": {
+    "description": "Vacation mode for phone description"
+  },
+  "vacationModeWatch": "Vakantiemodus voor Smartwatch",
+  "@vacationModeWatch": {
+    "description": "Vacation mode for watch toggle title"
+  },
+  "vacationModeWatchDescription": "Meldingen op smartwatch uitschakelen",
+  "@vacationModeWatchDescription": {
+    "description": "Vacation mode for watch description"
+  },
+  "serverUrl": "Server URL",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  "collection": "Collectie",
+  "@collection": {
+    "description": "Collection label"
+  },
+  "language": "Taal",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "selectLanguage": "Selecteer Taal",
+  "@selectLanguage": {
+    "description": "Select language dropdown label"
+  },
+  "languageDescription": "Kies uw voorkeurstaal. De app gebruikt standaard de taal van uw apparaat.",
+  "@languageDescription": {
+    "description": "Language settings description"
+  },
+  "close": "Sluiten",
+  "@close": {
+    "description": "Close button text"
+  },
+  "settingsSaved": "Instellingen opgeslagen",
+  "@settingsSaved": {
+    "description": "Settings saved message"
+  },
+  "invalidUrl": "Voer een geldige URL in",
+  "@invalidUrl": {
+    "description": "Invalid URL error message"
+  },
+  "invalidPollingInterval": "Polling interval moet tussen 5-300 seconden liggen",
+  "@invalidPollingInterval": {
+    "description": "Invalid polling interval error message"
+  },
+  "noGroupsAdded": "Nog geen groepen toegevoegd. Voeg hierboven een groepsnaam toe.",
+  "@noGroupsAdded": {
+    "description": "No groups added message"
+  },
+  "donate": "Doneren",
+  "@donate": {
+    "description": "Donate button text"
+  },
+  "donateDescription": "Ondersteun de ontwikkeling van deze app",
+  "@donateDescription": {
+    "description": "Donate section description"
+  },
+  "donateButton": "Koop me een Koffie",
+  "@donateButton": {
+    "description": "Donate button label"
+  }
+}

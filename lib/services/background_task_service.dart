@@ -16,6 +16,7 @@ import 'work_item_service.dart' show WorkItemService, WorkItem;
 import 'notification_service.dart';
 import 'market_service.dart';
 import 'storage_service.dart';
+import 'auth_service.dart';
 
 /// Arka plan görev servisi sınıfı
 /// Uygulama kapalıyken bile periyodik kontroller yapar
@@ -29,21 +30,24 @@ class BackgroundTaskService {
   final WorkItemService _workItemService = WorkItemService();
   final NotificationService _notificationService = NotificationService();
   StorageService? _storageService;
+  AuthService? _authService;
   final Map<int, int> _workItemRevisions = {};
   final Map<int, String?> _workItemAssignees = {}; // Track assignees to detect assignee changes
   final Map<int, DateTime?> _workItemChangedDates = {}; // Track changed dates for better change detection
   Set<int> _knownWorkItemIds = {};
   Set<int> _notifiedWorkItemIds = {}; // Track which work items we've already notified about
+  final Map<int, Timer> _notificationRetryTimers = {}; // Nöbetçi modunda okunmayan bildirimler için retry timer'ları
   
   // SharedPreferences key for persistent notified work item IDs
   static const String _notifiedIdsKey = 'notified_work_item_ids';
   static const String _firstAssignmentNotifiedIdsKey = 'first_assignment_notified_work_item_ids';
 
   /// Initialize the service (called on app start)
-  Future<void> init() async {
+  Future<void> init({AuthService? authService}) async {
     // Initialize storage service
     _storageService = StorageService();
     await _storageService!.init();
+    _authService = authService;
     // Actual initialization happens in initializeTracking()
   }
 
@@ -96,7 +100,76 @@ class BackgroundTaskService {
     _isRunning = false;
     _backgroundTimer?.cancel();
     _backgroundTimer = null;
+    // Cancel all retry timers
+    for (final timer in _notificationRetryTimers.values) {
+      timer.cancel();
+    }
+    _notificationRetryTimers.clear();
     print('Background task service stopped');
+  }
+  
+  /// Nöbetçi modunda okunmayan bildirimleri 3 kez yenileme
+  Future<void> _scheduleNotificationRetry(int workItemId, String title, String type, String currentState, List<String>? availableStates) async {
+    if (_storageService == null) return;
+    
+    // Eğer nöbetçi modu aktif değilse, retry yapma
+    if (!_storageService!.getOnCallMode()) {
+      return;
+    }
+    
+    // Mevcut retry timer'ı iptal et
+    _notificationRetryTimers[workItemId]?.cancel();
+    
+    // Retry count'u kontrol et
+    final retryCount = await _storageService!.getUnreadNotificationRetryCount(workItemId);
+    if (retryCount >= 3) {
+      print('🔄 [BackgroundTaskService] Max retry count reached for work item #$workItemId');
+      return;
+    }
+    
+    // 30 saniye sonra retry yap
+    final timer = Timer(const Duration(seconds: 30), () async {
+      if (_storageService == null) return;
+      
+      // Retry count'u artır
+      await _storageService!.incrementUnreadNotificationRetry(workItemId);
+      final newRetryCount = await _storageService!.getUnreadNotificationRetryCount(workItemId);
+      
+      if (newRetryCount <= 3) {
+        print('🔄 [BackgroundTaskService] Retrying notification for work item #$workItemId (attempt $newRetryCount/3)');
+        
+        // Nöbetçi modunda agresif bildirim gönder
+        final isOnCallModePhone = _storageService!.getOnCallModePhone();
+        if (isOnCallModePhone) {
+          await _notificationService.showOnCallNotification(
+            title: 'Work Item #$workItemId: $title',
+            body: 'Size atanan work item: $type (Yeniden bildirim ${newRetryCount}/3)',
+            payload: workItemId.toString(),
+          );
+        }
+        
+        // Bir sonraki retry'ı planla (eğer 3'ten azsa)
+        if (newRetryCount < 3) {
+          await _scheduleNotificationRetry(workItemId, title, type, currentState, availableStates);
+        }
+      }
+      
+      // Timer'ı temizle
+      _notificationRetryTimers.remove(workItemId);
+    });
+    
+    _notificationRetryTimers[workItemId] = timer;
+    print('⏰ [BackgroundTaskService] Scheduled notification retry for work item #$workItemId (30s)');
+  }
+  
+  /// Bildirim okunduğunda retry timer'ı iptal et
+  Future<void> cancelNotificationRetry(int workItemId) async {
+    _notificationRetryTimers[workItemId]?.cancel();
+    _notificationRetryTimers.remove(workItemId);
+    if (_storageService != null) {
+      await _storageService!.resetUnreadNotificationRetry(workItemId);
+    }
+    print('✅ [BackgroundTaskService] Notification retry cancelled for work item #$workItemId');
   }
 
   /// Check for work item changes
@@ -145,6 +218,14 @@ class BackgroundTaskService {
           _workItemAssignees[workItem.id] = currentAssignee;
           _workItemChangedDates[workItem.id] = currentChangedDate;
           
+          // TATİL MODU KONTROLÜ - En önce kontrol et, eğer tatil modu aktifse hiçbir bildirim gönderme
+          final vacationModePhone = _storageService!.getVacationModePhone();
+          final vacationModeWatch = _storageService!.getVacationModeWatch();
+          if (vacationModePhone && vacationModeWatch) {
+            print('🏖️ [BackgroundTaskService] Skipping all notifications: Vacation mode enabled for both phone and watch');
+            continue;
+          }
+          
           // ÖNEMLİ: Eğer bu work item "ilk atamada bildirim" ile işaretlenmişse ve sadece "ilk atamada bildirim" aktifse,
           // bir daha asla bildirim gönderme
           if (await _isFirstAssignmentNotified(workItem.id)) {
@@ -169,7 +250,7 @@ class BackgroundTaskService {
             }
           }
           
-          // Bildirim ayarlarını kontrol et
+          // Bildirim ayarlarını kontrol et (tatil modu kontrolü _shouldNotifyForWorkItem içinde yapılıyor)
           final shouldNotify = await _shouldNotifyForWorkItem(workItem, isNew: true, wasAssigned: true);
           if (!shouldNotify) {
             print('🔕 [BackgroundTaskService] Notification skipped for work item #${workItem.id} based on settings');
@@ -178,11 +259,87 @@ class BackgroundTaskService {
           
           // Yeni work item veya değişiklik var - bildirim gönder
           print('🆕 [BackgroundTaskService] New work item detected: #${workItem.id} - ${workItem.title}');
-          await _notificationService.showWorkItemNotification(
-            workItemId: workItem.id,
-            title: workItem.title,
-            body: 'Size yeni bir work item atandı: ${workItem.type}',
-          );
+          
+          // Nöbetçi modu kontrolü
+          final isOnCallModePhone = _storageService!.getOnCallModePhone();
+          final isOnCallModeWatch = _storageService!.getOnCallModeWatch();
+          final isOnCallMode = isOnCallModePhone || isOnCallModeWatch;
+          
+          // Work item state'lerini al (akıllı saat için)
+          List<String>? availableStates;
+          if (_authService != null && _storageService != null) {
+            try {
+              final token = await _authService!.getAuthToken();
+              if (token != null) {
+                availableStates = await _workItemService.getWorkItemStates(
+                  serverUrl: _authService!.serverUrl!,
+                  token: token,
+                  workItemType: workItem.type,
+                  collection: _storageService!.getCollection(),
+                  project: workItem.project,
+                );
+              }
+            } catch (e) {
+              print('⚠️ [BackgroundTaskService] Failed to get work item states: $e');
+            }
+          }
+          
+          // Telefon bildirimi (tatil modu kontrolü ile)
+          final shouldNotifyPhone = await _shouldNotifyForWorkItem(workItem, isNew: true, wasAssigned: true, forPhone: true, forWatch: false);
+          if (shouldNotifyPhone) {
+            if (isOnCallModePhone) {
+              // Nöbetçi modunda agresif bildirim
+              await _notificationService.showOnCallNotification(
+                title: 'Work Item #${workItem.id}: ${workItem.title}',
+                body: 'Size yeni bir work item atandı: ${workItem.type}',
+                payload: workItem.id.toString(),
+              );
+            } else {
+              // Normal bildirim
+              await _notificationService.showWorkItemNotification(
+                workItemId: workItem.id,
+                title: workItem.title,
+                body: 'Size yeni bir work item atandı: ${workItem.type}',
+                isFirstAssignment: true,
+                isOnCallMode: false,
+                availableStates: availableStates,
+                currentState: workItem.state,
+                storageService: _storageService,
+                workItemService: _workItemService,
+              );
+            }
+          }
+          
+          // Akıllı saat bildirimi (sadece ilk atamada, tatil modu kontrolü ile)
+          final shouldNotifyWatch = await _shouldNotifyForWorkItem(workItem, isNew: true, wasAssigned: true, forPhone: false, forWatch: true);
+          if (shouldNotifyWatch && _storageService!.getEnableSmartwatchNotifications()) {
+            if (isOnCallModeWatch) {
+              // Nöbetçi modunda agresif bildirim (akıllı saat için)
+              await _notificationService.showOnCallNotification(
+                title: 'Work Item #${workItem.id}: ${workItem.title}',
+                body: 'Size yeni bir work item atandı: ${workItem.type}',
+                payload: workItem.id.toString(),
+              );
+            } else {
+              // Normal akıllı saat bildirimi
+              await _notificationService.showWorkItemNotification(
+                workItemId: workItem.id,
+                title: workItem.title,
+                body: 'Size yeni bir work item atandı: ${workItem.type}',
+                isFirstAssignment: true,
+                isOnCallMode: false,
+                availableStates: availableStates,
+                currentState: workItem.state,
+                storageService: _storageService,
+                workItemService: _workItemService,
+              );
+            }
+          }
+          
+          // Nöbetçi modunda okunmayan bildirimleri 3 kez yenileme
+          if (isOnCallMode) {
+            await _scheduleNotificationRetry(workItem.id, workItem.title, workItem.type, workItem.state, availableStates);
+          }
           
           // ÖNEMLİ: Eğer sadece "ilk atamada bildirim" aktifse (ve "tüm güncellemelerde bildirim" aktif değilse),
           // bu work item için bir daha ASLA bildirim gönderme (uygulama kaldırılıp tekrar kurulsa bile)
@@ -250,6 +407,24 @@ class BackgroundTaskService {
           }
           
           if (shouldNotify) {
+            // TATİL MODU KONTROLÜ - En önce kontrol et, eğer tatil modu aktifse hiçbir bildirim gönderme
+            final vacationModePhone = _storageService!.getVacationModePhone();
+            final vacationModeWatch = _storageService!.getVacationModeWatch();
+            if (vacationModePhone && vacationModeWatch) {
+              print('🏖️ [BackgroundTaskService] Skipping all notifications: Vacation mode enabled for both phone and watch');
+              // Update tracking even if notification skipped
+              if (knownRev == null) {
+                _workItemRevisions[workItem.id] = currentRev;
+              }
+              if (knownAssignee == null) {
+                _workItemAssignees[workItem.id] = currentAssignee;
+              }
+              if (knownChangedDate == null && currentChangedDate != null) {
+                _workItemChangedDates[workItem.id] = currentChangedDate;
+              }
+              continue;
+            }
+            
             // ÖNEMLİ: Eğer bu work item "ilk atamada bildirim" ile işaretlenmişse ve sadece "ilk atamada bildirim" aktifse,
             // bir daha asla bildirim gönderme
             if (await _isFirstAssignmentNotified(workItem.id)) {
@@ -308,15 +483,64 @@ class BackgroundTaskService {
               continue;
             }
             
-            await _notificationService.showWorkItemNotification(
-              workItemId: workItem.id,
-              title: workItem.title,
-              body: notificationBody,
-            );
+            // Telefon ve saat için ayrı ayrı kontrol et (tatil modu kontrolü _shouldNotifyForWorkItem içinde yapılıyor)
+            final shouldNotifyPhone = await _shouldNotifyForWorkItem(workItem, isNew: false, wasAssigned: wasAssigned, forPhone: true, forWatch: false);
+            final shouldNotifyWatch = await _shouldNotifyForWorkItem(workItem, isNew: false, wasAssigned: wasAssigned, forPhone: false, forWatch: true);
             
-            await _saveLastNotifiedRevision(workItem.id, currentRev);
-            await _markAsNotified(workItem.id); // Kalıcı olarak kaydet
-            print('✅ [BackgroundTaskService] Notification sent for work item #${workItem.id}: $notificationBody');
+            if (shouldNotifyPhone) {
+              final isOnCallModePhone = _storageService!.getOnCallModePhone();
+              if (isOnCallModePhone) {
+                await _notificationService.showOnCallNotification(
+                  title: 'Work Item #${workItem.id}: ${workItem.title}',
+                  body: notificationBody,
+                  payload: workItem.id.toString(),
+                );
+              } else {
+                await _notificationService.showWorkItemNotification(
+                  workItemId: workItem.id,
+                  title: workItem.title,
+                  body: notificationBody,
+                  isFirstAssignment: false,
+                  isOnCallMode: false,
+                  availableStates: null,
+                  currentState: workItem.state,
+                  storageService: _storageService,
+                  workItemService: _workItemService,
+                );
+              }
+            }
+            
+            if (shouldNotifyWatch && _storageService!.getEnableSmartwatchNotifications()) {
+              final isOnCallModeWatch = _storageService!.getOnCallModeWatch();
+              if (isOnCallModeWatch) {
+                await _notificationService.showOnCallNotification(
+                  title: 'Work Item #${workItem.id}: ${workItem.title}',
+                  body: notificationBody,
+                  payload: workItem.id.toString(),
+                );
+              } else {
+                await _notificationService.showWorkItemNotification(
+                  workItemId: workItem.id,
+                  title: workItem.title,
+                  body: notificationBody,
+                  isFirstAssignment: false,
+                  isOnCallMode: false,
+                  availableStates: null,
+                  currentState: workItem.state,
+                  storageService: _storageService,
+                  workItemService: _workItemService,
+                );
+              }
+            }
+            
+            // Sadece bildirim gönderildiyse tracking güncelle
+            if (shouldNotifyPhone || shouldNotifyWatch) {
+              await _saveLastNotifiedRevision(workItem.id, currentRev);
+              await _markAsNotified(workItem.id); // Kalıcı olarak kaydet
+              print('✅ [BackgroundTaskService] Notification sent for work item #${workItem.id}: $notificationBody');
+            } else {
+              print('🔕 [BackgroundTaskService] No notification sent for work item #${workItem.id} (vacation mode or other settings)');
+            }
           }
           
           // Update tracking even if no notification sent
@@ -715,12 +939,22 @@ class BackgroundTaskService {
   }
   
   /// Check if notification should be sent based on user settings
-  Future<bool> _shouldNotifyForWorkItem(WorkItem workItem, {required bool isNew, required bool wasAssigned}) async {
+  Future<bool> _shouldNotifyForWorkItem(WorkItem workItem, {required bool isNew, required bool wasAssigned, bool forPhone = true, bool forWatch = false}) async {
     try {
       // Initialize storage service if not already done
       if (_storageService == null) {
         _storageService = StorageService();
         await _storageService!.init();
+      }
+      
+      // Tatil modu kontrolü
+      if (forPhone && _storageService!.getVacationModePhone()) {
+        print('🏖️ [BackgroundTaskService] Skipping notification: Vacation mode enabled for phone');
+        return false;
+      }
+      if (forWatch && _storageService!.getVacationModeWatch()) {
+        print('🏖️ [BackgroundTaskService] Skipping notification: Vacation mode enabled for watch');
+        return false;
       }
       
       // Get notification settings
@@ -736,6 +970,12 @@ class BackgroundTaskService {
       // ÖNEMLİ: Eğer hiçbir bildirim ayarı aktif değilse, bildirim gönderme
       if (!notifyOnFirstAssignment && !notifyOnAllUpdates && !notifyOnHotfixOnly && !notifyOnGroupAssignments) {
         print('🔕 [BackgroundTaskService] Skipping notification: No notification settings enabled (all disabled)');
+        return false;
+      }
+      
+      // Akıllı saat için: Sadece ilk atamada bildirim gönder
+      if (forWatch && !isNew) {
+        print('⌚ [BackgroundTaskService] Skipping watch notification: Only first assignment allowed for smartwatch');
         return false;
       }
       

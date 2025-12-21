@@ -1,0 +1,220 @@
+{
+  "@@locale": "ug",
+  "appTitle": "Azure DevOps",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "تەڭشەكلەر",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "wikiSettings": "Wiki تەڭشەكلەرى",
+  "@wikiSettings": {
+    "description": "Wiki settings section title"
+  },
+  "wikiSettingsDescription": "Azure DevOps wiki ھۆججىتىنىڭ URL نى كىرگۈزۈڭ. بۇ wiki مەزمۇنى باش بەتتە كۆرسىتىلىدۇ.",
+  "@wikiSettingsDescription": {
+    "description": "Wiki settings description"
+  },
+  "wikiUrl": "Wiki URL",
+  "@wikiUrl": {
+    "description": "Wiki URL input label"
+  },
+  "save": "ساقلاش",
+  "@save": {
+    "description": "Save button text"
+  },
+  "marketSettings": "بازار تەڭشەكلەرى",
+  "@marketSettings": {
+    "description": "Market settings section title"
+  },
+  "marketSettingsDescription": "IIS static directory نىڭ URL نى كىرگۈزۈڭ. APK ۋە IPA ھۆججەتلىرى بۇ directory دىن تىزىملىنىدۇ ۋە چۈشۈرۈلىدۇ.",
+  "@marketSettingsDescription": {
+    "description": "Market settings description"
+  },
+  "marketUrl": "بازار URL",
+  "@marketUrl": {
+    "description": "Market URL input label"
+  },
+  "notificationSettings": "ئۇقتۇرۇش تەڭشەكلەرى",
+  "@notificationSettings": {
+    "description": "Notification settings section title"
+  },
+  "controlFrequency": "كونترول چاستلىقى",
+  "@controlFrequency": {
+    "description": "Control frequency section title"
+  },
+  "pollingInterval": "سۇئال قويۇش ئارىلىقى (سېكۇنت)",
+  "@pollingInterval": {
+    "description": "Polling interval input label"
+  },
+  "pollingIntervalHelper": "5-300 سېكۇنت ئارىسى",
+  "@pollingIntervalHelper": {
+    "description": "Polling interval helper text"
+  },
+  "fast": "تېز (10s)",
+  "@fast": {
+    "description": "Fast polling interval button"
+  },
+  "normal": "نورمال (15s)",
+  "@normal": {
+    "description": "Normal polling interval button"
+  },
+  "slow": "ئاستا (30s)",
+  "@slow": {
+    "description": "Slow polling interval button"
+  },
+  "notificationTypes": "ئۇقتۇرۇش تۈرلىرى",
+  "@notificationTypes": {
+    "description": "Notification types section title"
+  },
+  "notifyOnFirstAssignment": "بىرىنچى تەيىنلەشتە ئۇقتۇرۇش",
+  "@notifyOnFirstAssignment": {
+    "description": "Notify on first assignment toggle title"
+  },
+  "notifyOnFirstAssignmentDescription": "پەقەت بىرىنچى قېتىم ماڭا تەيىنلەنگەندە ئۇقتۇرۇش ئەۋەتىڭ",
+  "@notifyOnFirstAssignmentDescription": {
+    "description": "Notify on first assignment description"
+  },
+  "notifyOnAllUpdates": "بارلىق يېڭىلانمىلاردا ئۇقتۇرۇش",
+  "@notifyOnAllUpdates": {
+    "description": "Notify on all updates toggle title"
+  },
+  "notifyOnAllUpdatesDescription": "ماڭا تەيىنلەنگەن خىزمەت تۈرلىرى يېڭىلانغاندا ئۇقتۇرۇش ئەۋەتىڭ",
+  "@notifyOnAllUpdatesDescription": {
+    "description": "Notify on all updates description"
+  },
+  "notifyOnHotfixOnly": "پەقەت Hotfix",
+  "@notifyOnHotfixOnly": {
+    "description": "Notify on hotfix only toggle title"
+  },
+  "notifyOnHotfixOnlyDescription": "پەقەت Hotfix تۈرىدىكى خىزمەت تۈرلىرى ئۈچۈن ئۇقتۇرۇش",
+  "@notifyOnHotfixOnlyDescription": {
+    "description": "Notify on hotfix only description"
+  },
+  "notifyOnGroupAssignments": "گۇرۇپپا تەيىنلەشلەردە ئۇقتۇرۇش",
+  "@notifyOnGroupAssignments": {
+    "description": "Notify on group assignments toggle title"
+  },
+  "notifyOnGroupAssignmentsDescription": "بەلگىلەنگەن گۇرۇپپىلارغا تەيىنلەش قىلىنغاندا ئۇقتۇرۇش ئەۋەتىڭ",
+  "@notifyOnGroupAssignmentsDescription": {
+    "description": "Notify on group assignments description"
+  },
+  "groupName": "گۇرۇپپا ئىسمى",
+  "@groupName": {
+    "description": "Group name input label"
+  },
+  "groupNameHint": "مەسىلەن: ئىجادىيەتچىلەر، QA گۇرۇپپىسى",
+  "@groupNameHint": {
+    "description": "Group name input hint"
+  },
+  "smartwatchNotifications": "ئەقىللىق سائەت ئۇقتۇرۇشلىرى",
+  "@smartwatchNotifications": {
+    "description": "Smartwatch notifications toggle title"
+  },
+  "smartwatchNotificationsDescription": "ئەقىللىق سائەتلەرگە ئۇقتۇرۇش ئەۋەتىڭ (پەقەت بىرىنچى تەيىنلەشتە)",
+  "@smartwatchNotificationsDescription": {
+    "description": "Smartwatch notifications description"
+  },
+  "onCallMode": "نۆبەتچىلىك ھالىتى",
+  "@onCallMode": {
+    "description": "On-call mode section title"
+  },
+  "onCallModeDescription": "نۆبەتچىلىك ھالىتىدە، ئۇقتۇرۇشلار تېخىمۇ كۈچلۈك بولىدۇ ۋە ئوقۇلمىغان ئۇقتۇرۇشلار 3 قېتىم يېڭىلىنىدۇ.",
+  "@onCallModeDescription": {
+    "description": "On-call mode description"
+  },
+  "onCallModePhone": "تېلېفون ئۈچۈن نۆبەتچىلىك ھالىتى",
+  "@onCallModePhone": {
+    "description": "On-call mode for phone toggle title"
+  },
+  "onCallModePhoneDescription": "تېلېفوندا كۈچلۈك ئۇقتۇرۇشلار",
+  "@onCallModePhoneDescription": {
+    "description": "On-call mode for phone description"
+  },
+  "onCallModeWatch": "ئەقىللىق سائەت ئۈچۈن نۆبەتچىلىك ھالىتى",
+  "@onCallModeWatch": {
+    "description": "On-call mode for watch toggle title"
+  },
+  "onCallModeWatchDescription": "ئەقىللىق سائەتتە كۈچلۈك ئۇقتۇرۇشلار",
+  "@onCallModeWatchDescription": {
+    "description": "On-call mode for watch description"
+  },
+  "vacationMode": "ئىسپات ھالىتى",
+  "@vacationMode": {
+    "description": "Vacation mode section title"
+  },
+  "vacationModeDescription": "ئىسپات ھالىتىدە ھېچقانداق ئۇقتۇرۇش قوبۇل قىلىنمايدۇ.",
+  "@vacationModeDescription": {
+    "description": "Vacation mode description"
+  },
+  "vacationModePhone": "تېلېفون ئۈچۈن ئىسپات ھالىتى",
+  "@vacationModePhone": {
+    "description": "Vacation mode for phone toggle title"
+  },
+  "vacationModePhoneDescription": "تېلېفوندا ئۇقتۇرۇشلارنى چەكلەڭ",
+  "@vacationModePhoneDescription": {
+    "description": "Vacation mode for phone description"
+  },
+  "vacationModeWatch": "ئەقىللىق سائەت ئۈچۈن ئىسپات ھالىتى",
+  "@vacationModeWatch": {
+    "description": "Vacation mode for watch toggle title"
+  },
+  "vacationModeWatchDescription": "ئەقىللىق سائەتتە ئۇقتۇرۇشلارنى چەكلەڭ",
+  "@vacationModeWatchDescription": {
+    "description": "Vacation mode for watch description"
+  },
+  "serverUrl": "مۇلازىمېتىر URL",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  "collection": "توپلام",
+  "@collection": {
+    "description": "Collection label"
+  },
+  "language": "تىل",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "selectLanguage": "تىل تاللاڭ",
+  "@selectLanguage": {
+    "description": "Select language dropdown label"
+  },
+  "languageDescription": "ئۆزىڭىزنىڭ ئارزۇ قىلغان تىلىڭىزنى تاللاڭ. ئەپ سۈكۈتتىكى ھالدا ئۈسكۈنىڭىزنىڭ تىلىنى ئىشلىتىدۇ.",
+  "@languageDescription": {
+    "description": "Language settings description"
+  },
+  "close": "تاقاش",
+  "@close": {
+    "description": "Close button text"
+  },
+  "settingsSaved": "تەڭشەكلەر ساقلاندى",
+  "@settingsSaved": {
+    "description": "Settings saved message"
+  },
+  "invalidUrl": "ئىناۋەتلىك URL كىرگۈزۈڭ",
+  "@invalidUrl": {
+    "description": "Invalid URL error message"
+  },
+  "invalidPollingInterval": "سۇئال قويۇش ئارىلىقى 5-300 سېكۇنت ئارىسىدا بولۇشى كېرەك",
+  "@invalidPollingInterval": {
+    "description": "Invalid polling interval error message"
+  },
+  "noGroupsAdded": "تېخى ھېچقانداق گۇرۇپپا قوشۇلمىدى. يۇقىرىدىن گۇرۇپپا ئىسمى قوشۇڭ.",
+  "@noGroupsAdded": {
+    "description": "No groups added message"
+  },
+  "donate": "ئىئانە قىلىش",
+  "@donate": {
+    "description": "Donate button text"
+  },
+  "donateDescription": "بۇ ئەپنىڭ ئىجادىيىتىنى قوللاڭ",
+  "@donateDescription": {
+    "description": "Donate section description"
+  },
+  "donateButton": "ماڭا بىر قەھۋە سېتىپ بېرىڭ",
+  "@donateButton": {
+    "description": "Donate button label"
+  }
+}
+

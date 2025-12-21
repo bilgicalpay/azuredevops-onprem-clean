@@ -1,0 +1,220 @@
+{
+  "@@locale": "ja",
+  "appTitle": "Azure DevOps",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "設定",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "wikiSettings": "Wiki設定",
+  "@wikiSettings": {
+    "description": "Wiki settings section title"
+  },
+  "wikiSettingsDescription": "Azure DevOps wikiファイルのURLを入力してください。このwikiコンテンツはホームページに表示されます。",
+  "@wikiSettingsDescription": {
+    "description": "Wiki settings description"
+  },
+  "wikiUrl": "Wiki URL",
+  "@wikiUrl": {
+    "description": "Wiki URL input label"
+  },
+  "save": "保存",
+  "@save": {
+    "description": "Save button text"
+  },
+  "marketSettings": "マーケット設定",
+  "@marketSettings": {
+    "description": "Market settings section title"
+  },
+  "marketSettingsDescription": "IIS静的ディレクトリのURLを入力してください。APKおよびIPAファイルはこのディレクトリから一覧表示され、ダウンロード可能になります。",
+  "@marketSettingsDescription": {
+    "description": "Market settings description"
+  },
+  "marketUrl": "マーケットURL",
+  "@marketUrl": {
+    "description": "Market URL input label"
+  },
+  "notificationSettings": "通知設定",
+  "@notificationSettings": {
+    "description": "Notification settings section title"
+  },
+  "controlFrequency": "制御頻度",
+  "@controlFrequency": {
+    "description": "Control frequency section title"
+  },
+  "pollingInterval": "ポーリング間隔（秒）",
+  "@pollingInterval": {
+    "description": "Polling interval input label"
+  },
+  "pollingIntervalHelper": "5-300秒の間",
+  "@pollingIntervalHelper": {
+    "description": "Polling interval helper text"
+  },
+  "fast": "高速（10秒）",
+  "@fast": {
+    "description": "Fast polling interval button"
+  },
+  "normal": "通常（15秒）",
+  "@normal": {
+    "description": "Normal polling interval button"
+  },
+  "slow": "低速（30秒）",
+  "@slow": {
+    "description": "Slow polling interval button"
+  },
+  "notificationTypes": "通知タイプ",
+  "@notificationTypes": {
+    "description": "Notification types section title"
+  },
+  "notifyOnFirstAssignment": "初回割り当て時の通知",
+  "@notifyOnFirstAssignment": {
+    "description": "Notify on first assignment toggle title"
+  },
+  "notifyOnFirstAssignmentDescription": "初めて割り当てられた時のみ通知を送信",
+  "@notifyOnFirstAssignmentDescription": {
+    "description": "Notify on first assignment description"
+  },
+  "notifyOnAllUpdates": "すべての更新時の通知",
+  "@notifyOnAllUpdates": {
+    "description": "Notify on all updates toggle title"
+  },
+  "notifyOnAllUpdatesDescription": "割り当てられた作業項目が更新された時に通知を送信",
+  "@notifyOnAllUpdatesDescription": {
+    "description": "Notify on all updates description"
+  },
+  "notifyOnHotfixOnly": "Hotfixのみ",
+  "@notifyOnHotfixOnly": {
+    "description": "Notify on hotfix only toggle title"
+  },
+  "notifyOnHotfixOnlyDescription": "Hotfixタイプの作業項目のみ通知",
+  "@notifyOnHotfixOnlyDescription": {
+    "description": "Notify on hotfix only description"
+  },
+  "notifyOnGroupAssignments": "グループ割り当て時の通知",
+  "@notifyOnGroupAssignments": {
+    "description": "Notify on group assignments toggle title"
+  },
+  "notifyOnGroupAssignmentsDescription": "指定されたグループに割り当てが行われた時に通知を送信",
+  "@notifyOnGroupAssignmentsDescription": {
+    "description": "Notify on group assignments description"
+  },
+  "groupName": "グループ名",
+  "@groupName": {
+    "description": "Group name input label"
+  },
+  "groupNameHint": "例：開発者、QAチーム",
+  "@groupNameHint": {
+    "description": "Group name input hint"
+  },
+  "smartwatchNotifications": "スマートウォッチ通知",
+  "@smartwatchNotifications": {
+    "description": "Smartwatch notifications toggle title"
+  },
+  "smartwatchNotificationsDescription": "スマートウォッチに通知を送信（初回割り当て時のみ）",
+  "@smartwatchNotificationsDescription": {
+    "description": "Smartwatch notifications description"
+  },
+  "onCallMode": "オンコールモード",
+  "@onCallMode": {
+    "description": "On-call mode section title"
+  },
+  "onCallModeDescription": "オンコールモードでは、通知がより積極的になり、未読の通知が3回更新されます。",
+  "@onCallModeDescription": {
+    "description": "On-call mode description"
+  },
+  "onCallModePhone": "電話用オンコールモード",
+  "@onCallModePhone": {
+    "description": "On-call mode for phone toggle title"
+  },
+  "onCallModePhoneDescription": "電話での積極的な通知",
+  "@onCallModePhoneDescription": {
+    "description": "On-call mode for phone description"
+  },
+  "onCallModeWatch": "スマートウォッチ用オンコールモード",
+  "@onCallModeWatch": {
+    "description": "On-call mode for watch toggle title"
+  },
+  "onCallModeWatchDescription": "スマートウォッチでの積極的な通知",
+  "@onCallModeWatchDescription": {
+    "description": "On-call mode for watch description"
+  },
+  "vacationMode": "休暇モード",
+  "@vacationMode": {
+    "description": "Vacation mode section title"
+  },
+  "vacationModeDescription": "休暇モードでは通知を受信しません。",
+  "@vacationModeDescription": {
+    "description": "Vacation mode description"
+  },
+  "vacationModePhone": "電話用休暇モード",
+  "@vacationModePhone": {
+    "description": "Vacation mode for phone toggle title"
+  },
+  "vacationModePhoneDescription": "電話での通知を無効化",
+  "@vacationModePhoneDescription": {
+    "description": "Vacation mode for phone description"
+  },
+  "vacationModeWatch": "スマートウォッチ用休暇モード",
+  "@vacationModeWatch": {
+    "description": "Vacation mode for watch toggle title"
+  },
+  "vacationModeWatchDescription": "スマートウォッチでの通知を無効化",
+  "@vacationModeWatchDescription": {
+    "description": "Vacation mode for watch description"
+  },
+  "serverUrl": "サーバーURL",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  "collection": "コレクション",
+  "@collection": {
+    "description": "Collection label"
+  },
+  "language": "言語",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "selectLanguage": "言語を選択",
+  "@selectLanguage": {
+    "description": "Select language dropdown label"
+  },
+  "languageDescription": "希望する言語を選択してください。アプリはデフォルトでデバイスの言語を使用します。",
+  "@languageDescription": {
+    "description": "Language settings description"
+  },
+  "close": "閉じる",
+  "@close": {
+    "description": "Close button text"
+  },
+  "settingsSaved": "設定が保存されました",
+  "@settingsSaved": {
+    "description": "Settings saved message"
+  },
+  "invalidUrl": "有効なURLを入力してください",
+  "@invalidUrl": {
+    "description": "Invalid URL error message"
+  },
+  "invalidPollingInterval": "ポーリング間隔は5-300秒の間である必要があります",
+  "@invalidPollingInterval": {
+    "description": "Invalid polling interval error message"
+  },
+  "noGroupsAdded": "まだグループが追加されていません。上からグループ名を追加してください。",
+  "@noGroupsAdded": {
+    "description": "No groups added message"
+  },
+  "donate": "寄付",
+  "@donate": {
+    "description": "Donate button text"
+  },
+  "donateDescription": "このアプリの開発をサポートしてください",
+  "@donateDescription": {
+    "description": "Donate section description"
+  },
+  "donateButton": "コーヒーを一杯",
+  "@donateButton": {
+    "description": "Donate button label"
+  }
+}
+

@@ -2,7 +2,7 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
-## [1.1.4] - 2024-12-20
+## [1.1.4] - 21-12-2025
 
 ### 🆕 Yeni Özellikler
 
@@ -63,7 +63,7 @@ Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
 ---
 
-## [1.1.3] - 2024-12-20
+## [1.1.3] - 21-12-2025
 
 ### ✅ Test Edildi ve Onaylandı
 
@@ -85,7 +85,7 @@ Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
 ---
 
-## [1.1.2] - 2024-12-20
+## [1.1.2] - 21-12-2025
 
 ### 🔧 İyileştirmeler
 
@@ -105,7 +105,7 @@ Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
 ---
 
-## [1.1.0] - 2024-12-20
+## [1.1.0] - 21-12-2025
 
 ### 🆕 Yeni Özellikler
 

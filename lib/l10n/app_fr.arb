@@ -1,0 +1,219 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Azure DevOps",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "Paramètres",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "wikiSettings": "Paramètres Wiki",
+  "@wikiSettings": {
+    "description": "Wiki settings section title"
+  },
+  "wikiSettingsDescription": "Entrez l'URL du fichier wiki Azure DevOps. Ce contenu wiki sera affiché sur la page d'accueil.",
+  "@wikiSettingsDescription": {
+    "description": "Wiki settings description"
+  },
+  "wikiUrl": "URL Wiki",
+  "@wikiUrl": {
+    "description": "Wiki URL input label"
+  },
+  "save": "Enregistrer",
+  "@save": {
+    "description": "Save button text"
+  },
+  "marketSettings": "Paramètres du Marché",
+  "@marketSettings": {
+    "description": "Market settings section title"
+  },
+  "marketSettingsDescription": "Entrez l'URL du répertoire statique IIS. Les fichiers APK et IPA seront listés et téléchargeables depuis ce répertoire.",
+  "@marketSettingsDescription": {
+    "description": "Market settings description"
+  },
+  "marketUrl": "URL du Marché",
+  "@marketUrl": {
+    "description": "Market URL input label"
+  },
+  "notificationSettings": "Paramètres de Notification",
+  "@notificationSettings": {
+    "description": "Notification settings section title"
+  },
+  "controlFrequency": "Fréquence de Contrôle",
+  "@controlFrequency": {
+    "description": "Control frequency section title"
+  },
+  "pollingInterval": "Intervalle d'Interrogation (secondes)",
+  "@pollingInterval": {
+    "description": "Polling interval input label"
+  },
+  "pollingIntervalHelper": "Entre 5-300 secondes",
+  "@pollingIntervalHelper": {
+    "description": "Polling interval helper text"
+  },
+  "fast": "Rapide (10s)",
+  "@fast": {
+    "description": "Fast polling interval button"
+  },
+  "normal": "Normal (15s)",
+  "@normal": {
+    "description": "Normal polling interval button"
+  },
+  "slow": "Lent (30s)",
+  "@slow": {
+    "description": "Slow polling interval button"
+  },
+  "notificationTypes": "Types de Notification",
+  "@notificationTypes": {
+    "description": "Notification types section title"
+  },
+  "notifyOnFirstAssignment": "Notification lors de la Première Attribution",
+  "@notifyOnFirstAssignment": {
+    "description": "Notify on first assignment toggle title"
+  },
+  "notifyOnFirstAssignmentDescription": "Envoyer une notification uniquement lors de la première attribution",
+  "@notifyOnFirstAssignmentDescription": {
+    "description": "Notify on first assignment description"
+  },
+  "notifyOnAllUpdates": "Notification lors de Toutes les Mises à Jour",
+  "@notifyOnAllUpdates": {
+    "description": "Notify on all updates toggle title"
+  },
+  "notifyOnAllUpdatesDescription": "Envoyer une notification lorsque les éléments de travail qui me sont attribués sont mis à jour",
+  "@notifyOnAllUpdatesDescription": {
+    "description": "Notify on all updates description"
+  },
+  "notifyOnHotfixOnly": "Uniquement Hotfix",
+  "@notifyOnHotfixOnly": {
+    "description": "Notify on hotfix only toggle title"
+  },
+  "notifyOnHotfixOnlyDescription": "Notification uniquement pour les éléments de travail de type Hotfix",
+  "@notifyOnHotfixOnlyDescription": {
+    "description": "Notify on hotfix only description"
+  },
+  "notifyOnGroupAssignments": "Notification lors des Attributions de Groupe",
+  "@notifyOnGroupAssignments": {
+    "description": "Notify on group assignments toggle title"
+  },
+  "notifyOnGroupAssignmentsDescription": "Envoyer une notification lorsque des attributions sont faites aux groupes spécifiés",
+  "@notifyOnGroupAssignmentsDescription": {
+    "description": "Notify on group assignments description"
+  },
+  "groupName": "Nom du Groupe",
+  "@groupName": {
+    "description": "Group name input label"
+  },
+  "groupNameHint": "Ex: Développeurs, Équipe QA",
+  "@groupNameHint": {
+    "description": "Group name input hint"
+  },
+  "smartwatchNotifications": "Notifications Montre Intelligente",
+  "@smartwatchNotifications": {
+    "description": "Smartwatch notifications toggle title"
+  },
+  "smartwatchNotificationsDescription": "Envoyer des notifications aux montres intelligentes (uniquement lors de la première attribution)",
+  "@smartwatchNotificationsDescription": {
+    "description": "Smartwatch notifications description"
+  },
+  "onCallMode": "Mode de Garde",
+  "@onCallMode": {
+    "description": "On-call mode section title"
+  },
+  "onCallModeDescription": "En mode de garde, les notifications deviennent plus agressives et les notifications non lues sont actualisées 3 fois.",
+  "@onCallModeDescription": {
+    "description": "On-call mode description"
+  },
+  "onCallModePhone": "Mode de Garde pour Téléphone",
+  "@onCallModePhone": {
+    "description": "On-call mode for phone toggle title"
+  },
+  "onCallModePhoneDescription": "Notifications agressives sur le téléphone",
+  "@onCallModePhoneDescription": {
+    "description": "On-call mode for phone description"
+  },
+  "onCallModeWatch": "Mode de Garde pour Montre Intelligente",
+  "@onCallModeWatch": {
+    "description": "On-call mode for watch toggle title"
+  },
+  "onCallModeWatchDescription": "Notifications agressives sur la montre intelligente",
+  "@onCallModeWatchDescription": {
+    "description": "On-call mode for watch description"
+  },
+  "vacationMode": "Mode Vacances",
+  "@vacationMode": {
+    "description": "Vacation mode section title"
+  },
+  "vacationModeDescription": "Aucune notification n'est reçue en mode vacances.",
+  "@vacationModeDescription": {
+    "description": "Vacation mode description"
+  },
+  "vacationModePhone": "Mode Vacances pour Téléphone",
+  "@vacationModePhone": {
+    "description": "Vacation mode for phone toggle title"
+  },
+  "vacationModePhoneDescription": "Désactiver les notifications sur le téléphone",
+  "@vacationModePhoneDescription": {
+    "description": "Vacation mode for phone description"
+  },
+  "vacationModeWatch": "Mode Vacances pour Montre Intelligente",
+  "@vacationModeWatch": {
+    "description": "Vacation mode for watch toggle title"
+  },
+  "vacationModeWatchDescription": "Désactiver les notifications sur la montre intelligente",
+  "@vacationModeWatchDescription": {
+    "description": "Vacation mode for watch description"
+  },
+  "serverUrl": "URL du Serveur",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  "collection": "Collection",
+  "@collection": {
+    "description": "Collection label"
+  },
+  "language": "Langue",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "selectLanguage": "Sélectionner la Langue",
+  "@selectLanguage": {
+    "description": "Select language dropdown label"
+  },
+  "languageDescription": "Choisissez votre langue préférée. L'application utilisera la langue de votre appareil par défaut.",
+  "@languageDescription": {
+    "description": "Language settings description"
+  },
+  "close": "Fermer",
+  "@close": {
+    "description": "Close button text"
+  },
+  "settingsSaved": "Paramètres enregistrés",
+  "@settingsSaved": {
+    "description": "Settings saved message"
+  },
+  "invalidUrl": "Veuillez entrer une URL valide",
+  "@invalidUrl": {
+    "description": "Invalid URL error message"
+  },
+  "invalidPollingInterval": "L'intervalle d'interrogation doit être entre 5-300 secondes",
+  "@invalidPollingInterval": {
+    "description": "Invalid polling interval error message"
+  },
+  "noGroupsAdded": "Aucun groupe ajouté pour le moment. Ajoutez un nom de groupe ci-dessus.",
+  "@noGroupsAdded": {
+    "description": "No groups added message"
+  },
+  "donate": "Faire un Don",
+  "@donate": {
+    "description": "Donate button text"
+  },
+  "donateDescription": "Soutenez le développement de cette application",
+  "@donateDescription": {
+    "description": "Donate section description"
+  },
+  "donateButton": "Offrez-moi un Café",
+  "@donateButton": {
+    "description": "Donate button label"
+  }
+}

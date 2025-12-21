@@ -8,8 +8,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:azuredevops_onprem/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/storage_service.dart';
 import '../services/auth_service.dart';
+import 'dart:ui' show Locale;
 
 /// Ayarlar ekranı widget'ı
 /// Uygulama ayarlarını yönetir
@@ -32,6 +35,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifyOnHotfixOnly = false;
   bool _notifyOnGroupAssignments = false;
   List<String> _notificationGroups = [];
+  bool _enableSmartwatchNotifications = false;
+  bool _onCallModePhone = false;
+  bool _onCallModeWatch = false;
+  bool _vacationModePhone = false;
+  bool _vacationModeWatch = false;
 
   @override
   void initState() {
@@ -66,6 +74,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final notifyOnGroupAssignments = storage.getNotifyOnGroupAssignments();
     final notificationGroups = await storage.getNotificationGroups();
     
+    // Load smartwatch and mode settings
+    final enableSmartwatchNotifications = storage.getEnableSmartwatchNotifications();
+    final onCallModePhone = storage.getOnCallModePhone();
+    final onCallModeWatch = storage.getOnCallModeWatch();
+    final vacationModePhone = storage.getVacationModePhone();
+    final vacationModeWatch = storage.getVacationModeWatch();
+    
     setState(() {
       _pollingInterval = interval;
       _pollingIntervalController.text = interval.toString();
@@ -74,6 +89,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _notifyOnHotfixOnly = notifyOnHotfixOnly;
       _notifyOnGroupAssignments = notifyOnGroupAssignments;
       _notificationGroups = notificationGroups;
+      _enableSmartwatchNotifications = enableSmartwatchNotifications;
+      _onCallModePhone = onCallModePhone;
+      _onCallModeWatch = onCallModeWatch;
+      _vacationModePhone = vacationModePhone;
+      _vacationModeWatch = vacationModeWatch;
     });
   }
 
@@ -145,6 +165,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await storage.setNotifyOnGroupAssignments(_notifyOnGroupAssignments);
     await storage.setNotificationGroups(_notificationGroups);
     
+    // Akıllı saat ve mod ayarlarını kaydet
+    await storage.setEnableSmartwatchNotifications(_enableSmartwatchNotifications);
+    await storage.setOnCallModePhone(_onCallModePhone);
+    await storage.setOnCallModeWatch(_onCallModeWatch);
+    await storage.setVacationModePhone(_vacationModePhone);
+    await storage.setVacationModeWatch(_vacationModeWatch);
+    
     setState(() => _isLoading = false);
     
     if (!mounted) return;
@@ -176,10 +203,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final storage = Provider.of<StorageService>(context);
+    final l10n = AppLocalizations.of(context)!;
+    final selectedLanguage = storage.getSelectedLanguage();
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ayarlar'),
+        title: Text(l10n.settings),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -430,6 +460,181 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
                         ),
                     ],
+                    
+                    const Divider(height: 32),
+                    
+                    // Akıllı Saat Bildirimleri
+                    SwitchListTile(
+                      title: const Text('Akıllı Saat Bildirimleri'),
+                      subtitle: const Text('Akıllı saatlere bildirim gönder (sadece ilk atamada)'),
+                      value: _enableSmartwatchNotifications,
+                      onChanged: (value) {
+                        setState(() => _enableSmartwatchNotifications = value);
+                      },
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.watch),
+                    ),
+                    
+                    const Divider(height: 32),
+                    
+                    // Nöbetçi Modu
+                    const Text(
+                      'Nöbetçi Modu',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Nöbetçi modunda bildirimler daha agresif olur ve okunmayan bildirimler 3 kez yenilenir.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      title: const Text('Telefon için Nöbetçi Modu'),
+                      subtitle: const Text('Telefonda agresif bildirimler'),
+                      value: _onCallModePhone,
+                      onChanged: (value) {
+                        setState(() => _onCallModePhone = value);
+                      },
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.phone),
+                    ),
+                    SwitchListTile(
+                      title: const Text('Akıllı Saat için Nöbetçi Modu'),
+                      subtitle: const Text('Akıllı saatte agresif bildirimler'),
+                      value: _onCallModeWatch,
+                      onChanged: (value) {
+                        setState(() => _onCallModeWatch = value);
+                      },
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.watch),
+                    ),
+                    
+                    const Divider(height: 32),
+                    
+                    // Tatil Modu
+                    const Text(
+                      'Tatil Modu',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Tatil modunda hiçbir bildirim gelmez.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      title: const Text('Telefon için Tatil Modu'),
+                      subtitle: const Text('Telefonda bildirimleri devre dışı bırak'),
+                      value: _vacationModePhone,
+                      onChanged: (value) {
+                        setState(() => _vacationModePhone = value);
+                      },
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.beach_access),
+                    ),
+                    SwitchListTile(
+                      title: const Text('Akıllı Saat için Tatil Modu'),
+                      subtitle: const Text('Akıllı saatte bildirimleri devre dışı bırak'),
+                      value: _vacationModeWatch,
+                      onChanged: (value) {
+                        setState(() => _vacationModeWatch = value);
+                      },
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.watch_off),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Language Selection
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.language,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.languageDescription,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedLanguage == 'system' ? null : selectedLanguage,
+                      decoration: InputDecoration(
+                        labelText: l10n.selectLanguage,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.language),
+                      ),
+                      items: [
+                        DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('${l10n.language} (${Localizations.localeOf(context).languageCode})'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'tr',
+                          child: Text('Türkçe'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'en',
+                          child: Text('English'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'ru',
+                          child: Text('Русский'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'hi',
+                          child: Text('हिन्दी'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'nl',
+                          child: Text('Nederlands'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'de',
+                          child: Text('Deutsch'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'fr',
+                          child: Text('Français'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'ur',
+                          child: Text('اردو'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'ug',
+                          child: Text('ئۇيغۇرچە'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'az',
+                          child: Text('Azərbaycan'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'ky',
+                          child: Text('Кыргызча'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'ja',
+                          child: Text('日本語'),
+                        ),
+                      ],
+                      onChanged: (value) async {
+                        await storage.setSelectedLanguage(value ?? 'system');
+                        // Restart app to apply language change
+                        // Note: In production, you might want to use a state management solution
+                        // that can update the locale without restarting
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -438,7 +643,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.info_outline),
-                title: const Text('Server URL'),
+                title: Text(l10n.serverUrl),
                 subtitle: Text(authService.serverUrl ?? 'N/A'),
               ),
             ),
@@ -446,9 +651,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Card(
               child: ListTile(
                 leading: const Icon(Icons.folder),
-                title: const Text('Collection'),
+                title: Text(l10n.collection),
                 subtitle: Text(
                   Provider.of<StorageService>(context).getCollection() ?? 'N/A',
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Donate Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.favorite, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.donate,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.donateDescription,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          try {
+                            final url = Uri.parse('https://buymeacoffee.com/bilgicalpay');
+                            // Open in external browser
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Could not open link: $e'),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.coffee),
+                        label: Text(l10n.donateButton),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

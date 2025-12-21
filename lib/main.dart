@@ -11,6 +11,7 @@
 library;
 
 import 'dart:ui' as ui;
+import 'dart:ui' show Locale;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderErrorBox, debugDisableShadows;
 import 'package:provider/provider.dart';
@@ -26,6 +27,9 @@ import 'services/security_service.dart';
 import 'services/token_refresh_service.dart';
 import 'services/auto_logout_service.dart';
 import 'package:logging/logging.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:azuredevops_onprem/l10n/app_localizations.dart';
+import 'dart:ui' show Locale;
 
 /// Uygulama giriş noktası
 /// Servisleri başlatır ve ana widget'ı çalıştırır
@@ -100,26 +104,70 @@ class MyApp extends StatelessWidget {
         }),
         ChangeNotifierProvider.value(value: storage),
       ],
-      child: MaterialApp(
-        title: '',
-        debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.light,
-          ),
-          textTheme: GoogleFonts.robotoTextTheme(),
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.dark,
-          ),
-          textTheme: GoogleFonts.robotoTextTheme(ThemeData.dark().textTheme),
-          useMaterial3: true,
-        ),
-        home: const AuthWrapper(),
+      child: Consumer<StorageService>(
+        builder: (context, storageService, _) {
+          // Get selected language or use system default
+          final selectedLanguage = storageService.getSelectedLanguage();
+          Locale? locale;
+          
+          if (selectedLanguage != 'system') {
+            locale = Locale(selectedLanguage);
+          } else {
+            // Use system locale
+            final systemLocale = ui.PlatformDispatcher.instance.locale;
+            // Check if system locale is supported
+            final supportedLocales = ['tr', 'en', 'ru', 'hi', 'nl', 'de', 'fr', 'ur'];
+            if (supportedLocales.contains(systemLocale.languageCode)) {
+              locale = systemLocale;
+            } else {
+              // Default to Turkish if system locale not supported
+              locale = const Locale('tr');
+            }
+          }
+          
+          return MaterialApp(
+            title: '',
+            debugShowCheckedModeBanner: false,
+            locale: locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('tr', ''), // Turkish
+              Locale('en', ''), // English
+              Locale('ru', ''), // Russian
+              Locale('hi', ''), // Hindi
+              Locale('nl', ''), // Dutch
+              Locale('de', ''), // German
+              Locale('fr', ''), // French
+              Locale('ur', ''), // Urdu
+              Locale('ug', ''), // Uyghur
+              Locale('az', ''), // Azerbaijani
+              Locale('ky', ''), // Kyrgyz
+              Locale('ja', ''), // Japanese
+            ],
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.blue,
+                brightness: Brightness.light,
+              ),
+              textTheme: GoogleFonts.robotoTextTheme(),
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.blue,
+                brightness: Brightness.dark,
+              ),
+              textTheme: GoogleFonts.robotoTextTheme(ThemeData.dark().textTheme),
+              useMaterial3: true,
+            ),
+            home: const AuthWrapper(),
+          );
+        },
       ),
     );
   }

@@ -1,8 +1,8 @@
 # Azure DevOps Server 2022 Mobile App
 
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.1.4+43  
-**Tarih:** 2024-12-20
+**Versiyon:** 1.2.0+45  
+**Tarih:** 21-12-2025
 
 ## 📱 Genel Bakış
 
@@ -27,6 +27,21 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
   - Sadece Hotfix filtresi (yalnızca Hotfix tipindeki work item'lar için)
   - Grup bildirimleri (belirtilen gruplara atama yapıldığında)
   - Tüm ayarlar background servislerde aktif olarak çalışır
+- ✅ **Akıllı Saat Bildirimleri:**
+  - Android Wear OS ve iOS watchOS desteği
+  - Xiaomi, Huawei, Samsung, Apple Watch desteği
+  - Saat uygulamasında özel uygulama seçimi ile bildirim iletimi (Mi Fit, Xiaomi Wear, Samsung Galaxy Watch, Apple Watch)
+  - Sadece ilk atamada akıllı saat bildirimi (titreşim, ses, ekran)
+  - Etkileşimli butonlar ile state değiştirme (dropdown menü)
+  - Dinamik state listesi (work item'ın mevcut state'leri)
+  - Bildirimden "Telefonda Aç" ile work item detay sayfasına yönlendirme
+- ✅ **Nöbetçi Modu:**
+  - Telefon ve akıllı saat için ayrı ayrı aktif edilebilir
+  - Agresif bildirimler (maksimum öncelik, daha fazla titreşim, daha yüksek ses)
+  - Okunmayan bildirimler 3 kez otomatik yenilenir (30 saniye aralıklarla)
+- ✅ **Tatil Modu:**
+  - Telefon ve akıllı saat için ayrı ayrı aktif edilebilir
+  - Tatil modunda hiçbir bildirim gelmez
 - ✅ Gerçek zamanlı güncellemeler (WebSocket)
 - ✅ Background task ile periyodik kontrol
 
@@ -240,7 +255,21 @@ Detaylar için [docs/MDM_INTEGRATION.md](docs/MDM_INTEGRATION.md) dosyasına bak
    - Tüm güncellemelerde bildirim
    - Sadece Hotfix filtresi
    - Grup bildirimleri (grup adları ekleyin)
-3. Ayarları kaydedin
+3. **Akıllı Saat Bildirimleri:**
+   - **Önce saat uygulamanızda Azure DevOps uygulamasını etkinleştirin:**
+     - **Android saatler (Xiaomi, Huawei, Samsung):** Mi Fit / Xiaomi Wear / Samsung Galaxy Watch uygulamasında **Bildirimler** → **Özel Uygulama Seçimi** → **Azure DevOps** aktif edin
+     - **Apple Watch:** iPhone Watch uygulamasında **Bildirimler** → **Azure DevOps** aktif edin
+   - **Uygulama içinde:** Ayarlar → Bildirim Ayarları → **Akıllı Saat Bildirimleri** toggle switch'ini aktif edin
+   - Sadece ilk atamada akıllı saat bildirimi gönderilir
+   - Etkileşimli butonlar ile state değiştirme yapılabilir
+   - Bildirimden "Telefonda Aç" seçeneği ile work item detay sayfasını açabilirsiniz
+4. **Nöbetçi Modu:**
+   - Telefon için nöbetçi modu: Agresif bildirimler, okunmayan bildirimler 3 kez yenilenir
+   - Akıllı saat için nöbetçi modu: Agresif bildirimler
+5. **Tatil Modu:**
+   - Telefon için tatil modu: Hiçbir bildirim gelmez
+   - Akıllı saat için tatil modu: Hiçbir bildirim gelmez
+6. Ayarları kaydedin
 
 ### Market Özelliği
 
@@ -344,25 +373,111 @@ Market özelliği, IIS static dizininden APK ve IPA dosyalarını indirmenizi sa
 ### Bildirim Yönetimi
 
 #### Bildirim Ayarları
-1. **Ayarlar** → **Bildirim Ayarları**
+
+**Ayarlar Ekranı Görünümü:**
+- Ayarlar ekranında **Bildirim Ayarları** bölümü bulunur
+- **Kontrol Sıklığı** ayarı ile polling interval'i ayarlayabilirsiniz (5-300 saniye arası)
+- Hızlı (10s), Normal (15s), Yavaş (30s) gibi önceden tanımlı seçenekler mevcuttur
+
+**Bildirim Türleri:**
+1. **Ayarlar** → **Bildirim Ayarları** bölümüne gidin
 2. İstediğiniz bildirim seçeneklerini aktif edin:
    - **İlk Atamada Bildirim:** Sadece size ilk atandığında bildirim alın
+     - Toggle switch'i aktif edin
+     - Bu seçenek aktifken, sadece ilk atamada bildirim gelir, sonraki güncellemelerde gelmez
    - **Tüm Güncellemelerde Bildirim:** Atanmış work item'lar güncellendiğinde bildirim alın
+     - Toggle switch'i aktif edin
+     - Bu seçenek aktifken, tüm güncellemelerde bildirim gelir
    - **Sadece Hotfix:** Yalnızca Hotfix tipindeki work item'lar için bildirim alın
+     - Toggle switch'i aktif edin
+     - Bu seçenek aktifken, sadece Hotfix tipindeki work item'lar için bildirim gelir
    - **Grup Bildirimleri:** Belirtilen gruplara atama yapıldığında bildirim alın
+     - Toggle switch'i aktif edin
      - Grup adı eklemek için **+** butonuna tıklayın
      - Grup adı silmek için **X** butonuna tıklayın
+
+**Akıllı Saat Bildirimleri:**
+
+Akıllı saatlerinizde Azure DevOps bildirimlerini almak için önce saat uygulamanızda Azure DevOps uygulamasını etkinleştirmeniz gerekir.
+
+**Android Saatler (Xiaomi, Huawei, Samsung, vb.):**
+
+1. **Mi Fit / Xiaomi Wear / Samsung Galaxy Watch uygulamasını açın**
+2. **Profil** veya **Ayarlar** bölümüne gidin
+3. **Bildirimler** veya **Uygulama Bildirimleri** seçeneğini bulun
+4. **Özel Uygulama Seçimi** veya **Uygulama Bildirimleri** bölümüne gidin
+5. **Azure DevOps** uygulamasını bulun ve aktif edin
+6. Bildirim ayarlarını kontrol edin:
+   - **Bildirimleri Göster**: Açık
+   - **Titreşim**: Açık (isteğe bağlı)
+   - **Ses**: Açık (isteğe bağlı)
+
+**Apple Watch (watchOS):**
+
+1. iPhone'unuzda **Watch** uygulamasını açın
+2. **Bildirimler** sekmesine gidin
+3. **Azure DevOps** uygulamasını bulun
+4. Bildirim stilini seçin:
+   - **Bildirimleri Göster**: Açık
+   - **Bildirimlerde Ses Çal**: Açık (isteğe bağlı)
+   - **Titreşim**: Açık (isteğe bağlı)
+
+**Uygulama İçi Ayarlar:**
+
+1. **Ayarlar** → **Bildirim Ayarları** bölümüne gidin
+2. **Akıllı Saat Bildirimleri** toggle switch'ini aktif edin
+3. Bu özellik aktifken:
+   - Sadece ilk atamada akıllı saatte bildirim gelir
+   - Bildirimde titreşim, ses ve ekran bildirimi olur
+   - Etkileşimli butonlar ile work item state'i değiştirilebilir
+   - State listesi dinamik olarak work item'ın mevcut state'lerinden oluşur
+   - Dropdown menü ile state seçimi yapılabilir
+
+**Bildirimden Work Item Açma:**
+
+Akıllı saatte bildirim geldiğinde:
+1. Bildirime dokunun veya kaydırın
+2. **"Telefonda Aç"** veya **"Open on Phone"** seçeneğini seçin
+3. Telefondaki Azure DevOps uygulaması otomatik olarak açılır
+4. İlgili work item detay sayfası gösterilir
+
+**Not:** Bu özellik için telefon ve akıllı saatin eşleşmiş olması ve Bluetooth bağlantısının aktif olması gerekir.
+
+**Nöbetçi Modu:**
+- **Nöbetçi Modu** bölümünde telefon ve akıllı saat için ayrı ayrı ayarlar bulunur
+- **Telefon için Nöbetçi Modu:**
+  - Toggle switch'i aktif edin
+  - Bildirimler daha agresif olur (maksimum öncelik, daha fazla titreşim, daha yüksek ses)
+  - Okunmayan bildirimler 30 saniye aralıklarla 3 kez otomatik yenilenir
+- **Akıllı Saat için Nöbetçi Modu:**
+  - Toggle switch'i aktif edin
+  - Akıllı saatte bildirimler daha agresif olur
+
+**Tatil Modu:**
+- **Tatil Modu** bölümünde telefon ve akıllı saat için ayrı ayrı ayarlar bulunur
+- **Telefon için Tatil Modu:**
+  - Toggle switch'i aktif edin
+  - Bu mod aktifken telefonda hiçbir bildirim gelmez
+- **Akıllı Saat için Tatil Modu:**
+  - Toggle switch'i aktif edin
+  - Bu mod aktifken akıllı saatte hiçbir bildirim gelmez
+
+**Ayarlar Ekranı Özellikleri:**
+- Tüm ayarlar gerçek zamanlı olarak kaydedilir
+- Ayarlar cihazda kalıcı olarak saklanır
+- Uygulama yeniden başlatıldığında ayarlar korunur
 
 #### Bildirim Geçmişi
 - Bildirim gönderilmiş work item'lar için tekrar bildirim gönderilmez
 - Uygulama yeniden kurulduğunda bile bildirim geçmişi korunur
+- İlk atamada bildirim gönderilmiş work item'lar için sonraki güncellemelerde bildirim gelmez (eğer sadece "ilk atamada bildirim" seçeneği aktifse)
 
 ## 🔒 Güvenlik
 
 ### Güvenlik Özellikleri
 
 - ✅ **Token Şifreleme:** `flutter_secure_storage` kullanılıyor (Production'da aktif)
-  - Android: EncryptedSharedPreferences
+- Android: EncryptedSharedPreferences
   - iOS: Keychain Services
   - AES-256 şifreleme
 
@@ -465,7 +580,7 @@ lib/
 │   ├── security_service.dart
 │   └── certificate_pinning_service.dart
 └── assets/                      # Assets
-    └── images/
+└── images/
         └── logo.png
 
 docs/                            # Dokümantasyon
@@ -479,7 +594,7 @@ docs/                            # Dokümantasyon
 
 ## 📝 Release Notes
 
-### v1.1.4+43 (2024-12-20)
+### v1.1.4+43 (21-12-2025)
 
 #### Yeni Özellikler
 - ✅ Türk Kültürü Popup (ana sayfada pull-to-refresh ile rastgele bilgiler)
@@ -504,14 +619,41 @@ Detaylı release notları için [RELEASE_NOTES.md](RELEASE_NOTES.md) dosyasına 
 
 **Güvenlik Sorunları:**
 - E-posta: bilgicalpay@gmail.com
-- Repository: https://github.com/bilgicalpay/azuredevops-server-mobile
+- Repository: https://github.com/bilgicalpay/azuredevops-mobile
 
 ## 📄 Lisans
 
-Bu uygulama kurumsal kullanım için geliştirilmiştir.
+Bu uygulama açık kaynak kodlu olarak geliştirilmiştir ve özel bir lisans altında dağıtılmaktadır.
+
+### Lisans Koşulları
+
+**İzin Verilenler:**
+- ✅ Yazılımı özgürce kullanabilirsiniz
+- ✅ Yazılımı değiştirebilir ve geliştirebilirsiniz
+- ✅ Yazılımı ticari olmayan amaçlarla dağıtabilirsiniz
+- ✅ Eğitim ve kişisel kullanım için serbest
+
+**Kesinlikle Yasak Olanlar:**
+- ❌ **TİCARİ SATIŞ YASAKTIR**: Yazılımı veya türev eserlerini ticari amaçlarla satamazsınız
+- ❌ **TİCARİ DAĞITIM YASAKTIR**: Yazılımı veya türev eserlerini ticari ürünlere dahil edemezsiniz
+- ❌ **TİCARİ LİSANSLAMA YASAKTIR**: Türev eserleri sahipli veya ticari lisanslar altında lisanslayamazsınız
+- ❌ **YENİDEN SATIŞ YASAKTIR**: Herhangi bir ticari dağıtım, yeniden satış veya ticarileştirme biçimi yasaktır
+
+**Gereksinimler:**
+- 📝 Kullanımda orijinal telif hakkı bildirimini ve atıfı korumalısınız
+- 📝 Türev eserler aynı lisans koşulları altında dağıtılmalıdır
+- 📝 Kaynak kodu kullanılabilir olmalıdır
+
+**Ticari Kullanım:**
+**ÖNEMLİ**: Ticari kullanım, satış, lisanslama veya dağıtım için **AÇIK YAZILI İZİN GEREKLİDİR**.
+
+Ticari kullanım için lütfen iletişime geçin:
+- E-posta: bilgicalpay@gmail.com
+
+**Detaylı lisans metni (Türkçe ve İngilizce) için [LICENSE](LICENSE) dosyasına bakın.**
 
 ---
 
 **Geliştirici:** Alpay Bilgiç  
-**Son Güncelleme:** 2024-12-20  
-**Versiyon:** 1.1.4+43
+**Son Güncelleme:** 21-12-2025  
+**Versiyon:** 1.2.0+46

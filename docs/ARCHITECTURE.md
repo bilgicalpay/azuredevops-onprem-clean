@@ -2,8 +2,8 @@
 
 **Uygulama:** Azure DevOps Server 2022 Mobile App  
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.1.4+43  
-**Tarih:** 2024-12-20
+**Versiyon:** 1.2.0+46  
+**Tarih:** 21-12-2025
 
 ## Genel Bakış
 
@@ -278,6 +278,10 @@ graph TB
 - Genel ayarlar (SharedPreferences)
 - Token ve kimlik bilgileri yönetimi
 - Bildirim ayarları yönetimi
+- Akıllı saat bildirim ayarları
+- Nöbetçi modu ayarları (telefon ve akıllı saat için ayrı)
+- Tatil modu ayarları (telefon ve akıllı saat için ayrı)
+- Okunmayan bildirim retry takibi
 
 **WorkItemService**
 - Work item CRUD işlemleri
@@ -293,16 +297,25 @@ graph TB
 **NotificationService**
 - Local notification gönderme
 - Bildirim ayarlarına göre filtreleme
+- Akıllı saat bildirimleri (Wear OS ve watchOS)
+- Etkileşimli butonlar ile state değiştirme
+- Nöbetçi modu için agresif bildirimler
+- Tatil modu kontrolü
 
 **BackgroundTaskService**
 - Periyodik work item kontrolü
 - Bildirim gönderme
 - Bildirim filtreleme mantığı
+- Nöbetçi modu kontrolü
+- Tatil modu kontrolü
+- Okunmayan bildirimleri 3 kez yenileme (nöbetçi modunda)
 
 **RealtimeService**
 - WebSocket bağlantısı
 - Gerçek zamanlı güncellemeler
 - Bildirim gönderme
+- Nöbetçi modu kontrolü
+- Tatil modu kontrolü
 
 **MarketService**
 - IIS static dizin listeleme
@@ -360,14 +373,31 @@ graph TB
 ### Notification Flow
 1. BackgroundTaskService periyodik olarak çalışır
 2. Yeni/ güncellenmiş work item'lar kontrol edilir
-3. Bildirim ayarlarına göre filtreleme yapılır
-4. Uygun bildirimler gönderilir
+3. Bildirim ayarlarına göre filtreleme yapılır:
+   - İlk atamada bildirim kontrolü
+   - Tüm güncellemelerde bildirim kontrolü
+   - Hotfix filtresi
+   - Grup bildirimleri
+   - Nöbetçi modu kontrolü (telefon ve akıllı saat için ayrı)
+   - Tatil modu kontrolü (telefon ve akıllı saat için ayrı)
+4. Uygun bildirimler gönderilir:
+   - Telefon bildirimleri (normal veya nöbetçi modu)
+   - Akıllı saat bildirimleri (sadece ilk atamada, etkileşimli butonlarla)
+5. Nöbetçi modunda okunmayan bildirimler 3 kez yenilenir (30 saniye aralıklarla)
 
 ### Real-time Update Flow
 1. RealtimeService WebSocket bağlantısı kurar
 2. Azure DevOps Server'dan güncellemeler alınır
-3. Bildirim ayarlarına göre filtreleme yapılır
-4. UI güncellenir ve bildirimler gönderilir
+3. Bildirim ayarlarına göre filtreleme yapılır:
+   - İlk atamada bildirim kontrolü
+   - Tüm güncellemelerde bildirim kontrolü
+   - Hotfix filtresi
+   - Grup bildirimleri
+   - Nöbetçi modu kontrolü (telefon ve akıllı saat için ayrı)
+   - Tatil modu kontrolü (telefon ve akıllı saat için ayrı)
+4. UI güncellenir ve bildirimler gönderilir:
+   - Telefon bildirimleri (normal veya nöbetçi modu)
+   - Akıllı saat bildirimleri (sadece ilk atamada, etkileşimli butonlarla)
 
 ## Güvenlik Mimarisi
 
@@ -473,6 +503,6 @@ graph TB
 
 ---
 
-**Son Güncelleme:** 2024-12-20  
-**Dokümantasyon Versiyonu:** 1.1.4
+**Son Güncelleme:** 21-12-2025  
+**Dokümantasyon Versiyonu:** 1.2.0
 

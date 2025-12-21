@@ -1,0 +1,1462 @@
+{
+  "SchemaVersion": 2,
+  "ReportID": "019b3dd4-fe87-7d98-9edc-c96402643cf2",
+  "CreatedAt": "2025-12-21T01:15:27.623892+03:00",
+  "ArtifactID": "sha256:e01b89a85efd2da92d2952cc546eae94cdb4a9580d02b14bcb95d1aa77dda351",
+  "ArtifactName": ".",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "https://github.com/bilgicalpay/azuredevops-server-mobile.git",
+    "Branch": "develop",
+    "Commit": "2743cffea7d7a428e672293fc5c96bd353113b11",
+    "CommitMsg": "chore: Bump version to 1.2.0+45 for testing\n\n- Minor version bump (1.1.4 -\u003e 1.2.0)\n- Build number increment (44 -\u003e 45)\n- Ready for iOS and Android testing",
+    "Author": "Alpay Bilgiç \u003cbilgicalpay@gmail.com\u003e",
+    "Committer": "Alpay Bilgiç \u003cbilgicalpay@gmail.com\u003e"
+  },
+  "Results": [
+    {
+      "Target": "ios/Podfile.lock",
+      "Class": "lang-pkgs",
+      "Type": "cocoapods",
+      "Packages": [
+        {
+          "ID": "DKImagePickerController/Core@4.3.9",
+          "Name": "DKImagePickerController/Core",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKImagePickerController@4.3.9#Core",
+            "UID": "1938e7d8daee5a36"
+          },
+          "Version": "4.3.9",
+          "DependsOn": [
+            "DKImagePickerController/ImageDataManager@4.3.9",
+            "DKImagePickerController/Resource@4.3.9"
+          ]
+        },
+        {
+          "ID": "DKImagePickerController/ImageDataManager@4.3.9",
+          "Name": "DKImagePickerController/ImageDataManager",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKImagePickerController@4.3.9#ImageDataManager",
+            "UID": "9294d5a88f6247f"
+          },
+          "Version": "4.3.9"
+        },
+        {
+          "ID": "DKImagePickerController/PhotoGallery@4.3.9",
+          "Name": "DKImagePickerController/PhotoGallery",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKImagePickerController@4.3.9#PhotoGallery",
+            "UID": "4660fbf64480dd8d"
+          },
+          "Version": "4.3.9",
+          "DependsOn": [
+            "DKImagePickerController/Core@4.3.9",
+            "DKPhotoGallery@0.0.19"
+          ]
+        },
+        {
+          "ID": "DKImagePickerController/Resource@4.3.9",
+          "Name": "DKImagePickerController/Resource",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKImagePickerController@4.3.9#Resource",
+            "UID": "7c262bf452d44333"
+          },
+          "Version": "4.3.9"
+        },
+        {
+          "ID": "DKPhotoGallery@0.0.19",
+          "Name": "DKPhotoGallery",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKPhotoGallery@0.0.19",
+            "UID": "8c710d1931c37a7"
+          },
+          "Version": "0.0.19",
+          "DependsOn": [
+            "DKPhotoGallery/Core@0.0.19",
+            "DKPhotoGallery/Model@0.0.19",
+            "DKPhotoGallery/Preview@0.0.19",
+            "DKPhotoGallery/Resource@0.0.19",
+            "SDWebImage@5.21.5",
+            "SwiftyGif@5.4.5"
+          ]
+        },
+        {
+          "ID": "DKPhotoGallery/Core@0.0.19",
+          "Name": "DKPhotoGallery/Core",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKPhotoGallery@0.0.19#Core",
+            "UID": "4723410a5ad6ad72"
+          },
+          "Version": "0.0.19",
+          "DependsOn": [
+            "DKPhotoGallery/Model@0.0.19",
+            "DKPhotoGallery/Preview@0.0.19",
+            "SDWebImage@5.21.5",
+            "SwiftyGif@5.4.5"
+          ]
+        },
+        {
+          "ID": "DKPhotoGallery/Model@0.0.19",
+          "Name": "DKPhotoGallery/Model",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKPhotoGallery@0.0.19#Model",
+            "UID": "4b69f60491063ba0"
+          },
+          "Version": "0.0.19",
+          "DependsOn": [
+            "SDWebImage@5.21.5",
+            "SwiftyGif@5.4.5"
+          ]
+        },
+        {
+          "ID": "DKPhotoGallery/Preview@0.0.19",
+          "Name": "DKPhotoGallery/Preview",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKPhotoGallery@0.0.19#Preview",
+            "UID": "f1495113bb2e3bd4"
+          },
+          "Version": "0.0.19",
+          "DependsOn": [
+            "DKPhotoGallery/Model@0.0.19",
+            "DKPhotoGallery/Resource@0.0.19",
+            "SDWebImage@5.21.5",
+            "SwiftyGif@5.4.5"
+          ]
+        },
+        {
+          "ID": "DKPhotoGallery/Resource@0.0.19",
+          "Name": "DKPhotoGallery/Resource",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/DKPhotoGallery@0.0.19#Resource",
+            "UID": "a2f0260a11b1489a"
+          },
+          "Version": "0.0.19",
+          "DependsOn": [
+            "SDWebImage@5.21.5",
+            "SwiftyGif@5.4.5"
+          ]
+        },
+        {
+          "ID": "Flutter@1.0.0",
+          "Name": "Flutter",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/Flutter@1.0.0",
+            "UID": "15a7f3f14db6dd15"
+          },
+          "Version": "1.0.0"
+        },
+        {
+          "ID": "SDWebImage@5.21.5",
+          "Name": "SDWebImage",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/SDWebImage@5.21.5",
+            "UID": "bd5fdc070c68a530"
+          },
+          "Version": "5.21.5",
+          "DependsOn": [
+            "SDWebImage/Core@5.21.5"
+          ]
+        },
+        {
+          "ID": "SDWebImage/Core@5.21.5",
+          "Name": "SDWebImage/Core",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/SDWebImage@5.21.5#Core",
+            "UID": "6a7cf40fe09a20fd"
+          },
+          "Version": "5.21.5"
+        },
+        {
+          "ID": "SwiftyGif@5.4.5",
+          "Name": "SwiftyGif",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/SwiftyGif@5.4.5",
+            "UID": "10a935b814d11d10"
+          },
+          "Version": "5.4.5"
+        },
+        {
+          "ID": "file_picker@0.0.1",
+          "Name": "file_picker",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/file_picker@0.0.1",
+            "UID": "207bd10edd78ce2b"
+          },
+          "Version": "0.0.1",
+          "DependsOn": [
+            "DKImagePickerController/PhotoGallery@4.3.9",
+            "Flutter@1.0.0"
+          ]
+        },
+        {
+          "ID": "flutter_background_service_ios@0.0.3",
+          "Name": "flutter_background_service_ios",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/flutter_background_service_ios@0.0.3",
+            "UID": "a7907b37cc804928"
+          },
+          "Version": "0.0.3",
+          "DependsOn": [
+            "Flutter@1.0.0"
+          ]
+        },
+        {
+          "ID": "flutter_local_notifications@0.0.1",
+          "Name": "flutter_local_notifications",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/flutter_local_notifications@0.0.1",
+            "UID": "49baa7c64a5e2f0"
+          },
+          "Version": "0.0.1",
+          "DependsOn": [
+            "Flutter@1.0.0"
+          ]
+        },
+        {
+          "ID": "flutter_secure_storage@6.0.0",
+          "Name": "flutter_secure_storage",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/flutter_secure_storage@6.0.0",
+            "UID": "6d44cc5c15a6bdc0"
+          },
+          "Version": "6.0.0",
+          "DependsOn": [
+            "Flutter@1.0.0"
+          ]
+        },
+        {
+          "ID": "package_info_plus@0.4.5",
+          "Name": "package_info_plus",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/package_info_plus@0.4.5",
+            "UID": "8ff5c8612c2fe5ed"
+          },
+          "Version": "0.4.5",
+          "DependsOn": [
+            "Flutter@1.0.0"
+          ]
+        },
+        {
+          "ID": "path_provider_foundation@0.0.1",
+          "Name": "path_provider_foundation",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/path_provider_foundation@0.0.1",
+            "UID": "6dbb9c1fa47cba72"
+          },
+          "Version": "0.0.1",
+          "DependsOn": [
+            "Flutter@1.0.0",
+            "FlutterMacOS"
+          ]
+        },
+        {
+          "ID": "permission_handler_apple@9.3.0",
+          "Name": "permission_handler_apple",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/permission_handler_apple@9.3.0",
+            "UID": "2cf9eb3ad5179586"
+          },
+          "Version": "9.3.0",
+          "DependsOn": [
+            "Flutter@1.0.0"
+          ]
+        },
+        {
+          "ID": "root_detector@0.0.1",
+          "Name": "root_detector",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/root_detector@0.0.1",
+            "UID": "4bceb0e9ba73e99b"
+          },
+          "Version": "0.0.1",
+          "DependsOn": [
+            "Flutter@1.0.0"
+          ]
+        },
+        {
+          "ID": "shared_preferences_foundation@0.0.1",
+          "Name": "shared_preferences_foundation",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/shared_preferences_foundation@0.0.1",
+            "UID": "b9d9f3c97799494d"
+          },
+          "Version": "0.0.1",
+          "DependsOn": [
+            "Flutter@1.0.0",
+            "FlutterMacOS"
+          ]
+        },
+        {
+          "ID": "url_launcher_ios@0.0.1",
+          "Name": "url_launcher_ios",
+          "Identifier": {
+            "PURL": "pkg:cocoapods/url_launcher_ios@0.0.1",
+            "UID": "9ac6943ab9fab96e"
+          },
+          "Version": "0.0.1",
+          "DependsOn": [
+            "Flutter@1.0.0"
+          ]
+        }
+      ]
+    },
+    {
+      "Target": "pubspec.lock",
+      "Class": "lang-pkgs",
+      "Type": "pub",
+      "Packages": [
+        {
+          "ID": "cupertino_icons@1.0.8",
+          "Name": "cupertino_icons",
+          "Identifier": {
+            "PURL": "pkg:pub/cupertino_icons@1.0.8",
+            "UID": "441ed471cd5a7ccb"
+          },
+          "Version": "1.0.8",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "dio@5.9.0",
+          "Name": "dio",
+          "Identifier": {
+            "PURL": "pkg:pub/dio@5.9.0",
+            "UID": "6f24911e8fe8600f"
+          },
+          "Version": "5.9.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "file_picker@8.3.7",
+          "Name": "file_picker",
+          "Identifier": {
+            "PURL": "pkg:pub/file_picker@8.3.7",
+            "UID": "d285fbc6c1ba32c4"
+          },
+          "Version": "8.3.7",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter@0.0.0",
+          "Name": "flutter",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter@0.0.0",
+            "UID": "d6e98fc34afdb87c"
+          },
+          "Version": "0.0.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter_background_service@5.1.0",
+          "Name": "flutter_background_service",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_background_service@5.1.0",
+            "UID": "90ebb9909110c7d1"
+          },
+          "Version": "5.1.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter_background_service_android@6.3.1",
+          "Name": "flutter_background_service_android",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_background_service_android@6.3.1",
+            "UID": "20ac24f11d2e8ffe"
+          },
+          "Version": "6.3.1",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter_html@3.0.0",
+          "Name": "flutter_html",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_html@3.0.0",
+            "UID": "ae2ff48f80b0fab9"
+          },
+          "Version": "3.0.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter_lints@5.0.0",
+          "Name": "flutter_lints",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_lints@5.0.0",
+            "UID": "c40b49b4c11df891"
+          },
+          "Version": "5.0.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter_local_notifications@17.2.4",
+          "Name": "flutter_local_notifications",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_local_notifications@17.2.4",
+            "UID": "6d55ee9672c305a4"
+          },
+          "Version": "17.2.4",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter_markdown@0.6.23",
+          "Name": "flutter_markdown",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_markdown@0.6.23",
+            "UID": "76f1fd3b51d2a999"
+          },
+          "Version": "0.6.23",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter_secure_storage@9.2.4",
+          "Name": "flutter_secure_storage",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_secure_storage@9.2.4",
+            "UID": "ca37e71881718c92"
+          },
+          "Version": "9.2.4",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "flutter_test@0.0.0",
+          "Name": "flutter_test",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_test@0.0.0",
+            "UID": "17a9beb7fcc2ea9"
+          },
+          "Version": "0.0.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "google_fonts@6.3.3",
+          "Name": "google_fonts",
+          "Identifier": {
+            "PURL": "pkg:pub/google_fonts@6.3.3",
+            "UID": "e98c175dfd12b1b8"
+          },
+          "Version": "6.3.3",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "html@0.15.6",
+          "Name": "html",
+          "Identifier": {
+            "PURL": "pkg:pub/html@0.15.6",
+            "UID": "92b0be63d7ec5855"
+          },
+          "Version": "0.15.6",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "http@1.6.0",
+          "Name": "http",
+          "Identifier": {
+            "PURL": "pkg:pub/http@1.6.0",
+            "UID": "442e37a95f2db737"
+          },
+          "Version": "1.6.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "intl@0.18.1",
+          "Name": "intl",
+          "Identifier": {
+            "PURL": "pkg:pub/intl@0.18.1",
+            "UID": "d01a0e4384ef07e9"
+          },
+          "Version": "0.18.1",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "logging@1.3.0",
+          "Name": "logging",
+          "Identifier": {
+            "PURL": "pkg:pub/logging@1.3.0",
+            "UID": "73a18b6e44714c4d"
+          },
+          "Version": "1.3.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "package_info_plus@8.3.1",
+          "Name": "package_info_plus",
+          "Identifier": {
+            "PURL": "pkg:pub/package_info_plus@8.3.1",
+            "UID": "e717393e03271736"
+          },
+          "Version": "8.3.1",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "path@1.9.1",
+          "Name": "path",
+          "Identifier": {
+            "PURL": "pkg:pub/path@1.9.1",
+            "UID": "e533a7dcfd895143"
+          },
+          "Version": "1.9.1",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "path_provider@2.1.5",
+          "Name": "path_provider",
+          "Identifier": {
+            "PURL": "pkg:pub/path_provider@2.1.5",
+            "UID": "7738192de21181f6"
+          },
+          "Version": "2.1.5",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "permission_handler@11.4.0",
+          "Name": "permission_handler",
+          "Identifier": {
+            "PURL": "pkg:pub/permission_handler@11.4.0",
+            "UID": "29e62c575fdb48a4"
+          },
+          "Version": "11.4.0",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "provider@6.1.5+1",
+          "Name": "provider",
+          "Identifier": {
+            "PURL": "pkg:pub/provider@6.1.5%2B1",
+            "UID": "ae149c6ac93b1739"
+          },
+          "Version": "6.1.5+1",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "root_detector@0.0.6",
+          "Name": "root_detector",
+          "Identifier": {
+            "PURL": "pkg:pub/root_detector@0.0.6",
+            "UID": "cabfbd2f49eeaefc"
+          },
+          "Version": "0.0.6",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "shared_preferences@2.2.3",
+          "Name": "shared_preferences",
+          "Identifier": {
+            "PURL": "pkg:pub/shared_preferences@2.2.3",
+            "UID": "f324196cf54b9741"
+          },
+          "Version": "2.2.3",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "url_launcher@6.3.2",
+          "Name": "url_launcher",
+          "Identifier": {
+            "PURL": "pkg:pub/url_launcher@6.3.2",
+            "UID": "9ac709d4954304f3"
+          },
+          "Version": "6.3.2",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "web_socket_channel@3.0.3",
+          "Name": "web_socket_channel",
+          "Identifier": {
+            "PURL": "pkg:pub/web_socket_channel@3.0.3",
+            "UID": "fe868f1e09a52d7b"
+          },
+          "Version": "3.0.3",
+          "Relationship": "direct"
+        },
+        {
+          "ID": "args@2.7.0",
+          "Name": "args",
+          "Identifier": {
+            "PURL": "pkg:pub/args@2.7.0",
+            "UID": "3a22e51ce584ab4c"
+          },
+          "Version": "2.7.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "async@2.13.0",
+          "Name": "async",
+          "Identifier": {
+            "PURL": "pkg:pub/async@2.13.0",
+            "UID": "82144967ab6435c3"
+          },
+          "Version": "2.13.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "boolean_selector@2.1.2",
+          "Name": "boolean_selector",
+          "Identifier": {
+            "PURL": "pkg:pub/boolean_selector@2.1.2",
+            "UID": "a99b6a1a78f1438a"
+          },
+          "Version": "2.1.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "characters@1.4.0",
+          "Name": "characters",
+          "Identifier": {
+            "PURL": "pkg:pub/characters@1.4.0",
+            "UID": "2a3417945c7e7afd"
+          },
+          "Version": "1.4.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "clock@1.1.2",
+          "Name": "clock",
+          "Identifier": {
+            "PURL": "pkg:pub/clock@1.1.2",
+            "UID": "7cfa2e44ef311634"
+          },
+          "Version": "1.1.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "collection@1.19.1",
+          "Name": "collection",
+          "Identifier": {
+            "PURL": "pkg:pub/collection@1.19.1",
+            "UID": "241888610f7fce44"
+          },
+          "Version": "1.19.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "cross_file@0.3.5+1",
+          "Name": "cross_file",
+          "Identifier": {
+            "PURL": "pkg:pub/cross_file@0.3.5%2B1",
+            "UID": "111bb7822ad00900"
+          },
+          "Version": "0.3.5+1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "crypto@3.0.7",
+          "Name": "crypto",
+          "Identifier": {
+            "PURL": "pkg:pub/crypto@3.0.7",
+            "UID": "1253de1333f0ac19"
+          },
+          "Version": "3.0.7",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "csslib@1.0.2",
+          "Name": "csslib",
+          "Identifier": {
+            "PURL": "pkg:pub/csslib@1.0.2",
+            "UID": "bf4e73cff58f6756"
+          },
+          "Version": "1.0.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "dbus@0.7.11",
+          "Name": "dbus",
+          "Identifier": {
+            "PURL": "pkg:pub/dbus@0.7.11",
+            "UID": "9ad4c125a26d7d62"
+          },
+          "Version": "0.7.11",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "dio_web_adapter@1.1.1",
+          "Name": "dio_web_adapter",
+          "Identifier": {
+            "PURL": "pkg:pub/dio_web_adapter@1.1.1",
+            "UID": "56070c71c7df9a94"
+          },
+          "Version": "1.1.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "fake_async@1.3.3",
+          "Name": "fake_async",
+          "Identifier": {
+            "PURL": "pkg:pub/fake_async@1.3.3",
+            "UID": "f71c93b07db5024e"
+          },
+          "Version": "1.3.3",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "ffi@2.1.4",
+          "Name": "ffi",
+          "Identifier": {
+            "PURL": "pkg:pub/ffi@2.1.4",
+            "UID": "a4ab2a192c8eab73"
+          },
+          "Version": "2.1.4",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "file@7.0.1",
+          "Name": "file",
+          "Identifier": {
+            "PURL": "pkg:pub/file@7.0.1",
+            "UID": "16d0c10391884ba6"
+          },
+          "Version": "7.0.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_background_service_ios@5.0.3",
+          "Name": "flutter_background_service_ios",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_background_service_ios@5.0.3",
+            "UID": "9c939f1065090f08"
+          },
+          "Version": "5.0.3",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_background_service_platform_interface@5.1.2",
+          "Name": "flutter_background_service_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_background_service_platform_interface@5.1.2",
+            "UID": "3fe2c43df40df5f7"
+          },
+          "Version": "5.1.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_local_notifications_linux@4.0.1",
+          "Name": "flutter_local_notifications_linux",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_local_notifications_linux@4.0.1",
+            "UID": "9aaec147f22be83a"
+          },
+          "Version": "4.0.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_local_notifications_platform_interface@7.2.0",
+          "Name": "flutter_local_notifications_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_local_notifications_platform_interface@7.2.0",
+            "UID": "458b80bae6d66e25"
+          },
+          "Version": "7.2.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_plugin_android_lifecycle@2.0.33",
+          "Name": "flutter_plugin_android_lifecycle",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_plugin_android_lifecycle@2.0.33",
+            "UID": "d81ec5800a2e94d6"
+          },
+          "Version": "2.0.33",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_secure_storage_linux@1.2.3",
+          "Name": "flutter_secure_storage_linux",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_secure_storage_linux@1.2.3",
+            "UID": "feb47359b2a52ea9"
+          },
+          "Version": "1.2.3",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_secure_storage_macos@3.1.3",
+          "Name": "flutter_secure_storage_macos",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_secure_storage_macos@3.1.3",
+            "UID": "4c753091f28393c0"
+          },
+          "Version": "3.1.3",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_secure_storage_platform_interface@1.1.2",
+          "Name": "flutter_secure_storage_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_secure_storage_platform_interface@1.1.2",
+            "UID": "fced63764c636f4b"
+          },
+          "Version": "1.1.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_secure_storage_web@1.2.1",
+          "Name": "flutter_secure_storage_web",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_secure_storage_web@1.2.1",
+            "UID": "9ea7ba5d922a06e3"
+          },
+          "Version": "1.2.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_secure_storage_windows@3.1.2",
+          "Name": "flutter_secure_storage_windows",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_secure_storage_windows@3.1.2",
+            "UID": "4dcdc72902ac597"
+          },
+          "Version": "3.1.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "flutter_web_plugins@0.0.0",
+          "Name": "flutter_web_plugins",
+          "Identifier": {
+            "PURL": "pkg:pub/flutter_web_plugins@0.0.0",
+            "UID": "8b1e6c32f66427e"
+          },
+          "Version": "0.0.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "http_parser@4.1.2",
+          "Name": "http_parser",
+          "Identifier": {
+            "PURL": "pkg:pub/http_parser@4.1.2",
+            "UID": "3d9a743379fd3019"
+          },
+          "Version": "4.1.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "js@0.6.7",
+          "Name": "js",
+          "Identifier": {
+            "PURL": "pkg:pub/js@0.6.7",
+            "UID": "4715bd831dba58f"
+          },
+          "Version": "0.6.7",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "leak_tracker@11.0.2",
+          "Name": "leak_tracker",
+          "Identifier": {
+            "PURL": "pkg:pub/leak_tracker@11.0.2",
+            "UID": "1db0149858ccfdbe"
+          },
+          "Version": "11.0.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "leak_tracker_flutter_testing@3.0.10",
+          "Name": "leak_tracker_flutter_testing",
+          "Identifier": {
+            "PURL": "pkg:pub/leak_tracker_flutter_testing@3.0.10",
+            "UID": "ad0740a50ad70ee0"
+          },
+          "Version": "3.0.10",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "leak_tracker_testing@3.0.2",
+          "Name": "leak_tracker_testing",
+          "Identifier": {
+            "PURL": "pkg:pub/leak_tracker_testing@3.0.2",
+            "UID": "421941a868a1f74f"
+          },
+          "Version": "3.0.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "lints@5.1.1",
+          "Name": "lints",
+          "Identifier": {
+            "PURL": "pkg:pub/lints@5.1.1",
+            "UID": "234a9360b87493d5"
+          },
+          "Version": "5.1.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "list_counter@1.0.2",
+          "Name": "list_counter",
+          "Identifier": {
+            "PURL": "pkg:pub/list_counter@1.0.2",
+            "UID": "b894c70f3560934b"
+          },
+          "Version": "1.0.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "markdown@7.3.0",
+          "Name": "markdown",
+          "Identifier": {
+            "PURL": "pkg:pub/markdown@7.3.0",
+            "UID": "dd70b9f576e5e0f2"
+          },
+          "Version": "7.3.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "matcher@0.12.17",
+          "Name": "matcher",
+          "Identifier": {
+            "PURL": "pkg:pub/matcher@0.12.17",
+            "UID": "28f15619c05f55cb"
+          },
+          "Version": "0.12.17",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "material_color_utilities@0.11.1",
+          "Name": "material_color_utilities",
+          "Identifier": {
+            "PURL": "pkg:pub/material_color_utilities@0.11.1",
+            "UID": "46c2bbc6ea2bc26b"
+          },
+          "Version": "0.11.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "meta@1.17.0",
+          "Name": "meta",
+          "Identifier": {
+            "PURL": "pkg:pub/meta@1.17.0",
+            "UID": "5eb72e9b76fd951a"
+          },
+          "Version": "1.17.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "mime@2.0.0",
+          "Name": "mime",
+          "Identifier": {
+            "PURL": "pkg:pub/mime@2.0.0",
+            "UID": "16f099894be002ce"
+          },
+          "Version": "2.0.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "nested@1.0.0",
+          "Name": "nested",
+          "Identifier": {
+            "PURL": "pkg:pub/nested@1.0.0",
+            "UID": "bbb1ce44ac140960"
+          },
+          "Version": "1.0.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "package_info_plus_platform_interface@3.2.1",
+          "Name": "package_info_plus_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/package_info_plus_platform_interface@3.2.1",
+            "UID": "b4783e5b39db37dc"
+          },
+          "Version": "3.2.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "path_provider_android@2.2.22",
+          "Name": "path_provider_android",
+          "Identifier": {
+            "PURL": "pkg:pub/path_provider_android@2.2.22",
+            "UID": "12825059eae333b9"
+          },
+          "Version": "2.2.22",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "path_provider_foundation@2.5.1",
+          "Name": "path_provider_foundation",
+          "Identifier": {
+            "PURL": "pkg:pub/path_provider_foundation@2.5.1",
+            "UID": "d65ea5216f33fe6f"
+          },
+          "Version": "2.5.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "path_provider_linux@2.2.1",
+          "Name": "path_provider_linux",
+          "Identifier": {
+            "PURL": "pkg:pub/path_provider_linux@2.2.1",
+            "UID": "2ba2ea87f7d90e02"
+          },
+          "Version": "2.2.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "path_provider_platform_interface@2.1.2",
+          "Name": "path_provider_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/path_provider_platform_interface@2.1.2",
+            "UID": "f8f899941e059c21"
+          },
+          "Version": "2.1.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "path_provider_windows@2.3.0",
+          "Name": "path_provider_windows",
+          "Identifier": {
+            "PURL": "pkg:pub/path_provider_windows@2.3.0",
+            "UID": "e9288a267ce1951a"
+          },
+          "Version": "2.3.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "permission_handler_android@12.1.0",
+          "Name": "permission_handler_android",
+          "Identifier": {
+            "PURL": "pkg:pub/permission_handler_android@12.1.0",
+            "UID": "b508dcb933e42963"
+          },
+          "Version": "12.1.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "permission_handler_apple@9.4.7",
+          "Name": "permission_handler_apple",
+          "Identifier": {
+            "PURL": "pkg:pub/permission_handler_apple@9.4.7",
+            "UID": "3f722a85a0f00ad8"
+          },
+          "Version": "9.4.7",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "permission_handler_html@0.1.1",
+          "Name": "permission_handler_html",
+          "Identifier": {
+            "PURL": "pkg:pub/permission_handler_html@0.1.1",
+            "UID": "fb19c8b9b92104d6"
+          },
+          "Version": "0.1.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "permission_handler_platform_interface@4.3.0",
+          "Name": "permission_handler_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/permission_handler_platform_interface@4.3.0",
+            "UID": "5477820dba6c0f4b"
+          },
+          "Version": "4.3.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "permission_handler_windows@0.2.1",
+          "Name": "permission_handler_windows",
+          "Identifier": {
+            "PURL": "pkg:pub/permission_handler_windows@0.2.1",
+            "UID": "442b1455f807dec0"
+          },
+          "Version": "0.2.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "petitparser@7.0.1",
+          "Name": "petitparser",
+          "Identifier": {
+            "PURL": "pkg:pub/petitparser@7.0.1",
+            "UID": "9898162d0b35389a"
+          },
+          "Version": "7.0.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "platform@3.1.6",
+          "Name": "platform",
+          "Identifier": {
+            "PURL": "pkg:pub/platform@3.1.6",
+            "UID": "2471f6baa4b3710b"
+          },
+          "Version": "3.1.6",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "plugin_platform_interface@2.1.8",
+          "Name": "plugin_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/plugin_platform_interface@2.1.8",
+            "UID": "31710146d098054"
+          },
+          "Version": "2.1.8",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "shared_preferences_android@2.4.18",
+          "Name": "shared_preferences_android",
+          "Identifier": {
+            "PURL": "pkg:pub/shared_preferences_android@2.4.18",
+            "UID": "b177f8837b49f01f"
+          },
+          "Version": "2.4.18",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "shared_preferences_foundation@2.5.6",
+          "Name": "shared_preferences_foundation",
+          "Identifier": {
+            "PURL": "pkg:pub/shared_preferences_foundation@2.5.6",
+            "UID": "234d9c3cd3086d9"
+          },
+          "Version": "2.5.6",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "shared_preferences_linux@2.4.1",
+          "Name": "shared_preferences_linux",
+          "Identifier": {
+            "PURL": "pkg:pub/shared_preferences_linux@2.4.1",
+            "UID": "fe84983d79c7b9d1"
+          },
+          "Version": "2.4.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "shared_preferences_platform_interface@2.4.1",
+          "Name": "shared_preferences_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/shared_preferences_platform_interface@2.4.1",
+            "UID": "93102abb422672d"
+          },
+          "Version": "2.4.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "shared_preferences_web@2.4.3",
+          "Name": "shared_preferences_web",
+          "Identifier": {
+            "PURL": "pkg:pub/shared_preferences_web@2.4.3",
+            "UID": "72a81f9478e2fbe2"
+          },
+          "Version": "2.4.3",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "shared_preferences_windows@2.4.1",
+          "Name": "shared_preferences_windows",
+          "Identifier": {
+            "PURL": "pkg:pub/shared_preferences_windows@2.4.1",
+            "UID": "2ebe44b89712d05f"
+          },
+          "Version": "2.4.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "sky_engine@0.0.0",
+          "Name": "sky_engine",
+          "Identifier": {
+            "PURL": "pkg:pub/sky_engine@0.0.0",
+            "UID": "53716a1bf33358b7"
+          },
+          "Version": "0.0.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "source_span@1.10.1",
+          "Name": "source_span",
+          "Identifier": {
+            "PURL": "pkg:pub/source_span@1.10.1",
+            "UID": "273e14a06bec1de2"
+          },
+          "Version": "1.10.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "stack_trace@1.12.1",
+          "Name": "stack_trace",
+          "Identifier": {
+            "PURL": "pkg:pub/stack_trace@1.12.1",
+            "UID": "ae189d97cd890523"
+          },
+          "Version": "1.12.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "stream_channel@2.1.4",
+          "Name": "stream_channel",
+          "Identifier": {
+            "PURL": "pkg:pub/stream_channel@2.1.4",
+            "UID": "2c04c6aedeb9110e"
+          },
+          "Version": "2.1.4",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "string_scanner@1.4.1",
+          "Name": "string_scanner",
+          "Identifier": {
+            "PURL": "pkg:pub/string_scanner@1.4.1",
+            "UID": "ec3a5b17e024024f"
+          },
+          "Version": "1.4.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "term_glyph@1.2.2",
+          "Name": "term_glyph",
+          "Identifier": {
+            "PURL": "pkg:pub/term_glyph@1.2.2",
+            "UID": "bed7ef0424c002ae"
+          },
+          "Version": "1.2.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "test_api@0.7.7",
+          "Name": "test_api",
+          "Identifier": {
+            "PURL": "pkg:pub/test_api@0.7.7",
+            "UID": "31c8d33281bb8b3c"
+          },
+          "Version": "0.7.7",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "timezone@0.9.4",
+          "Name": "timezone",
+          "Identifier": {
+            "PURL": "pkg:pub/timezone@0.9.4",
+            "UID": "2cbf6fd629873f80"
+          },
+          "Version": "0.9.4",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "typed_data@1.4.0",
+          "Name": "typed_data",
+          "Identifier": {
+            "PURL": "pkg:pub/typed_data@1.4.0",
+            "UID": "26ffc03d91a0576b"
+          },
+          "Version": "1.4.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "url_launcher_android@6.3.28",
+          "Name": "url_launcher_android",
+          "Identifier": {
+            "PURL": "pkg:pub/url_launcher_android@6.3.28",
+            "UID": "30be4b2672d72d4"
+          },
+          "Version": "6.3.28",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "url_launcher_ios@6.3.6",
+          "Name": "url_launcher_ios",
+          "Identifier": {
+            "PURL": "pkg:pub/url_launcher_ios@6.3.6",
+            "UID": "37d9b78de36fce5b"
+          },
+          "Version": "6.3.6",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "url_launcher_linux@3.2.2",
+          "Name": "url_launcher_linux",
+          "Identifier": {
+            "PURL": "pkg:pub/url_launcher_linux@3.2.2",
+            "UID": "392922beee01a397"
+          },
+          "Version": "3.2.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "url_launcher_macos@3.2.5",
+          "Name": "url_launcher_macos",
+          "Identifier": {
+            "PURL": "pkg:pub/url_launcher_macos@3.2.5",
+            "UID": "23d495147a964f55"
+          },
+          "Version": "3.2.5",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "url_launcher_platform_interface@2.3.2",
+          "Name": "url_launcher_platform_interface",
+          "Identifier": {
+            "PURL": "pkg:pub/url_launcher_platform_interface@2.3.2",
+            "UID": "52c68966684c970e"
+          },
+          "Version": "2.3.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "url_launcher_web@2.4.1",
+          "Name": "url_launcher_web",
+          "Identifier": {
+            "PURL": "pkg:pub/url_launcher_web@2.4.1",
+            "UID": "167e9e50fa9c0d"
+          },
+          "Version": "2.4.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "url_launcher_windows@3.1.5",
+          "Name": "url_launcher_windows",
+          "Identifier": {
+            "PURL": "pkg:pub/url_launcher_windows@3.1.5",
+            "UID": "a731b1b1e0106350"
+          },
+          "Version": "3.1.5",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "vector_math@2.2.0",
+          "Name": "vector_math",
+          "Identifier": {
+            "PURL": "pkg:pub/vector_math@2.2.0",
+            "UID": "db3211f48fd6142f"
+          },
+          "Version": "2.2.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "vm_service@15.0.2",
+          "Name": "vm_service",
+          "Identifier": {
+            "PURL": "pkg:pub/vm_service@15.0.2",
+            "UID": "fd43f71d243b1888"
+          },
+          "Version": "15.0.2",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "web@1.1.1",
+          "Name": "web",
+          "Identifier": {
+            "PURL": "pkg:pub/web@1.1.1",
+            "UID": "42b8fdb6089569b0"
+          },
+          "Version": "1.1.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "web_socket@1.0.1",
+          "Name": "web_socket",
+          "Identifier": {
+            "PURL": "pkg:pub/web_socket@1.0.1",
+            "UID": "4bcd62052b599738"
+          },
+          "Version": "1.0.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "win32@5.15.0",
+          "Name": "win32",
+          "Identifier": {
+            "PURL": "pkg:pub/win32@5.15.0",
+            "UID": "7dac844c90a56288"
+          },
+          "Version": "5.15.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "xdg_directories@1.1.0",
+          "Name": "xdg_directories",
+          "Identifier": {
+            "PURL": "pkg:pub/xdg_directories@1.1.0",
+            "UID": "7bb0f9b400fb5cf3"
+          },
+          "Version": "1.1.0",
+          "Indirect": true,
+          "Relationship": "indirect"
+        },
+        {
+          "ID": "xml@6.6.1",
+          "Name": "xml",
+          "Identifier": {
+            "PURL": "pkg:pub/xml@6.6.1",
+            "UID": "4fa372925ce4052a"
+          },
+          "Version": "6.6.1",
+          "Indirect": true,
+          "Relationship": "indirect"
+        }
+      ]
+    }
+  ]
+}

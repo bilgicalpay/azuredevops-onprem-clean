@@ -364,5 +364,130 @@ class StorageService extends ChangeNotifier {
       print('Error setting notification groups: $e');
     }
   }
+
+  // ==================== AKILLI SAAT BİLDİRİMLERİ ====================
+  
+  /// Akıllı saat bildirimleri aktif mi? (varsayılan: false)
+  bool getEnableSmartwatchNotifications() {
+    return _prefs?.getBool('enable_smartwatch_notifications') ?? false;
+  }
+  
+  Future<void> setEnableSmartwatchNotifications(bool value) async {
+    await _prefs?.setBool('enable_smartwatch_notifications', value);
+    notifyListeners();
+  }
+
+  // ==================== NÖBETÇİ MODU ====================
+  
+  /// Nöbetçi modu aktif mi? (telefon için, varsayılan: false)
+  bool getOnCallModePhone() {
+    return _prefs?.getBool('on_call_mode_phone') ?? false;
+  }
+  
+  Future<void> setOnCallModePhone(bool value) async {
+    await _prefs?.setBool('on_call_mode_phone', value);
+    notifyListeners();
+  }
+  
+  /// Nöbetçi modu aktif mi? (akıllı saat için, varsayılan: false)
+  bool getOnCallModeWatch() {
+    return _prefs?.getBool('on_call_mode_watch') ?? false;
+  }
+  
+  Future<void> setOnCallModeWatch(bool value) async {
+    await _prefs?.setBool('on_call_mode_watch', value);
+    notifyListeners();
+  }
+  
+  /// Nöbetçi modu aktif mi? (genel - telefon veya saat için)
+  bool getOnCallMode() {
+    return getOnCallModePhone() || getOnCallModeWatch();
+  }
+
+  // ==================== TATİL MODU ====================
+  
+  /// Tatil modu aktif mi? (telefon için, varsayılan: false)
+  bool getVacationModePhone() {
+    return _prefs?.getBool('vacation_mode_phone') ?? false;
+  }
+  
+  Future<void> setVacationModePhone(bool value) async {
+    await _prefs?.setBool('vacation_mode_phone', value);
+    notifyListeners();
+  }
+  
+  /// Tatil modu aktif mi? (akıllı saat için, varsayılan: false)
+  bool getVacationModeWatch() {
+    return _prefs?.getBool('vacation_mode_watch') ?? false;
+  }
+  
+  Future<void> setVacationModeWatch(bool value) async {
+    await _prefs?.setBool('vacation_mode_watch', value);
+    notifyListeners();
+  }
+  
+  /// Tatil modu aktif mi? (genel - telefon veya saat için)
+  bool getVacationMode() {
+    return getVacationModePhone() || getVacationModeWatch();
+  }
+
+  // ==================== OKUNMAYAN BİLDİRİMLER TAKİBİ ====================
+  
+  /// Okunmayan bildirimler için yeniden gönderme sayısı (work item ID -> count)
+  Future<Map<int, int>> getUnreadNotificationRetryCounts() async {
+    try {
+      final countsJson = _prefs?.getString('unread_notification_retry_counts');
+      if (countsJson == null || countsJson.isEmpty) {
+        return {};
+      }
+      final Map<String, dynamic> counts = jsonDecode(countsJson);
+      return counts.map((key, value) => MapEntry(int.parse(key), value as int));
+    } catch (e) {
+      print('Error reading unread notification retry counts: $e');
+      return {};
+    }
+  }
+  
+  /// Okunmayan bildirim için yeniden gönderme sayısını artır
+  Future<void> incrementUnreadNotificationRetry(int workItemId) async {
+    try {
+      final counts = await getUnreadNotificationRetryCounts();
+      counts[workItemId] = (counts[workItemId] ?? 0) + 1;
+      await _prefs?.setString('unread_notification_retry_counts', jsonEncode(counts));
+      notifyListeners();
+    } catch (e) {
+      print('Error incrementing unread notification retry: $e');
+    }
+  }
+  
+  /// Okunmayan bildirim için yeniden gönderme sayısını sıfırla (bildirim okunduğunda)
+  Future<void> resetUnreadNotificationRetry(int workItemId) async {
+    try {
+      final counts = await getUnreadNotificationRetryCounts();
+      counts.remove(workItemId);
+      await _prefs?.setString('unread_notification_retry_counts', jsonEncode(counts));
+      notifyListeners();
+    } catch (e) {
+      print('Error resetting unread notification retry: $e');
+    }
+  }
+  
+  /// Okunmayan bildirim için yeniden gönderme sayısını al
+  Future<int> getUnreadNotificationRetryCount(int workItemId) async {
+    final counts = await getUnreadNotificationRetryCounts();
+    return counts[workItemId] ?? 0;
+  }
+
+  // ==================== DİL AYARLARI ====================
+  
+  /// Seçili dil kodu (varsayılan: cihaz dili veya 'tr')
+  String getSelectedLanguage() {
+    return _prefs?.getString('selected_language') ?? 'system';
+  }
+  
+  Future<void> setSelectedLanguage(String languageCode) async {
+    await _prefs?.setString('selected_language', languageCode);
+    notifyListeners();
+  }
 }
 

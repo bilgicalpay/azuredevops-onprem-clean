@@ -1,0 +1,219 @@
+{
+  "@@locale": "ur",
+  "appTitle": "Azure DevOps",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "ترتیبات",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "wikiSettings": "ویکی ترتیبات",
+  "@wikiSettings": {
+    "description": "Wiki settings section title"
+  },
+  "wikiSettingsDescription": "Azure DevOps ویکی فائل کا URL درج کریں۔ یہ ویکی مواد ہوم پیج پر دکھایا جائے گا۔",
+  "@wikiSettingsDescription": {
+    "description": "Wiki settings description"
+  },
+  "wikiUrl": "ویکی URL",
+  "@wikiUrl": {
+    "description": "Wiki URL input label"
+  },
+  "save": "محفوظ کریں",
+  "@save": {
+    "description": "Save button text"
+  },
+  "marketSettings": "مارکیٹ ترتیبات",
+  "@marketSettings": {
+    "description": "Market settings section title"
+  },
+  "marketSettingsDescription": "IIS static directory کا URL درج کریں۔ APK اور IPA فائلیں اس directory سے فہرست میں آئیں گی اور ڈاؤن لوڈ کی جا سکیں گی۔",
+  "@marketSettingsDescription": {
+    "description": "Market settings description"
+  },
+  "marketUrl": "مارکیٹ URL",
+  "@marketUrl": {
+    "description": "Market URL input label"
+  },
+  "notificationSettings": "اطلاعات کی ترتیبات",
+  "@notificationSettings": {
+    "description": "Notification settings section title"
+  },
+  "controlFrequency": "کنٹرول کی تعدد",
+  "@controlFrequency": {
+    "description": "Control frequency section title"
+  },
+  "pollingInterval": "پولنگ وقفہ (سیکنڈ)",
+  "@pollingInterval": {
+    "description": "Polling interval input label"
+  },
+  "pollingIntervalHelper": "5-300 سیکنڈ کے درمیان",
+  "@pollingIntervalHelper": {
+    "description": "Polling interval helper text"
+  },
+  "fast": "تیز (10s)",
+  "@fast": {
+    "description": "Fast polling interval button"
+  },
+  "normal": "عام (15s)",
+  "@normal": {
+    "description": "Normal polling interval button"
+  },
+  "slow": "سست (30s)",
+  "@slow": {
+    "description": "Slow polling interval button"
+  },
+  "notificationTypes": "اطلاعات کی اقسام",
+  "@notificationTypes": {
+    "description": "Notification types section title"
+  },
+  "notifyOnFirstAssignment": "پہلی تفویض پر اطلاع",
+  "@notifyOnFirstAssignment": {
+    "description": "Notify on first assignment toggle title"
+  },
+  "notifyOnFirstAssignmentDescription": "صرف پہلی بار مجھے تفویض ہونے پر اطلاع بھیجیں",
+  "@notifyOnFirstAssignmentDescription": {
+    "description": "Notify on first assignment description"
+  },
+  "notifyOnAllUpdates": "تمام اپ ڈیٹس پر اطلاع",
+  "@notifyOnAllUpdates": {
+    "description": "Notify on all updates toggle title"
+  },
+  "notifyOnAllUpdatesDescription": "میرے نام تفویض کردہ کام کے آئٹمز اپ ڈیٹ ہونے پر اطلاع بھیجیں",
+  "@notifyOnAllUpdatesDescription": {
+    "description": "Notify on all updates description"
+  },
+  "notifyOnHotfixOnly": "صرف Hotfix",
+  "@notifyOnHotfixOnly": {
+    "description": "Notify on hotfix only toggle title"
+  },
+  "notifyOnHotfixOnlyDescription": "صرف Hotfix قسم کے کام کے آئٹمز کے لیے اطلاع",
+  "@notifyOnHotfixOnlyDescription": {
+    "description": "Notify on hotfix only description"
+  },
+  "notifyOnGroupAssignments": "گروپ تفویضات پر اطلاع",
+  "@notifyOnGroupAssignments": {
+    "description": "Notify on group assignments toggle title"
+  },
+  "notifyOnGroupAssignmentsDescription": "مخصوص گروپس کو تفویضات ہونے پر اطلاع بھیجیں",
+  "@notifyOnGroupAssignmentsDescription": {
+    "description": "Notify on group assignments description"
+  },
+  "groupName": "گروپ کا نام",
+  "@groupName": {
+    "description": "Group name input label"
+  },
+  "groupNameHint": "مثال: ڈویلپرز، QA ٹیم",
+  "@groupNameHint": {
+    "description": "Group name input hint"
+  },
+  "smartwatchNotifications": "اسمارٹ واچ اطلاعات",
+  "@smartwatchNotifications": {
+    "description": "Smartwatch notifications toggle title"
+  },
+  "smartwatchNotificationsDescription": "اسمارٹ واچز کو اطلاعات بھیجیں (صرف پہلی تفویض پر)",
+  "@smartwatchNotificationsDescription": {
+    "description": "Smartwatch notifications description"
+  },
+  "onCallMode": "ڈیوٹی موڈ",
+  "@onCallMode": {
+    "description": "On-call mode section title"
+  },
+  "onCallModeDescription": "ڈیوٹی موڈ میں، اطلاعات زیادہ جارحانہ ہو جاتی ہیں اور ناپڑھی اطلاعات 3 بار تازہ کی جاتی ہیں۔",
+  "@onCallModeDescription": {
+    "description": "On-call mode description"
+  },
+  "onCallModePhone": "فون کے لیے ڈیوٹی موڈ",
+  "@onCallModePhone": {
+    "description": "On-call mode for phone toggle title"
+  },
+  "onCallModePhoneDescription": "فون پر جارحانہ اطلاعات",
+  "@onCallModePhoneDescription": {
+    "description": "On-call mode for phone description"
+  },
+  "onCallModeWatch": "اسمارٹ واچ کے لیے ڈیوٹی موڈ",
+  "@onCallModeWatch": {
+    "description": "On-call mode for watch toggle title"
+  },
+  "onCallModeWatchDescription": "اسمارٹ واچ پر جارحانہ اطلاعات",
+  "@onCallModeWatchDescription": {
+    "description": "On-call mode for watch description"
+  },
+  "vacationMode": "چھٹی موڈ",
+  "@vacationMode": {
+    "description": "Vacation mode section title"
+  },
+  "vacationModeDescription": "چھٹی موڈ میں کوئی اطلاع موصول نہیں ہوتی۔",
+  "@vacationModeDescription": {
+    "description": "Vacation mode description"
+  },
+  "vacationModePhone": "فون کے لیے چھٹی موڈ",
+  "@vacationModePhone": {
+    "description": "Vacation mode for phone toggle title"
+  },
+  "vacationModePhoneDescription": "فون پر اطلاعات غیر فعال کریں",
+  "@vacationModePhoneDescription": {
+    "description": "Vacation mode for phone description"
+  },
+  "vacationModeWatch": "اسمارٹ واچ کے لیے چھٹی موڈ",
+  "@vacationModeWatch": {
+    "description": "Vacation mode for watch toggle title"
+  },
+  "vacationModeWatchDescription": "اسمارٹ واچ پر اطلاعات غیر فعال کریں",
+  "@vacationModeWatchDescription": {
+    "description": "Vacation mode for watch description"
+  },
+  "serverUrl": "سرور URL",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  "collection": "مجموعہ",
+  "@collection": {
+    "description": "Collection label"
+  },
+  "language": "زبان",
+  "@language": {
+    "description": "Language settings section title"
+  },
+  "selectLanguage": "زبان منتخب کریں",
+  "@selectLanguage": {
+    "description": "Select language dropdown label"
+  },
+  "languageDescription": "اپنی پسندیدہ زبان منتخب کریں۔ ایپ ڈیفالٹ کے طور پر آپ کی ڈیوائس کی زبان استعمال کرے گی۔",
+  "@languageDescription": {
+    "description": "Language settings description"
+  },
+  "close": "بند کریں",
+  "@close": {
+    "description": "Close button text"
+  },
+  "settingsSaved": "ترتیبات محفوظ ہو گئیں",
+  "@settingsSaved": {
+    "description": "Settings saved message"
+  },
+  "invalidUrl": "براہ کرم ایک درست URL درج کریں",
+  "@invalidUrl": {
+    "description": "Invalid URL error message"
+  },
+  "invalidPollingInterval": "پولنگ وقفہ 5-300 سیکنڈ کے درمیان ہونا چاہیے",
+  "@invalidPollingInterval": {
+    "description": "Invalid polling interval error message"
+  },
+  "noGroupsAdded": "ابھی تک کوئی گروپ شامل نہیں کیا گیا۔ اوپر سے گروپ کا نام شامل کریں۔",
+  "@noGroupsAdded": {
+    "description": "No groups added message"
+  },
+  "donate": "عطیہ کریں",
+  "@donate": {
+    "description": "Donate button text"
+  },
+  "donateDescription": "اس ایپ کی ترقی کی حمایت کریں",
+  "@donateDescription": {
+    "description": "Donate section description"
+  },
+  "donateButton": "مجھے ایک کافی خریدیں",
+  "@donateButton": {
+    "description": "Donate button label"
+  }
+}
