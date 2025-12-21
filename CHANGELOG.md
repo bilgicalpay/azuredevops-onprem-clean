@@ -2,6 +2,16 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [1.2.0+84] - 21-12-2025
+
+### 🧹 RDC Referansları Temizlendi
+- ✅ Tüm RDC referansları temizlendi
+- ✅ `io.rdc.azuredevops` → `com.higgscloud.azuredevops` değişikliği tamamlandı
+- ✅ `RDC Partner` → `Higgs Cloud` veya kaldırıldı
+- ✅ Klasör yapısı güncellendi: `io/rdc/azuredevops` → `com/higgscloud/azuredevops`
+- ✅ Logo referansları Azure DevOps logosu olarak güncellendi
+- ✅ Tüm script ve dokümantasyon dosyaları güncellendi
+
 ## [1.2.0] - 21-12-2025
 
 ### 🆕 Yeni Özellikler
