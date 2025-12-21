@@ -3,7 +3,7 @@
 # Bu uygulama Azure DevOps Server 2022 on-premise kurulumları için mobil erişim sağlar
 name: azuredevops_onprem
 description: "RDC Partner AzureDevOps - Azure DevOps Server 2022 Mobile App"
-version: 1.2.0+47
+version: 1.2.0+54
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
