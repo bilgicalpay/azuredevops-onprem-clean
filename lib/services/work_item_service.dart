@@ -738,6 +738,82 @@ class WorkItemService {
     }
   }
 
+  /// Get all work items (not just assigned to me) - for boards and general listing
+  Future<List<WorkItem>> getAllWorkItems({
+    required String serverUrl,
+    required String token,
+    String? collection,
+    String? project,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final projectFilter = project != null && project.isNotEmpty
+          ? "AND [System.TeamProject] = '$project'"
+          : '';
+
+      // Get all work items query - including Epics, Features, Backlog Items, etc.
+      final queryUrl = '$baseUrl/_apis/wit/wiql?api-version=7.0';
+      
+      final wiqlQuery = {
+        'query': "SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType], [System.AssignedTo], [System.ChangedDate], [System.TeamProject] FROM WorkItems WHERE [System.WorkItemType] IN ('Epic', 'Feature', 'Backlog Item', 'Product Backlog Item', 'User Story', 'Task', 'Bug') $projectFilter ORDER BY [System.ChangedDate] DESC"
+      };
+
+      final response = await _dio.post(
+        queryUrl,
+        data: wiqlQuery,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final workItemIds = (response.data['workItems'] as List)
+            .map((item) => item['id'] as int)
+            .toList();
+
+        if (workItemIds.isEmpty) {
+          return [];
+        }
+
+        // Get work item details
+        final detailsUrl = '$baseUrl/_apis/wit/workitems?ids=${workItemIds.join(',')}&\$expand=all&api-version=7.0';
+
+        final detailsResponse = await _dio.get(
+          detailsUrl,
+          options: Options(
+            headers: {
+              'Authorization': 'Basic ${_encodeToken(token)}',
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
+
+        if (detailsResponse.statusCode == 200) {
+          final workItems = (detailsResponse.data['value'] as List)
+              .map((item) => WorkItem.fromJson(item))
+              .toList();
+          return workItems;
+        }
+      }
+
+      return [];
+    } catch (e, stackTrace) {
+      debugPrint('❌ [WorkItemService] Get all work items error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return [];
+    }
+  }
+
   Future<List<WorkItem>> getWorkItems({
     required String serverUrl,
     required String token,
@@ -2049,6 +2125,105 @@ class WorkItemService {
     } catch (e) {
       debugPrint('❌ [ATTACHMENT] Attach file error: $e');
       return false;
+    }
+  }
+
+  /// Get work item types for a project
+  Future<List<String>> getWorkItemTypes({
+    required String serverUrl,
+    required String token,
+    required String project,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final url = '$baseUrl/$project/_apis/wit/workitemtypes?api-version=7.0';
+      
+      final response = await _dio.get(
+        url,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) => status! < 500,
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final types = (response.data['value'] as List)
+            .map((type) => type['name'] as String)
+            .toList();
+        return types;
+      }
+
+      return [];
+    } catch (e, stackTrace) {
+      debugPrint('❌ [WorkItemService] Get work item types error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return [];
+    }
+  }
+
+  /// Create a new work item
+  Future<WorkItem?> createWorkItem({
+    required String serverUrl,
+    required String token,
+    required String project,
+    required String workItemType,
+    required Map<String, dynamic> fields,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final url = '$baseUrl/$project/_apis/wit/workitems/\$$workItemType?api-version=7.0';
+      
+      // Prepare patch document
+      final patchDocument = fields.entries.map((entry) {
+        return {
+          'op': 'add',
+          'path': '/fields/${entry.key}',
+          'value': entry.value,
+        };
+      }).toList();
+
+      final response = await _dio.patch(
+        url,
+        data: patchDocument,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json-patch+json',
+          },
+          validateStatus: (status) => status! < 500,
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return WorkItem.fromJson(response.data);
+      } else {
+        debugPrint('❌ [WorkItemService] Create work item failed: ${response.statusCode}');
+        debugPrint('Response: ${response.data}');
+        return null;
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ [WorkItemService] Create work item error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return null;
     }
   }
 }

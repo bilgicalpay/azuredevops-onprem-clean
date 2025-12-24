@@ -1,8 +1,8 @@
 # Azure DevOps Server 2022 Mobile App
 
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.2.0+76  
-**Tarih:** 21-12-2025
+**Versiyon:** 1.0.16+111  
+**Tarih:** 24-12-2025
 
 ## 📱 Genel Bakış
 
@@ -58,27 +58,47 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
 - ✅ Wiki içerik görüntüleme
 - ✅ Markdown rendering desteği
 
+### Boards ve Work Item Yönetimi
+- ✅ Boards: Projeler → Work Item Types → Work Items hiyerarşik görünüm
+- ✅ Work Items: Tüm work item'ları listeleme ve oluşturma
+- ✅ Create Work Item: Proje ve work item type seçimi, dinamik field rendering
+- ✅ Work Item Types ve Field Definitions API entegrasyonu
+
+### Build Yönetimi
+- ✅ Builds: Projeler → Builds hiyerarşik görünüm
+- ✅ Build detayları: Timeline, stages, jobs görüntüleme
+- ✅ Build işlemleri: Start, Cancel, View details
+- ✅ Build logs görüntüleme
+- ✅ Build authorization kontrolü
+
+### Release Yönetimi
+- ✅ Releases: Projeler → Release Definitions → Releases hiyerarşik görünüm
+- ✅ Release Definitions: Klasör yapısında listeleme
+- ✅ Release detayları: Environment'lar, approvals, status tracking
+- ✅ Release işlemleri:
+  - Deploy Multiple: Tüm deploy edilebilir environment'lara toplu deploy
+  - Deploy Stage: Belirli environment seçerek deploy
+  - Cancel: Çalışan deployment'ları iptal etme
+  - Redeploy: Cancel sonrası tekrar deploy etme
+  - Create New Release: Release definition altından yeni release oluşturma
+- ✅ Release logs: Environment bazında log görüntüleme
+- ✅ Approval işlemleri: Release approval/reject
+- ✅ Azure DevOps Services (cloud) ve On-Premise desteği
+
 ### Market Özelliği
 - ✅ IIS static dizininden APK ve IPA dosyalarını indirme
 - ✅ Klasör yapısı desteği (Product → Version → Files)
 - ✅ Otomatik dosya filtreleme (APK, IPA, AAB)
 
-### Kültürel Özellikler
-- ✅ Türk Kültürü Popup (ana sayfada pull-to-refresh ile rastgele bilgiler)
-  - 50+ Türk tarihi figürü (bilim, sanat, edebiyat)
-  - 12 tarihi Türk devleti
-  - 15 modern Türk cumhuriyeti ve aktif Türk devleti
-  - Tüm diller için lokalize içerik (Türkçe, İngilizce, Rusça, Hintçe, Hollandaca, Almanca, Fransızca, Urduca, Uygurca, Azerbaycan Türkçesi, Kırgızca, Japonca)
-  - Generic içerikler kaldırıldı (sadece gerçek lokalize içerik gösteriliyor)
-- ✅ Türkiye Gezi Rehberi (iframe olarak web sitesi entegrasyonu)
-  - https://www.bizevdeyokuz.com/en/category/europe/turkey/ adresi iframe olarak gösteriliyor
-  - WebView ile tam ekran gezi rehberi deneyimi
-  - JavaScript desteği aktif
-
 ### UI İyileştirmeleri
+- ✅ Ana sayfada 4 grid/box: Boards, Work Items, Builds, Releases
+- ✅ Dinamik şirket logosu/ismi: Server URL'den otomatik tespit veya custom ayar
+- ✅ Settings'te logo display modu: Auto, Custom, Hide
 - ✅ Versiyon bilgisi Azure DevOps logosunun altında gösteriliyor
 - ✅ Azure DevOps logosuna tıklanınca GitHub repository adresi açılıyor
-- ✅ Logo ve yazı tıklanabilir hale getirildi
+- ✅ Build detail screen scroll iyileştirmeleri - Tüm içerik düzgün şekilde scroll edilebiliyor
+- ✅ Settings'e RDC Hizmetleri bölümü eklendi (https://rdc.com.tr linki ile)
+- ✅ İlk açılış welcome dialog: "RDC Partner tarafından AzureDevOps kullanıcılarına sunulmuştur." mesajı (3 saniye, bir kez gösterilir)
 
 ### Güvenlik
 - ✅ Certificate Pinning (SHA-256)
@@ -668,5 +688,5 @@ Ticari kullanım için lütfen iletişime geçin:
 ---
 
 **Geliştirici:** Alpay Bilgiç  
-**Son Güncelleme:** 21-12-2025  
-**Versiyon:** 1.2.0+46
+**Son Güncelleme:** 24-12-2025  
+**Versiyon:** 1.0.16+111

@@ -32,7 +32,7 @@ if [ "$DEVICE_COUNT" -gt 0 ]; then
     echo -e "${GREEN}✅ Android deployment completed!${NC}"
     
     echo "🚀 Launching app..."
-    /Users/alpaybilgic/Library/Android/sdk/platform-tools/adb shell am start -n io.rdc.azuredevops/io.rdc.azuredevops.MainActivity
+    /Users/alpaybilgic/Library/Android/sdk/platform-tools/adb shell am start -n com.higgscloud.azuredevops/com.higgscloud.azuredevops.MainActivity
   else
     echo -e "${YELLOW}⚠️  APK not found. Run 'flutter build apk --release' first.${NC}"
   fi
@@ -73,7 +73,7 @@ if [ -n "$BOOTED_SIM" ]; then
     echo -e "${GREEN}✅ iOS deployment completed!${NC}"
     
     echo "🚀 Launching app..."
-    xcrun simctl launch "$BOOTED_SIM" io.rdc.azuredevops
+    xcrun simctl launch "$BOOTED_SIM" com.higgscloud.azuredevops
   else
     echo -e "${YELLOW}⚠️  iOS app bundle not found. Run 'flutter build ios --simulator' first.${NC}"
   fi

@@ -29,7 +29,6 @@ import 'services/auto_logout_service.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:azuredevops_onprem/l10n/app_localizations.dart';
-import 'dart:ui' show Locale;
 
 /// Uygulama giriş noktası
 /// Servisleri başlatır ve ana widget'ı çalıştırır
@@ -46,43 +45,113 @@ void main() async {
   // Debug mode'da overflow göstergelerini kapat
   debugDisableShadows = true;
   
-  // Initialize security service first
-  await SecurityService.initialize();
+  StorageService? storage;
   
-  // Check device security
-  final isCompromised = await SecurityService.isDeviceCompromised();
-  if (isCompromised) {
-    SecurityService.logSecurityEvent(
-      'WARNING: Device is compromised (rooted/jailbroken)',
-      Level.SEVERE
-    );
-    // In production, you might want to block app usage or show warning
+  try {
+    // Initialize security service first
+    try {
+      await SecurityService.initialize();
+      
+      // Check device security
+      final isCompromised = await SecurityService.isDeviceCompromised();
+      if (isCompromised) {
+        SecurityService.logSecurityEvent(
+          'WARNING: Device is compromised (rooted/jailbroken)',
+          Level.SEVERE
+        );
+        // In production, you might want to block app usage or show warning
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Main] SecurityService initialization error: $e');
+      // Continue even if security service fails
+    }
+    
+    // Servisleri başlat
+    storage = StorageService();
+    try {
+      await storage.init();
+    } catch (e) {
+      debugPrint('⚠️ [Main] StorageService init error: $e');
+      // Continue with storage even if init fails
+    }
+    
+    try {
+      await NotificationService().init();
+    } catch (e) {
+      debugPrint('⚠️ [Main] NotificationService init error: $e');
+      // Continue even if notification service fails
+    }
+    
+    // Background Worker Service'i başlat (uygulama kapalıyken çalışmak için)
+    try {
+      await BackgroundWorkerService.initialize();
+      await BackgroundWorkerService.start();
+    } catch (e) {
+      debugPrint('⚠️ [Main] BackgroundWorkerService error: $e');
+      // Continue even if background worker fails
+    }
+    
+    // Arka plan görev servisini başlat (uygulama açıkken çalışmak için)
+    try {
+      final backgroundService = BackgroundTaskService();
+      await backgroundService.init();
+      await backgroundService.initializeTracking(); // Bildirim göndermeden takibi başlat
+      backgroundService.start();
+    } catch (e) {
+      debugPrint('⚠️ [Main] BackgroundTaskService error: $e');
+      // Continue even if background task service fails
+    }
+    
+    // Ensure token is valid
+    try {
+      if (storage != null) {
+        await TokenRefreshService.ensureValidToken(storage);
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Main] TokenRefreshService error: $e');
+      // Continue even if token refresh fails
+    }
+    
+    // Check for auto-logout (30 days of inactivity)
+    try {
+      if (storage != null) {
+        final authService = AuthService();
+        authService.setStorage(storage);
+        await AutoLogoutService.checkAndPerformAutoLogout(storage, authService);
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Main] AutoLogoutService error: $e');
+      // Continue even if auto-logout check fails
+    }
+  } catch (e, stackTrace) {
+    debugPrint('❌ [Main] Critical error during initialization: $e');
+    debugPrint('Stack trace: $stackTrace');
+    // Create storage if it wasn't created
+    if (storage == null) {
+      storage = StorageService();
+      try {
+        await storage.init();
+      } catch (e2) {
+        debugPrint('❌ [Main] Failed to create StorageService: $e2');
+      }
+    }
   }
   
-  // Servisleri başlat
-  final storage = StorageService();
-  await storage.init();
-  await NotificationService().init();
-  
-  // Background Worker Service'i başlat (uygulama kapalıyken çalışmak için)
-  await BackgroundWorkerService.initialize();
-  await BackgroundWorkerService.start();
-  
-  // Arka plan görev servisini başlat (uygulama açıkken çalışmak için)
-  final backgroundService = BackgroundTaskService();
-  await backgroundService.init();
-  await backgroundService.initializeTracking(); // Bildirim göndermeden takibi başlat
-  backgroundService.start();
-  
-  // Ensure token is valid
-  await TokenRefreshService.ensureValidToken(storage);
-  
-  // Check for auto-logout (30 days of inactivity)
-  final authService = AuthService();
-  authService.setStorage(storage);
-  await AutoLogoutService.checkAndPerformAutoLogout(storage, authService);
-  
-  runApp(MyApp(storage: storage));
+  // Always run app, even if some services failed
+  if (storage != null) {
+    runApp(MyApp(storage: storage));
+  } else {
+    // Last resort: create minimal storage
+    final fallbackStorage = StorageService();
+    try {
+      await fallbackStorage.init();
+      runApp(MyApp(storage: fallbackStorage));
+    } catch (e) {
+      debugPrint('❌ [Main] Failed to start app: $e');
+      // App will crash, but at least we tried
+      rethrow;
+    }
+  }
 }
 
 /// Ana uygulama widget'ı
@@ -154,7 +223,7 @@ class MyApp extends StatelessWidget {
                 seedColor: Colors.blue,
                 brightness: Brightness.light,
               ),
-              textTheme: GoogleFonts.robotoTextTheme(),
+              textTheme: _getTextTheme(ThemeData.light().textTheme),
               useMaterial3: true,
             ),
             darkTheme: ThemeData(
@@ -162,7 +231,7 @@ class MyApp extends StatelessWidget {
                 seedColor: Colors.blue,
                 brightness: Brightness.dark,
               ),
-              textTheme: GoogleFonts.robotoTextTheme(ThemeData.dark().textTheme),
+              textTheme: _getTextTheme(ThemeData.dark().textTheme),
               useMaterial3: true,
             ),
             home: const AuthWrapper(),
@@ -173,8 +242,62 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+/// Google Fonts yüklenirken hata olursa fallback text theme döndürür
+TextTheme _getTextTheme(TextTheme baseTheme) {
+  try {
+    return GoogleFonts.robotoTextTheme(baseTheme);
+  } catch (e) {
+    // Google Fonts yüklenemezse (internet yok, vs.) varsayılan tema kullan
+    debugPrint('⚠️ [Main] Google Fonts yüklenemedi, varsayılan tema kullanılıyor: $e');
+    return baseTheme;
+  }
+}
+
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Show welcome dialog on first launch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showWelcomeDialogIfNeeded();
+    });
+  }
+
+  Future<void> _showWelcomeDialogIfNeeded() async {
+    final storage = Provider.of<StorageService>(context, listen: false);
+    
+    // Check if welcome dialog has been shown
+    if (!storage.hasShownWelcomeDialog()) {
+      // Wait a bit for the screen to render
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (!mounted) return;
+      
+      // Show welcome dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const WelcomeDialog(),
+      );
+      
+      // Mark as shown
+      await storage.setHasShownWelcomeDialog(true);
+      
+      // Auto-dismiss after 3 seconds
+      await Future.delayed(const Duration(seconds: 3));
+      
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +308,60 @@ class AuthWrapper extends StatelessWidget {
         }
         return const LoginScreen();
       },
+    );
+  }
+}
+
+/// Welcome dialog shown on first app launch
+class WelcomeDialog extends StatelessWidget {
+  const WelcomeDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Icon(
+                Icons.business_center,
+                size: 32,
+                color: Colors.blue.shade700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'RDC Partner tarafından AzureDevOps kullanıcılarına sunulmuştur.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade700),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

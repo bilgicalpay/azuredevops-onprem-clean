@@ -121,7 +121,7 @@ if [ -n "$IOS_SIMULATOR" ]; then
             
             # Launch the app
             echo -e "${GREEN}🚀 Launching app on iOS Simulator...${NC}"
-            xcrun simctl launch "$BOOTED_SIM" io.rdc.azuredevops
+            xcrun simctl launch "$BOOTED_SIM" com.higgscloud.azuredevops
         else
             # Boot the first available simulator
             echo -e "${GREEN}📱 Booting iOS Simulator...${NC}"
@@ -130,7 +130,7 @@ if [ -n "$IOS_SIMULATOR" ]; then
                 xcrun simctl boot "$FIRST_SIM"
                 sleep 3
                 xcrun simctl install "$FIRST_SIM" "$APP_BUNDLE"
-                xcrun simctl launch "$FIRST_SIM" io.rdc.azuredevops
+                xcrun simctl launch "$FIRST_SIM" com.higgscloud.azuredevops
                 echo -e "${GREEN}✅ iOS Simulator deployment completed!${NC}"
             fi
         fi

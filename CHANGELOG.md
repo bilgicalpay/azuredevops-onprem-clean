@@ -2,6 +2,17 @@
 
 Bu proje [Semantic Versioning](https://semver.org/) kullanmaktadır.
 
+## [1.0.16+111] - 24-12-2025
+
+### 🔧 İyileştirmeler
+- ✅ Build detail screen scroll sorunu düzeltildi - Tüm içerik artık düzgün şekilde scroll edilebiliyor
+- ✅ Settings'e RDC Hizmetleri bölümü eklendi (Bağış yap bölümünün üstüne)
+- ✅ RDC Hizmetleri bölümünde logo ve https://rdc.com.tr linki eklendi
+
+### 🆕 Yeni Özellikler
+- ✅ İlk açılış popup'ı eklendi - Uygulama ilk kez açıldığında "RDC Partner tarafından AzureDevOps kullanıcılarına sunulmuştur." mesajı 3 saniyeliğine gösteriliyor
+- ✅ Welcome dialog bir kez gösterildikten sonra bir daha gösterilmiyor
+
 ## [1.2.0+84] - 21-12-2025
 
 ### 🧹 RDC Referansları Temizlendi

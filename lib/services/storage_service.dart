@@ -489,5 +489,170 @@ class StorageService extends ChangeNotifier {
     await _prefs?.setString('selected_language', languageCode);
     notifyListeners();
   }
+
+  // ==================== ŞİRKET/LOGO AYARLARI ====================
+  
+  /// Özel şirket adı (kullanıcı tarafından ayarlanabilir)
+  String? getCompanyName() {
+    return _prefs?.getString('company_name');
+  }
+  
+  Future<void> setCompanyName(String? name) async {
+    if (name == null || name.isEmpty) {
+      await _prefs?.remove('company_name');
+    } else {
+      await _prefs?.setString('company_name', name);
+    }
+    notifyListeners();
+  }
+  
+  /// Özel logo URL (kullanıcı tarafından ayarlanabilir)
+  String? getCompanyLogoUrl() {
+    return _prefs?.getString('company_logo_url');
+  }
+  
+  Future<void> setCompanyLogoUrl(String? url) async {
+    if (url == null || url.isEmpty) {
+      await _prefs?.remove('company_logo_url');
+    } else {
+      await _prefs?.setString('company_logo_url', url);
+    }
+    notifyListeners();
+  }
+  
+  /// Logo gösterim modu: 'auto' (domain'den), 'custom' (kullanıcı ayarı), 'none' (gösterme)
+  String getLogoDisplayMode() {
+    return _prefs?.getString('logo_display_mode') ?? 'auto';
+  }
+  
+  Future<void> setLogoDisplayMode(String mode) async {
+    await _prefs?.setString('logo_display_mode', mode);
+    notifyListeners();
+  }
+  
+  /// Server URL'den domain adını çıkar ve şirket adına dönüştür
+  /// Örnek 1: https://dev.azure.com/softwareoneturkiye/ -> Softwareoneturkiye (Azure DevOps Cloud)
+  /// Örnek 2: https://devops.higgscloud.com/Dev -> Higgscloud (On-premise)
+  /// Örnek 3: https://devops.vakifkatilim.com.tr -> Vakıf Katılım (On-premise)
+  String getCompanyNameFromServerUrl() {
+    final serverUrl = getServerUrl();
+    if (serverUrl == null || serverUrl.isEmpty) {
+      return '';
+    }
+    
+    try {
+      final uri = Uri.parse(serverUrl);
+      final host = uri.host; // dev.azure.com veya devops.higgscloud.com
+      
+      // Azure DevOps Cloud kontrolü: dev.azure.com/organizationname/
+      if (host == 'dev.azure.com' || host == 'azure.com') {
+        // Path'ten organization adını al
+        // https://dev.azure.com/softwareoneturkiye/ -> softwareoneturkiye
+        final pathSegments = uri.pathSegments;
+        if (pathSegments.isNotEmpty) {
+          final orgName = pathSegments.first;
+          if (orgName.isNotEmpty) {
+            return _formatCompanyName(orgName);
+          }
+        }
+        return 'Azure DevOps';
+      }
+      
+      // visualstudio.com eski format kontrolü
+      // https://softwareoneturkiye.visualstudio.com/ -> softwareoneturkiye
+      if (host.endsWith('.visualstudio.com')) {
+        final parts = host.split('.');
+        if (parts.isNotEmpty && parts.first.isNotEmpty) {
+          return _formatCompanyName(parts.first);
+        }
+      }
+      
+      // On-premise: Özel domain'den şirket adını al
+      // devops.higgscloud.com -> higgscloud
+      // devops.vakifkatilim.com.tr -> vakifkatilim
+      final parts = host.split('.');
+      if (parts.length < 2) {
+        return _formatCompanyName(host);
+      }
+      
+      // Alt domain'leri atla (devops, tfs, azuredevops gibi)
+      final commonSubdomains = ['devops', 'tfs', 'azuredevops', 'azure', 'dev', 'www'];
+      String mainDomain;
+      
+      if (parts.length >= 3) {
+        // devops.higgscloud.com -> higgscloud (index 1)
+        // devops.vakifkatilim.com.tr -> vakifkatilim (index 1)
+        if (commonSubdomains.contains(parts[0].toLowerCase())) {
+          mainDomain = parts[1];
+        } else {
+          mainDomain = parts[0];
+        }
+      } else {
+        mainDomain = parts[0];
+      }
+      
+      return _formatCompanyName(mainDomain);
+    } catch (e) {
+      return '';
+    }
+  }
+  
+  /// Domain/organization adını okunabilir şirket adına dönüştür
+  String _formatCompanyName(String name) {
+    if (name.isEmpty) return '';
+    
+    // Bilinen isimler için özel formatlar
+    final knownNames = {
+      'vakifkatilim': 'Vakıf Katılım',
+      'higgscloud': 'Higgs Cloud',
+      'microsoft': 'Microsoft',
+      'azure': 'Azure',
+      'google': 'Google',
+      'amazon': 'Amazon',
+      'github': 'GitHub',
+      'softwareone': 'SoftwareOne',
+      'softwareoneturkiye': 'SoftwareOne Türkiye',
+    };
+    
+    final lowerName = name.toLowerCase();
+    if (knownNames.containsKey(lowerName)) {
+      return knownNames[lowerName]!;
+    }
+    
+    // Genel format: İlk harfi büyük yap
+    return name[0].toUpperCase() + name.substring(1);
+  }
+  
+  /// Gösterilecek şirket adını al (öncelik: özel ayar > domain'den otomatik)
+  String getDisplayCompanyName() {
+    final mode = getLogoDisplayMode();
+    
+    if (mode == 'none') {
+      return '';
+    }
+    
+    if (mode == 'custom') {
+      final customName = getCompanyName();
+      if (customName != null && customName.isNotEmpty) {
+        return customName;
+      }
+    }
+    
+    // Auto mode veya custom boşsa domain'den al
+    return getCompanyNameFromServerUrl();
+  }
+
+  // ==================== İLK AÇILIŞ DIALOG AYARLARI ====================
+  
+  /// İlk açılış welcome dialog'unun gösterilip gösterilmediğini kontrol et
+  bool hasShownWelcomeDialog() {
+    return _prefs?.getBool('has_shown_welcome_dialog') ?? false;
+  }
+  
+  /// İlk açılış welcome dialog'unun gösterildiğini işaretle
+  Future<void> setHasShownWelcomeDialog(bool shown) async {
+    await _prefs?.setBool('has_shown_welcome_dialog', shown);
+    notifyListeners();
+  }
 }
 

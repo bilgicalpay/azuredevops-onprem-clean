@@ -2,8 +2,8 @@
 
 **Uygulama:** Azure DevOps Server 2022 Mobile App  
 **Geliştirici:** Alpay Bilgiç  
-**Versiyon:** 1.2.0+76  
-**Tarih:** 21-12-2025
+**Versiyon:** 1.0.15+117  
+**Tarih:** 24-12-2025
 
 ## Genel Bakış
 
@@ -75,9 +75,12 @@ graph TB
         VPN[VPN<br/>Optional]
     end
     
-    subgraph "Azure DevOps Server"
+    subgraph "Azure DevOps Server / Services"
         API[Azure DevOps API<br/>v7.0]
         WIT[Work Item<br/>Tracking API]
+        BOARD_API[Boards API]
+        BUILD_API[Build API<br/>v7.0]
+        RELEASE_API[Release API<br/>v6.0/v7.0<br/>vsrm.dev.azure.com]
         WIKI_API[Wiki API]
         ATTACH[Attachment API]
         COMMENTS[Comments API]
@@ -254,15 +257,22 @@ graph TB
 
 #### Screens
 - **LoginScreen**: Kullanıcı kimlik doğrulama
-- **HomeScreen**: Ana dashboard, work items listesi, wiki özeti, Türk kültürü popup, versiyon bilgisi, GitHub linki
+- **HomeScreen**: Ana dashboard, 4 grid box (Boards, Work Items, Builds, Releases), versiyon bilgisi, GitHub linki
+- **BoardsScreen**: Projeler listesi
+- **ProjectWorkItemTypesScreen**: Proje bazında work item types listesi
+- **WorkItemTypeItemsScreen**: Work item type bazında work items listesi
+- **WorkItemsScreen**: Tüm work items listesi ve oluşturma
+- **CreateWorkItemScreen**: Yeni work item oluşturma (proje, type, fields seçimi)
 - **WorkItemDetailScreen**: Work item detayları, custom fields, attachments, comments
-- **WorkItemListScreen**: Work items listesi ve filtreleme
+- **BuildsScreen**: Projeler → Builds hiyerarşik görünüm
+- **BuildDetailScreen**: Build detayları, timeline, stages, jobs, logs, start/cancel işlemleri
+- **ReleasesScreen**: Projeler → Release Definitions → Releases hiyerarşik görünüm
+- **ReleaseDetailScreen**: Release detayları, environments, deploy options (multiple/stage), logs, approvals
 - **QueriesScreen**: Query çalıştırma ve sonuç görüntüleme
 - **WikiViewerScreen**: Wiki içerik görüntüleme
-- **SettingsScreen**: Uygulama ayarları, bildirim ayarları
+- **SettingsScreen**: Uygulama ayarları, bildirim ayarları, logo/şirket ayarları
 - **MarketScreen**: APK/IPA dosyalarını indirme
 - **DocumentsScreen**: Dokümantasyon görüntüleme
-- **TurkeyGuideScreen**: Türkiye gezi rehberi (iframe/WebView)
 
 ### Business Logic Layer
 

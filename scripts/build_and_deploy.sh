@@ -40,7 +40,7 @@ if [ "$DEVICE_COUNT" -gt 0 ]; then
   echo "✅ APK installed successfully"
   
   echo "🚀 Launching app..."
-  /Users/alpaybilgic/Library/Android/sdk/platform-tools/adb shell am start -n io.rdc.azuredevops/io.rdc.azuredevops.MainActivity
+  /Users/alpaybilgic/Library/Android/sdk/platform-tools/adb shell am start -n com.higgscloud.azuredevops/com.higgscloud.azuredevops.MainActivity
   echo "✅ App launched"
 else
   echo "⚠️  No Android device connected. APK built but not deployed."
@@ -82,7 +82,7 @@ if [ -n "$BOOTED_SIM" ]; then
     echo "✅ iOS app installed"
     
     echo "🚀 Launching app on iOS Simulator..."
-    xcrun simctl launch "$BOOTED_SIM" io.rdc.azuredevops
+    xcrun simctl launch "$BOOTED_SIM" com.higgscloud.azuredevops
     echo "✅ App launched on iOS Simulator"
   else
     echo "⚠️  iOS app bundle not found at $APP_BUNDLE"

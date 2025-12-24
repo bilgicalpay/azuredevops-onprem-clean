@@ -2,14 +2,14 @@
 # Configure your app identifiers here
 
 # Android package name
-package_name("io.rdc.azuredevops")
+package_name("com.higgscloud.azuredevops")
 
 # Optional: Google Play Store configuration
 # json_key_file("path/to/your/google-play-service-account-key.json")
 # track("internal") # or "alpha", "beta", "production"
 
 # iOS App Store configuration
-app_identifier("io.rdc.azuredevops") # Bundle identifier
+app_identifier("com.higgscloud.azuredevops") # Bundle identifier
 # apple_id("your-apple-id@example.com") # Apple ID
 # team_id("YOUR_TEAM_ID") # App Store Connect Team ID
 # itc_team_id("YOUR_ITC_TEAM_ID") # iTunes Connect Team ID

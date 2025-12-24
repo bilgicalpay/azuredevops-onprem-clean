@@ -71,6 +71,44 @@ platform :android do
     # )
   end
 
+  desc "Upload AAB to Alpha and Closed Testing tracks"
+  lane :upload_testing do |options|
+    aab_path = options[:aab] || "build/app/outputs/bundle/release/app-release.aab"
+    
+    unless File.exist?(aab_path)
+      UI.user_error!("AAB dosyası bulunamadı: #{aab_path}")
+    end
+    
+    UI.message("📦 AAB dosyası bulundu: #{aab_path}")
+    
+    # Alpha track'e yükle
+    UI.message("🚀 Alpha track'ine yükleniyor...")
+    upload_to_play_store(
+      track: "alpha",
+      aab: aab_path,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true,
+    )
+    
+    UI.success("✅ Alpha track'ine yüklendi!")
+    
+    # Closed Testing track'e yükle
+    UI.message("🚀 Closed Testing track'ine yükleniyor...")
+    upload_to_play_store(
+      track: "closed",
+      aab: aab_path,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true,
+    )
+    
+    UI.success("✅ Closed Testing track'ine yüklendi!")
+    UI.success("✅ Tüm test track'lerine başarıyla yüklendi!")
+  end
+
   desc "Clean build artifacts"
   lane :clean do
     sh("flutter clean")

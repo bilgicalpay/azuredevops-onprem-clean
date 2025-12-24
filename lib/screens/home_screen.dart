@@ -25,10 +25,11 @@ import 'settings_screen.dart';
 import 'wiki_viewer_screen.dart';
 import 'documents_screen.dart';
 import 'market_screen.dart';
-import 'turkey_guide_screen.dart';
+import 'boards_screen.dart';
+import 'builds_screen.dart';
+import 'releases_screen.dart';
+import 'work_items_screen.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import '../services/turkish_culture_service.dart';
-import '../l10n/app_localizations.dart';
 
 /// Ana ekran widget'ı
 /// Work item listesi ve wiki içeriğini gösterir
@@ -47,8 +48,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _wikiContent;
   bool _isLoadingWiki = false;
   String _appVersion = '';
-  bool _showCulturePopup = false;
-  Map<String, String>? _cultureInfo;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _workItemsKey = GlobalKey();
 
   @override
   void initState() {
@@ -88,8 +89,105 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _scrollController.dispose();
     // Don't stop services on dispose - let them run in background
     super.dispose();
+  }
+
+  void _scrollToWorkItems() {
+    // Scroll to work items section
+    if (_workItemsKey.currentContext != null) {
+      Scrollable.ensureVisible(
+        _workItemsKey.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  Widget _buildGridCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    int? badge,
+  }) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.1),
+                color.withOpacity(0.05),
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
+                  children: [
+                    Icon(
+                      icon,
+                      size: 48,
+                      color: color,
+                    ),
+                    if (badge != null)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                          child: Text(
+                            badge > 99 ? '99+' : badge.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -298,43 +396,62 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
                     ),
                   ),
-                  // Sağ taraf: Vakıf Katılım - tam sağa dayalı
+                  // Sağ taraf: Şirket adı ve logo - dinamik olarak domain'den veya ayarlardan
                   Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Logo - önce logo, sonra yazı
-                        SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: Image.asset(
-                            'assets/images/vakif_katilim.png',
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              // Logo yoksa küçük bir placeholder ikon göster
-                              return Icon(
-                                Icons.account_balance,
+                    child: Consumer<StorageService>(
+                      builder: (context, storage, _) {
+                        final companyName = storage.getDisplayCompanyName();
+                        final logoMode = storage.getLogoDisplayMode();
+                        final customLogoUrl = storage.getCompanyLogoUrl();
+                        
+                        // Logo gösterimi kapalıysa boş döndür
+                        if (logoMode == 'none' || companyName.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Logo - özel URL varsa network image, yoksa ikon
+                            if (customLogoUrl != null && customLogoUrl.isNotEmpty)
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Image.network(
+                                  customLogoUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      Icons.business,
+                                      size: 20,
+                                      color: Colors.blue.shade900,
+                                    );
+                                  },
+                                ),
+                              )
+                            else
+                              Icon(
+                                Icons.business,
                                 size: 20,
                                 color: Colors.blue.shade900,
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'Vakıf Katılım',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade900,
+                              ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                companyName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade900,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                              ),
                             ),
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -413,19 +530,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         tooltip: 'Ayarlar',
                       ),
                       IconButton(
-                        icon: const Icon(Icons.flag),
-                        color: Colors.red.shade700,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const TurkeyGuideScreen(),
-                            ),
-                          );
-                        },
-                        tooltip: 'Türkiye Rehberi',
-                      ),
-                      IconButton(
                         icon: const Icon(Icons.refresh),
                         color: Colors.blue.shade900,
                         onPressed: () {
@@ -461,11 +565,84 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             onRefresh: () async {
               await _loadWorkItems();
               await _loadWikiContent();
-              // Show Turkish culture popup on refresh
-              _showTurkishCulturePopup();
             },
         child: Column(
           children: [
+            // 4 Grid Kutusu: Boards, Work Items, Builds, Releases
+            Container(
+              margin: const EdgeInsets.all(16.0),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.5,
+                children: [
+                  // 1. Boards
+                  _buildGridCard(
+                    context: context,
+                    title: 'Boards',
+                    icon: Icons.dashboard,
+                    color: Colors.blue,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BoardsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  // 2. Work Items
+                  _buildGridCard(
+                    context: context,
+                    title: 'Work Items',
+                    icon: Icons.assignment,
+                    color: Colors.green,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WorkItemsScreen(),
+                        ),
+                      );
+                    },
+                    badge: _workItems.isNotEmpty ? _workItems.length : null,
+                  ),
+                  // 3. Builds
+                  _buildGridCard(
+                    context: context,
+                    title: 'Builds',
+                    icon: Icons.build,
+                    color: Colors.orange,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BuildsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  // 4. Releases
+                  _buildGridCard(
+                    context: context,
+                    title: 'Releases',
+                    icon: Icons.rocket_launch,
+                    color: Colors.purple,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ReleasesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
             // Üst Bölüm: Wiki
             if (_wikiContent != null || _isLoadingWiki)
               Container(
@@ -587,6 +764,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           child: Text('Work item bulunamadı'),
                         )
                       : ListView.builder(
+                          key: _workItemsKey,
+                          controller: _scrollController,
                           itemCount: _workItems.length,
                           itemBuilder: (context, index) {
                             final item = _workItems[index];
@@ -623,126 +802,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ],
         ),
           ),
-          // Turkish Culture Popup
-          if (_showCulturePopup && _cultureInfo != null)
-            _buildCulturePopup(),
         ],
       ),
     );
   }
-
-  /// Show Turkish culture popup
-  void _showTurkishCulturePopup() {
-    try {
-      final info = TurkishCultureService.getRandomInfo(context);
-      if (info == null) {
-        print('⚠️ [HomeScreen] Turkish culture info is null');
-        return;
-      }
-      
-      print('✅ [HomeScreen] Turkish culture info received: ${info['title']}');
-      
-      // Get content from info
-      String content = info['content'] ?? '';
-      
-      // If content is empty or null, don't show popup
-      if (content.isEmpty) {
-        print('⚠️ [HomeScreen] Content is empty, skipping popup');
-        return;
-      }
-      
-      // Truncate content to max 250 characters if needed
-      if (content.length > 250) {
-        content = content.substring(0, 247) + '...';
-      }
-      
-      setState(() {
-        _cultureInfo = {
-          'title': info['title'] ?? 'Türk Kültürü',
-          'content': content,
-          'type': info['type'] ?? '',
-        };
-        _showCulturePopup = true;
-      });
-      
-      print('✅ [HomeScreen] Popup state set: _showCulturePopup=$_showCulturePopup, _cultureInfo=${_cultureInfo != null}');
-    } catch (e, stackTrace) {
-      print('❌ [HomeScreen] Error showing Turkish culture popup: $e');
-      print('Stack trace: $stackTrace');
-    }
-  }
-
-  /// Build Turkish culture popup widget
-  Widget _buildCulturePopup() {
-    return Container(
-      color: Colors.black54,
-      child: Center(
-        child: Card(
-          margin: const EdgeInsets.all(24.0),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with close button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _cultureInfo!['title']!,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                        // Ensure proper encoding for Turkish and other special characters
-                        textDirection: TextDirection.ltr,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        setState(() {
-                          _showCulturePopup = false;
-                          _cultureInfo = null;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Content
-                Text(
-                  _cultureInfo!['content']!,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.justify,
-                ),
-                const SizedBox(height: 16),
-                // Footer
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _showCulturePopup = false;
-                        _cultureInfo = null;
-                      });
-                    },
-                    child: Text(AppLocalizations.of(context)?.close ?? 'Kapat'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
 }
 

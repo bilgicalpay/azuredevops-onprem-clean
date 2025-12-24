@@ -27,6 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _pollingIntervalController = TextEditingController();
   final _marketRepoUrlController = TextEditingController();
   final _groupController = TextEditingController();
+  final _companyNameController = TextEditingController();
+  final _companyLogoUrlController = TextEditingController();
   bool _isLoading = false;
   int _pollingInterval = 15;
   bool _notifyOnFirstAssignment = false;
@@ -39,6 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _onCallModeWatch = false;
   bool _vacationModePhone = false;
   bool _vacationModeWatch = false;
+  String _logoDisplayMode = 'auto';
 
   @override
   void initState() {
@@ -52,6 +55,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _pollingIntervalController.dispose();
     _marketRepoUrlController.dispose();
     _groupController.dispose();
+    _companyNameController.dispose();
+    _companyLogoUrlController.dispose();
     super.dispose();
   }
 
@@ -118,6 +123,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final vacationModePhone = storage.getVacationModePhone();
     final vacationModeWatch = storage.getVacationModeWatch();
     
+    // Load company/logo settings
+    final logoDisplayMode = storage.getLogoDisplayMode();
+    final companyName = storage.getCompanyName() ?? '';
+    final companyLogoUrl = storage.getCompanyLogoUrl() ?? '';
+    
     setState(() {
       _pollingInterval = interval;
       _pollingIntervalController.text = interval.toString();
@@ -131,6 +141,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _onCallModeWatch = onCallModeWatch;
       _vacationModePhone = vacationModePhone;
       _vacationModeWatch = vacationModeWatch;
+      _logoDisplayMode = logoDisplayMode;
+      _companyNameController.text = companyName;
+      _companyLogoUrlController.text = companyLogoUrl;
     });
   }
 
@@ -209,6 +222,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await storage.setOnCallModeWatch(_onCallModeWatch);
     await storage.setVacationModePhone(_vacationModePhone);
     await storage.setVacationModeWatch(_vacationModeWatch);
+    
+    // Logo/şirket ayarlarını kaydet
+    await storage.setLogoDisplayMode(_logoDisplayMode);
+    final companyName = _companyNameController.text.trim();
+    await storage.setCompanyName(companyName.isEmpty ? null : companyName);
+    final companyLogoUrl = _companyLogoUrlController.text.trim();
+    await storage.setCompanyLogoUrl(companyLogoUrl.isEmpty ? null : companyLogoUrl);
     
     setState(() => _isLoading = false);
     
@@ -294,6 +314,151 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             )
                           : Text(l10n.save),
                     ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Logo/Şirket Ayarları Kartı
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.business, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.companySettings,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.companySettingsDescription,
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Logo gösterim modu
+                    Text(
+                      l10n.logoDisplayMode,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 8),
+                    SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment(
+                          value: 'auto',
+                          label: Text(l10n.logoModeAuto),
+                          icon: const Icon(Icons.auto_awesome),
+                        ),
+                        ButtonSegment(
+                          value: 'custom',
+                          label: Text(l10n.logoModeCustom),
+                          icon: const Icon(Icons.edit),
+                        ),
+                        ButtonSegment(
+                          value: 'none',
+                          label: Text(l10n.logoModeNone),
+                          icon: const Icon(Icons.visibility_off),
+                        ),
+                      ],
+                      selected: {_logoDisplayMode},
+                      onSelectionChanged: (Set<String> selection) {
+                        setState(() {
+                          _logoDisplayMode = selection.first;
+                        });
+                      },
+                    ),
+                    
+                    // Otomatik modda tespit edilen şirket adını göster
+                    if (_logoDisplayMode == 'auto') ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.blue.shade700),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${l10n.detectedCompany}: ${storage.getCompanyNameFromServerUrl().isEmpty ? l10n.notDetected : storage.getCompanyNameFromServerUrl()}',
+                                style: TextStyle(color: Colors.blue.shade700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    
+                    // Özel modda şirket adı ve logo URL girişi
+                    if (_logoDisplayMode == 'custom') ...[
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _companyNameController,
+                        decoration: InputDecoration(
+                          labelText: l10n.companyName,
+                          hintText: l10n.companyNameHint,
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.business),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _companyLogoUrlController,
+                        decoration: InputDecoration(
+                          labelText: l10n.companyLogoUrl,
+                          hintText: l10n.companyLogoUrlHint,
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.image),
+                        ),
+                        keyboardType: TextInputType.url,
+                      ),
+                      // Logo önizleme
+                      if (_companyLogoUrlController.text.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 40,
+                                height: 40,
+                                child: Image.network(
+                                  _companyLogoUrlController.text,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(Icons.broken_image, color: Colors.red.shade300);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  l10n.logoPreview,
+                                  style: TextStyle(color: Colors.grey.shade600),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ],
                 ),
               ),
@@ -692,6 +857,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: Text(l10n.collection),
                 subtitle: Text(
                   Provider.of<StorageService>(context).getCollection() ?? 'N/A',
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // RDC Services Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.business_center, color: Colors.blue),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'RDC Hizmetleri',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Hizmetler hakkında destek almak için tıklayınız',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          try {
+                            final url = Uri.parse('https://rdc.com.tr');
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(l10n.couldNotOpenLink(e.toString())),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('RDC Hizmetleri'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

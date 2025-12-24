@@ -3,7 +3,7 @@
 # Bu uygulama Azure DevOps Server 2022 on-premise kurulumları için mobil erişim sağlar
 name: azuredevops_onprem
 description: "Azure DevOps Mobile App"
-version: 1.2.0+84
+version: 1.0.16+111
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
