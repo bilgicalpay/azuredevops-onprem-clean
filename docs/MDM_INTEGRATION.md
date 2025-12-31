@@ -1,6 +1,6 @@
 # MDM Entegrasyon Kılavuzu
 
-**Uygulama:** Azure DevOps Server 2022 Mobile App  
+**Uygulama:** AzureDevOps Mobile App  
 **Geliştirici:** Alpay Bilgiç  
 **Versiyon:** 1.1.4+43  
 **Tarih:** 21-12-2025
@@ -67,7 +67,7 @@ Uygulama aşağıdaki MDM özelliklerini destekler:
 3. APK dosyasını yükle
 4. Uygulama bilgilerini doldur:
    - Name: Azure DevOps Mobile
-   - Description: Azure DevOps Server 2022 Mobile App
+   - Description: AzureDevOps Mobile App
    - Publisher: RDC Partner
    - Minimum operating system: Android 5.0
 

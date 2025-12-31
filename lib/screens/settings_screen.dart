@@ -10,8 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:azuredevops_onprem/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart';
 import '../services/storage_service.dart';
 import '../services/auth_service.dart';
+import '../services/wiki_service.dart';
 
 /// Ayarlar ekranı widget'ı
 /// Uygulama ayarlarını yönetir
@@ -42,6 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _vacationModePhone = false;
   bool _vacationModeWatch = false;
   String _logoDisplayMode = 'auto';
+  String _themeMode = 'system';
 
   @override
   void initState() {
@@ -66,8 +69,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Demo için default değerler
     const String defaultWikiUrl = 'https://dev.azure.com/hygieia-devops/DevOps-Turkiye/_wiki/wikis/README.md/3/README';
     const String defaultMarketUrl = 'https://ftp.kaist.ac.kr/apache/';
-    const String defaultServerUrl = 'https://dev.azure.com/hygieia-devops/DevOps-Turkiye';
-    const String defaultToken = '4mBp07NH52kYCuCBREGmTvdwBysraioeTcVf8Tluk9OmzohsdJGAJQQJ99BLACAAAAAAAAAAAAASAZDO1lgo';
+    const String defaultServerUrl = 'https://dev.azure.com/hygieia-devops';
+    const String defaultToken = 'AI9TJm5RCCifo7r0YeyoMAHZuXxuUS6vAQxQyVpRsklnr5C9wSx0JQQJ99BLACAAAAAAAAAAAAASAZDO1YxI';
     
     // Wiki URL - eğer storage'da yoksa default değeri kullan ve kaydet
     final wikiUrl = storage.getWikiUrl();
@@ -230,6 +233,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final companyLogoUrl = _companyLogoUrlController.text.trim();
     await storage.setCompanyLogoUrl(companyLogoUrl.isEmpty ? null : companyLogoUrl);
     
+    // Save theme mode
+    await storage.setThemeMode(_themeMode);
+    
     setState(() => _isLoading = false);
     
     if (!mounted) return;
@@ -256,6 +262,138 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _notificationGroups.remove(groupName);
     });
+  }
+
+  /// Browse and select wiki from projects
+  Future<void> _browseWikis() async {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final storage = Provider.of<StorageService>(context, listen: false);
+      final token = await authService.getAuthToken();
+      
+      if (token == null || authService.serverUrl == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication required')),
+        );
+        return;
+      }
+
+      setState(() => _isLoading = true);
+
+      final wikiService = WikiService();
+      
+      // Get projects
+      final projects = await wikiService.getProjects(
+        serverUrl: authService.serverUrl!,
+        token: token,
+        collection: storage.getCollection(),
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (projects.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No projects found')),
+        );
+        return;
+      }
+
+      // Show project selection dialog
+      final selectedProject = await showDialog<Map<String, String>>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Select Project'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: projects.length,
+              itemBuilder: (context, index) {
+                final project = projects[index];
+                return ListTile(
+                  title: Text(project['name'] ?? ''),
+                  onTap: () => Navigator.of(context).pop(project),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (selectedProject == null || !mounted) return;
+
+      // Get wikis for selected project
+      setState(() => _isLoading = true);
+      final wikis = await wikiService.getWikis(
+        serverUrl: authService.serverUrl!,
+        token: token,
+        project: selectedProject['name'] ?? '',
+        collection: storage.getCollection(),
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (wikis.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No wikis found in this project')),
+        );
+        return;
+      }
+
+      // Show wiki selection dialog
+      final selectedWiki = await showDialog<Wiki>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Select Wiki (${selectedProject['name']})'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: wikis.length,
+              itemBuilder: (context, index) {
+                final wiki = wikis[index];
+                return ListTile(
+                  title: Text(wiki.name),
+                  subtitle: Text(wiki.projectName),
+                  onTap: () => Navigator.of(context).pop(wiki),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (selectedWiki == null || !mounted) return;
+
+      // Build wiki URL
+      final cleanUrl = authService.serverUrl!.endsWith('/') 
+          ? authService.serverUrl!.substring(0, authService.serverUrl!.length - 1) 
+          : authService.serverUrl!;
+      final collection = storage.getCollection();
+      final baseUrl = (collection != null && collection.isNotEmpty)
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+      
+      // Wiki URL format: {baseUrl}/{project}/_wiki/wikis/{wikiName}
+      final wikiUrl = '$baseUrl/${selectedWiki.projectName}/_wiki/wikis/${selectedWiki.name}';
+      
+      setState(() {
+        _wikiUrlController.text = wikiUrl;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ [Settings] Error browsing wikis: $e');
+      }
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
@@ -293,15 +431,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
-                      controller: _wikiUrlController,
-                      decoration: InputDecoration(
-                        labelText: l10n.wikiUrl,
-                        hintText: l10n.wikiUrlHint,
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.link),
-                      ),
-                      keyboardType: TextInputType.url,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _wikiUrlController,
+                            decoration: InputDecoration(
+                              labelText: l10n.wikiUrl,
+                              hintText: l10n.wikiUrlHint,
+                              border: const OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.link),
+                            ),
+                            keyboardType: TextInputType.url,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: _isLoading ? null : _browseWikis,
+                          icon: const Icon(Icons.folder_open),
+                          label: const Text('Browse'),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -459,6 +609,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ],
                     ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Theme Mode Selection
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.palette, color: Colors.purple),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Tema',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Uygulama temasını seçin',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment(
+                          value: 'light',
+                          label: const Text('Açık'),
+                          icon: const Icon(Icons.light_mode),
+                        ),
+                        ButtonSegment(
+                          value: 'dark',
+                          label: const Text('Koyu'),
+                          icon: const Icon(Icons.dark_mode),
+                        ),
+                        ButtonSegment(
+                          value: 'system',
+                          label: const Text('Sistem'),
+                          icon: const Icon(Icons.brightness_auto),
+                        ),
+                      ],
+                      selected: {_themeMode},
+                      onSelectionChanged: (Set<String> selection) {
+                        setState(() {
+                          _themeMode = selection.first;
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),

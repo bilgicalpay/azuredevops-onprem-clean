@@ -1,13 +1,13 @@
 # Mimari Topoloji Dokümantasyonu
 
-**Uygulama:** Azure DevOps Server 2022 Mobile App  
+**Uygulama:** AzureDevOps Mobile App  
 **Geliştirici:** Alpay Bilgiç  
 **Versiyon:** 1.0.15+117  
 **Tarih:** 24-12-2025
 
 ## Genel Bakış
 
-Bu dokümantasyon, Azure DevOps Server 2022 Mobile App'in mimari topolojisini, bileşenlerini ve bunlar arasındaki ilişkileri açıklar.
+Bu dokümantasyon, AzureDevOps Mobile App'in mimari topolojisini, bileşenlerini ve bunlar arasındaki ilişkileri açıklar.
 
 ## Mimari Katmanlar
 

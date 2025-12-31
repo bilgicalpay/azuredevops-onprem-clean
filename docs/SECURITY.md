@@ -1,6 +1,6 @@
 # Güvenlik Dokümantasyonu
 
-**Uygulama:** Azure DevOps Server 2022 Mobile App  
+**Uygulama:** AzureDevOps Mobile App  
 **Geliştirici:** Alpay Bilgiç  
 **Versiyon:** 1.2.0+76  
 **Son Güncelleme:** 21-12-2025
@@ -24,7 +24,7 @@
 
 ### Genel Bakış
 
-Bu uygulama, kurumsal Azure DevOps Server 2022 on-premise kurulumlarına güvenli mobil erişim sağlar. Uygulama, MDM (Mobile Device Management) sistemleri ile entegre edilerek kurumsal güvenlik politikalarına uyumlu hale getirilir.
+Bu uygulama, kurumsal AzureDevOps on-premise kurulumlarına güvenli mobil erişim sağlar. Uygulama, MDM (Mobile Device Management) sistemleri ile entegre edilerek kurumsal güvenlik politikalarına uyumlu hale getirilir.
 
 ### Güvenlik Katmanları
 
@@ -145,7 +145,7 @@ dependencies:
 
 **İletişim Protokolü:**
 - HTTPS/TLS 1.2+ (zorunlu)
-- API versiyonu: 7.0 (Azure DevOps Server 2022)
+- API versiyonu: 7.0 (AzureDevOps)
 
 **İletilen Veriler:**
 - Work item bilgileri

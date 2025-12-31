@@ -1,6 +1,6 @@
 /// Build servisi
 /// 
-/// Azure DevOps Server 2022 API'si ile build'leri yönetir.
+/// AzureDevOps API'si ile build'leri yönetir.
 /// Build listeleme ve detay görüntüleme işlemlerini gerçekleştirir.
 /// 
 /// @author Alpay Bilgiç

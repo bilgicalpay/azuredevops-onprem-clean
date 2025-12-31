@@ -29,7 +29,6 @@ import 'boards_screen.dart';
 import 'builds_screen.dart';
 import 'releases_screen.dart';
 import 'work_items_screen.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 
 /// Ana ekran widget'ı
 /// Work item listesi ve wiki içeriğini gösterir
@@ -94,16 +93,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  void _scrollToWorkItems() {
-    // Scroll to work items section
-    if (_workItemsKey.currentContext != null) {
-      Scrollable.ensureVisible(
-        _workItemsKey.currentContext!,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
 
   Widget _buildGridCard({
     required BuildContext context,
@@ -134,53 +123,60 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Stack(
-                  children: [
-                    Icon(
-                      icon,
-                      size: 48,
-                      color: color,
-                    ),
-                    if (badge != null)
-                      Positioned(
-                        right: -4,
-                        top: -4,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 20,
-                            minHeight: 20,
-                          ),
-                          child: Text(
-                            badge > 99 ? '99+' : badge.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Stack(
+                    children: [
+                      Icon(
+                        icon,
+                        size: 40,
+                        color: color,
+                      ),
+                      if (badge != null)
+                        Positioned(
+                          right: -4,
+                          top: -4,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
                             ),
-                            textAlign: TextAlign.center,
+                            constraints: const BoxConstraints(
+                              minWidth: 20,
+                              minHeight: 20,
+                            ),
+                            child: Text(
+                              badge > 99 ? '99+' : badge.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                    ],
                   ),
-                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -566,240 +562,170 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               await _loadWorkItems();
               await _loadWikiContent();
             },
-        child: Column(
-          children: [
-            // 4 Grid Kutusu: Boards, Work Items, Builds, Releases
-            Container(
-              margin: const EdgeInsets.all(16.0),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1.5,
-                children: [
-                  // 1. Boards
-                  _buildGridCard(
-                    context: context,
-                    title: 'Boards',
-                    icon: Icons.dashboard,
-                    color: Colors.blue,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BoardsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  // 2. Work Items
-                  _buildGridCard(
-                    context: context,
-                    title: 'Work Items',
-                    icon: Icons.assignment,
-                    color: Colors.green,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const WorkItemsScreen(),
-                        ),
-                      );
-                    },
-                    badge: _workItems.isNotEmpty ? _workItems.length : null,
-                  ),
-                  // 3. Builds
-                  _buildGridCard(
-                    context: context,
-                    title: 'Builds',
-                    icon: Icons.build,
-                    color: Colors.orange,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BuildsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  // 4. Releases
-                  _buildGridCard(
-                    context: context,
-                    title: 'Releases',
-                    icon: Icons.rocket_launch,
-                    color: Colors.purple,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ReleasesScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            // Üst Bölüm: Wiki
-            if (_wikiContent != null || _isLoadingWiki)
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // 5 Grid Kutusu: Boards, Work Items, Builds, Releases, CAB
               Container(
                 margin: const EdgeInsets.all(16.0),
-                child: Card(
-                  child: InkWell(
-                    onTap: _wikiContent != null && _wikiContent!.isNotEmpty
-                        ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WikiViewerScreen(
-                                  wikiContent: _wikiContent!,
-                                  wikiTitle: 'Wiki',
-                                ),
-                              ),
-                            );
-                          }
-                        : null,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.info_outline, color: Colors.blue),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Wiki',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              if (_wikiContent != null && _wikiContent!.isNotEmpty)
-                                const Icon(Icons.open_in_full, size: 20, color: Colors.blue),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(Icons.refresh, size: 20),
-                                onPressed: _loadWikiContent,
-                                tooltip: 'Wiki\'yi Yenile',
-                              ),
-                            ],
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.6,
+                  children: [
+                    // 1. Boards
+                    _buildGridCard(
+                      context: context,
+                      title: 'Boards',
+                      icon: Icons.dashboard,
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BoardsScreen(),
                           ),
-                          const Divider(),
-                          SizedBox(
-                            height: 150,
-                            child: _isLoadingWiki
-                                ? const Center(child: CircularProgressIndicator())
-                                : _wikiContent != null && _wikiContent!.isNotEmpty
-                                    ? SingleChildScrollView(
-                                        scrollDirection: Axis.vertical,
-                                        child: MarkdownBody(
-                                          data: _wikiContent!.length > 500 
-                                              ? '${_wikiContent!.substring(0, 500)}...\n\n**[Tamamını görmek için tıklayın]**'
-                                              : _wikiContent!,
-                                          styleSheet: MarkdownStyleSheet(
-                                            p: const TextStyle(fontSize: 12),
-                                            h1: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                            h2: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                            h3: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                            code: TextStyle(
-                                              fontSize: 10,
-                                              fontFamily: 'monospace',
-                                              backgroundColor: Colors.grey.shade200,
-                                            ),
-                                            a: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
-                                          ),
-                                        ),
-                                      )
-                                    : Builder(
-                                        builder: (context) {
-                                          final storage = Provider.of<StorageService>(context, listen: false);
-                                          final wikiUrl = storage.getWikiUrl();
-                                          return Center(
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Column(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  const Icon(Icons.info_outline, color: Colors.grey, size: 32),
-                                                  const SizedBox(height: 8),
-                                                  const Text(
-                                                    'Wiki içeriği yüklenemedi',
-                                                    style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    wikiUrl != null && wikiUrl.isNotEmpty
-                                                        ? 'URL: ${wikiUrl.length > 50 ? "${wikiUrl.substring(0, 50)}..." : wikiUrl}'
-                                                        : 'Wiki URL\'si ayarlanmamış',
-                                                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                                                    textAlign: TextAlign.center,
-                                                    maxLines: 2,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  ),
+                    // 2. Work Items
+                    _buildGridCard(
+                      context: context,
+                      title: 'Work Items',
+                      icon: Icons.assignment,
+                      color: Colors.green,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const WorkItemsScreen(),
+                          ),
+                        );
+                      },
+                      badge: _workItems.isNotEmpty ? _workItems.length : null,
+                    ),
+                    // 3. Builds
+                    _buildGridCard(
+                      context: context,
+                      title: 'Builds',
+                      icon: Icons.build,
+                      color: Colors.orange,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BuildsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    // 4. Releases
+                    _buildGridCard(
+                      context: context,
+                      title: 'Releases',
+                      icon: Icons.rocket_launch,
+                      color: Colors.purple,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ReleasesScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    // 5. CAB (Wiki)
+                    _buildGridCard(
+                      context: context,
+                      title: 'CAB',
+                      icon: Icons.info_outline,
+                      color: Colors.teal,
+                      onTap: () {
+                        if (_wikiContent != null && _wikiContent!.isNotEmpty) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WikiViewerScreen(
+                                wikiContent: _wikiContent!,
+                                wikiTitle: 'Wiki',
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Wiki yükleniyorsa veya yoksa hata mesajı göster
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Wiki içeriği yüklenemedi veya ayarlanmamış'),
+                              action: SnackBarAction(
+                                label: 'Yenile',
+                                onPressed: _loadWikiContent,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ),
-            // Alt Bölüm: Work Items
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _workItems.isEmpty
-                      ? const Center(
-                          child: Text('Work item bulunamadı'),
-                        )
-                      : ListView.builder(
-                          key: _workItemsKey,
-                          controller: _scrollController,
-                          itemCount: _workItems.length,
-                          itemBuilder: (context, index) {
-                            final item = _workItems[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  child: Text(item.id.toString()),
+              // Alt Bölüm: Work Items
+              Container(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height * 0.3,
+                ),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _workItems.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(32.0),
+                              child: Text('Work item bulunamadı'),
+                            ),
+                          )
+                        : ListView.builder(
+                            key: _workItemsKey,
+                            controller: _scrollController,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _workItems.length,
+                            itemBuilder: (context, index) {
+                              final item = _workItems[index];
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
                                 ),
-                                title: Text(item.title),
-                                subtitle: Text('${item.type} - ${item.state}'),
-                                trailing: item.assignedTo != null
-                                    ? Chip(
-                                        label: Text(item.assignedTo!),
-                                        avatar: const Icon(Icons.person, size: 16),
-                                      )
-                                    : null,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => WorkItemDetailScreen(workItem: item),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
-            ),
-          ],
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    child: Text(item.id.toString()),
+                                  ),
+                                  title: Text(item.title),
+                                  subtitle: Text('${item.type} - ${item.state}'),
+                                  trailing: item.assignedTo != null
+                                      ? Chip(
+                                          label: Text(item.assignedTo!),
+                                          avatar: const Icon(Icons.person, size: 16),
+                                        )
+                                      : null,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => WorkItemDetailScreen(workItem: item),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
           ),
         ],

@@ -1,12 +1,12 @@
 # Development Workflow - Azure DevOps Mobile App
 
-**Proje:** Azure DevOps Server 2022 Mobile App (Flutter)  
+**Proje:** AzureDevOps Mobile App (Flutter)  
 **Geliştirici:** Alpay Bilgiç  
 **Bu doküman AI asistanı için zorunlu workflow kılavuzudur.**
 
 ## 🎯 Proje Özeti
 
-Azure DevOps Server 2022 on-premise kurulumları için Flutter ile geliştirilmiş mobil uygulama. Work item yönetimi, query çalıştırma, wiki görüntüleme, push notification ve market özellikleri sunar.
+AzureDevOps on-premise kurulumları için Flutter ile geliştirilmiş mobil uygulama. Work item yönetimi, query çalıştırma, wiki görüntüleme, push notification ve market özellikleri sunar.
 
 ## 📋 ZORUNLU WORKFLOW - HER ZAMAN UYGULA
 

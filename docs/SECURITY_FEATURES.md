@@ -5,7 +5,7 @@
 
 ## Genel Bakış
 
-Bu dokümantasyon, Azure DevOps Server 2022 Mobil Uygulaması'nda uygulanan güvenlik özelliklerini, son geliştirmeleri ve önemli yapılandırma notlarını açıklar.
+Bu dokümantasyon, AzureDevOps Mobil Uygulaması'nda uygulanan güvenlik özelliklerini, son geliştirmeleri ve önemli yapılandırma notlarını açıklar.
 
 ## 🔒 Uygulanan Güvenlik Özellikleri
 

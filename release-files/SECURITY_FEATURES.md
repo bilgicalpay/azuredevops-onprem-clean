@@ -5,7 +5,7 @@
 
 ## Overview
 
-This document describes the security features implemented in the Azure DevOps Server 2022 Mobile Application, including recent enhancements and important configuration notes.
+This document describes the security features implemented in the AzureDevOps Mobile Application, including recent enhancements and important configuration notes.
 
 ## 🔒 Implemented Security Features
 

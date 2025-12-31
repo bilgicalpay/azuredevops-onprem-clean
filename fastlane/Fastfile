@@ -71,42 +71,55 @@ platform :android do
     # )
   end
 
-  desc "Upload AAB to Alpha and Closed Testing tracks"
+  desc "Upload AAB to Alpha and Internal Testing tracks"
   lane :upload_testing do |options|
+    # JSON key dosyasının yolunu kontrol et
+    json_key = options[:json_key] || File.expand_path("service-account-key.json", __dir__)
+    
+    unless File.exist?(json_key)
+      UI.user_error!("❌ JSON key dosyası bulunamadı: #{json_key}")
+    end
+    
+    UI.message("📦 JSON key dosyası bulundu: #{json_key}")
+    
     aab_path = options[:aab] || File.expand_path("../build/app/outputs/bundle/release/app-release.aab", __dir__)
     
     unless File.exist?(aab_path)
-      UI.user_error!("AAB dosyası bulunamadı: #{aab_path}")
+      UI.user_error!("❌ AAB dosyası bulunamadı: #{aab_path}")
     end
     
     UI.message("📦 AAB dosyası bulundu: #{aab_path}")
     
     # Alpha track'e yükle
     UI.message("🚀 Alpha track'ine yükleniyor...")
+    begin
+      upload_to_play_store(
+        track: "alpha",
+        aab: aab_path,
+        json_key: json_key,
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        skip_upload_changelogs: true,
+      )
+      UI.success("✅ Alpha track'ine yüklendi!")
+    rescue => ex
+      UI.important("⚠️ Alpha track'e yükleme hatası: #{ex.message}")
+    end
+    
+    # Internal Testing track'e yükle
+    UI.message("🚀 Internal Testing track'ine yükleniyor...")
     upload_to_play_store(
-      track: "alpha",
+      track: "internal",
       aab: aab_path,
+      json_key: json_key,
       skip_upload_metadata: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
       skip_upload_changelogs: true,
     )
     
-    UI.success("✅ Alpha track'ine yüklendi!")
-    
-    # Closed Testing track'e yükle
-    UI.message("🚀 Closed Testing track'ine yükleniyor...")
-    upload_to_play_store(
-      track: "closed",
-      aab: aab_path,
-      skip_upload_metadata: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
-      skip_upload_changelogs: true,
-    )
-    
-    UI.success("✅ Closed Testing track'ine yüklendi!")
-    UI.success("✅ Tüm test track'lerine başarıyla yüklendi!")
+    UI.success("✅ Internal Testing track'ine yüklendi!")
   end
 
   desc "Clean build artifacts"

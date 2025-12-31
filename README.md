@@ -1,4 +1,4 @@
-# Azure DevOps Server 2022 Mobile App
+# AzureDevOps Mobile App
 
 **Geliştirici:** Alpay Bilgiç  
 **Versiyon:** 1.0.17+112  
@@ -6,7 +6,7 @@
 
 ## 📱 Genel Bakış
 
-Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişim sağlar. Kurumsal MDM (Mobile Device Management) sistemleri ile entegre edilerek güvenli bir şekilde dağıtılabilir. Flutter framework kullanılarak geliştirilmiştir ve hem Android hem iOS platformlarını destekler.
+Bu uygulama, AzureDevOps on-premise kurulumları için mobil erişim sağlar. Kurumsal MDM (Mobile Device Management) sistemleri ile entegre edilerek güvenli bir şekilde dağıtılabilir. Flutter framework kullanılarak geliştirilmiştir ve hem Android hem iOS platformlarını destekler.
 
 ## ✨ Özellikler
 
@@ -231,7 +231,7 @@ Detaylı mimari bilgisi için [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) dosya
 ## 📋 Sistem Gereksinimleri
 
 ### Azure DevOps Server
-- Azure DevOps Server 2022 veya üzeri
+- AzureDevOps veya üzeri
 - API Versiyonu: 7.0
 - HTTPS erişimi (TLS 1.2+)
 

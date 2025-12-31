@@ -1,6 +1,6 @@
 /// Kimlik doğrulama servisi
 /// 
-/// Azure DevOps Server 2022 için Personal Access Token (PAT) ve
+/// AzureDevOps için Personal Access Token (PAT) ve
 /// Active Directory (AD) kullanıcı adı/şifre ile kimlik doğrulama sağlar.
 /// 
 /// @author Alpay Bilgiç

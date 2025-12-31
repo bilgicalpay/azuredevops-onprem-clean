@@ -1,6 +1,6 @@
 /// Wiki servisi
 /// 
-/// Azure DevOps Server 2022'den wiki içeriğini getirir.
+/// AzureDevOps'den wiki içeriğini getirir.
 /// Hem Git repository dosyalarını hem de Wiki sayfalarını destekler.
 /// Markdown ve HTML formatlarını işler.
 /// 
@@ -10,11 +10,134 @@ library;
 import 'dart:convert' show base64, utf8;
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'certificate_pinning_service.dart';
+
+/// Wiki model class
+class Wiki {
+  final String id;
+  final String name;
+  final String projectId;
+  final String projectName;
+  final String? url;
+
+  Wiki({
+    required this.id,
+    required this.name,
+    required this.projectId,
+    required this.projectName,
+    this.url,
+  });
+
+  factory Wiki.fromJson(Map<String, dynamic> json, String projectName) {
+    return Wiki(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      projectId: json['projectId'] as String? ?? '',
+      projectName: projectName,
+      url: json['url'] as String?,
+    );
+  }
+}
 
 /// Wiki servisi sınıfı
 /// Wiki içeriklerini Azure DevOps API'den getirir
 class WikiService {
-  final Dio _dio = Dio();
+  final Dio _dio = CertificatePinningService.createSecureDio();
+
+  String _encodeToken(String token) {
+    return base64.encode(utf8.encode(':$token'));
+  }
+
+  /// Get list of projects user has access to
+  Future<List<Map<String, String>>> getProjects({
+    required String serverUrl,
+    required String token,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final url = '$baseUrl/_apis/projects?api-version=7.0';
+      
+      final response = await _dio.get(
+        url,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final projects = response.data['value'] as List?;
+        if (projects != null) {
+          return projects.map((project) {
+            return {
+              'id': project['id'] as String? ?? '',
+              'name': project['name'] as String? ?? '',
+            };
+          }).toList();
+        }
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('❌ [WikiService] Error getting projects: $e');
+      return [];
+    }
+  }
+
+  /// Get list of wikis for a project
+  Future<List<Wiki>> getWikis({
+    required String serverUrl,
+    required String token,
+    required String project,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      final url = '$baseUrl/$project/_apis/wiki/wikis?api-version=7.0';
+      
+      debugPrint('🔍 [WikiService] Fetching wikis for project: $project');
+      
+      final response = await _dio.get(
+        url,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final wikis = response.data['value'] as List?;
+        if (wikis != null) {
+          return wikis.map((wiki) => Wiki.fromJson(wiki as Map<String, dynamic>, project)).toList();
+        }
+      }
+
+      debugPrint('⚠️ [WikiService] No wikis found for project: $project');
+      return [];
+    } catch (e) {
+      debugPrint('❌ [WikiService] Error getting wikis: $e');
+      return [];
+    }
+  }
 
   /// Fetch wiki content from Azure DevOps wiki URL
   /// Example URL: https://devops.higgscloud.com/Dev/demo/_wiki/wikis/CAB-Plan/1/README
@@ -34,6 +157,9 @@ class WikiService {
       // Check if it's a wiki URL or git repo URL
       final uri = Uri.parse(wikiUrl);
       String? apiUrl;
+      
+      // Try multiple endpoints and headers
+      List<Map<String, String>> attempts = [];
       
       // If it's a wiki URL, convert to API endpoint
       if (uri.path.contains('/_wiki/wikis/')) {
@@ -63,10 +189,15 @@ class WikiService {
             
             // Try multiple wiki API endpoints
             if (pagePath.isNotEmpty) {
-              // Try text endpoint first (raw markdown/text) - this returns plain text
+              // Try HTML endpoint first (rendered HTML content)
               final encodedPagePath = Uri.encodeComponent(pagePath);
-              apiUrl = '${uri.scheme}://${uri.host}/$finalCollection/$project/_apis/wiki/wikis/$wikiName/pages/$encodedPagePath/text?api-version=7.0';
-              debugPrint('🔄 [WIKI] Converted wiki URL to text API: $apiUrl');
+              apiUrl = '${uri.scheme}://${uri.host}/$finalCollection/$project/_apis/wiki/wikis/$wikiName/pages/$encodedPagePath?includeContent=true&api-version=7.0';
+              debugPrint('🔄 [WIKI] Converted wiki URL to HTML API: $apiUrl');
+              // Also try with format=html parameter
+              attempts.add({
+                'url': '${uri.scheme}://${uri.host}/$finalCollection/$project/_apis/wiki/wikis/$wikiName/pages/$encodedPagePath?includeContent=true&format=html&api-version=7.0',
+                'accept': 'text/html',
+              });
             } else {
               // Try pages endpoint
               apiUrl = '${uri.scheme}://${uri.host}/$finalCollection/$project/_apis/wiki/wikis/$wikiName/pages?api-version=7.0';
@@ -75,8 +206,6 @@ class WikiService {
           }
         }
       }
-      // Try multiple endpoints and headers
-      List<Map<String, String>> attempts = [];
       
       // If it's a git repo URL, convert to API endpoint
       // Format: https://devops.higgscloud.com/Dev/_git/demo?path=/README.md
@@ -290,9 +419,5 @@ class WikiService {
       debugPrint('❌ [WIKI] Stack trace: $stackTrace');
       return null;
     }
-  }
-
-  String _encodeToken(String token) {
-    return base64.encode(utf8.encode(':$token'));
   }
 }

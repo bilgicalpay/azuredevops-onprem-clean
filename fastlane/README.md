@@ -69,7 +69,7 @@ Build and deploy to production
 [bundle exec] fastlane android upload_testing
 ```
 
-Upload AAB to Alpha and Closed Testing tracks
+Upload AAB to Alpha and Internal Testing tracks
 
 ### android clean
 

@@ -1,6 +1,6 @@
 /// Release servisi
 /// 
-/// Azure DevOps Server 2022 API'si ile release'leri yönetir.
+/// AzureDevOps API'si ile release'leri yönetir.
 /// Release listeleme, detay görüntüleme ve approval işlemlerini gerçekleştirir.
 /// 
 /// @author Alpay Bilgiç

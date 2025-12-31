@@ -1,6 +1,6 @@
 # Altyapı ve Dağıtım Dokümantasyonu
 
-**Uygulama:** Azure DevOps Server 2022 Mobile App  
+**Uygulama:** AzureDevOps Mobile App  
 **Geliştirici:** Alpay Bilgiç  
 **Versiyon:** 1.1.4+43  
 **Tarih:** 21-12-2025
@@ -23,7 +23,7 @@
 ### Azure DevOps Server Gereksinimleri
 
 **Minimum Versiyon:**
-- Azure DevOps Server 2022 veya üzeri
+- AzureDevOps veya üzeri
 - API Versiyonu: 7.0
 
 **Gerekli Özellikler:**

@@ -1,8 +1,8 @@
-/// Azure DevOps Server 2022 Mobile Application
+/// AzureDevOps Mobile Application
 /// 
 /// Geliştirici: Alpay Bilgiç
 /// 
-/// Bu uygulama Azure DevOps Server 2022 on-premise kurulumları için
+/// Bu uygulama AzureDevOps on-premise kurulumları için
 /// mobil erişim sağlar. Work item yönetimi, query çalıştırma, wiki görüntüleme
 /// ve push notification desteği sunar.
 /// 
@@ -234,11 +234,25 @@ class MyApp extends StatelessWidget {
               textTheme: _getTextTheme(ThemeData.dark().textTheme),
               useMaterial3: true,
             ),
+            themeMode: _getThemeMode(storageService.getThemeMode()),
             home: const AuthWrapper(),
           );
         },
       ),
     );
+  }
+}
+
+/// Get ThemeMode from string
+ThemeMode _getThemeMode(String mode) {
+  switch (mode) {
+    case 'light':
+      return ThemeMode.light;
+    case 'dark':
+      return ThemeMode.dark;
+    case 'system':
+    default:
+      return ThemeMode.system;
   }
 }
 

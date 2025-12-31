@@ -205,13 +205,13 @@ class DocumentViewerScreen extends StatelessWidget {
 // Dokümantasyon içerikleri
 const String _securityContent = '''# Güvenlik Dokümantasyonu
 
-**Uygulama:** Azure DevOps Server 2022 Mobile App
+**Uygulama:** AzureDevOps Mobile App
 **Geliştirici:** Alpay Bilgiç
 **Versiyon:** 1.0.0
 
 ## Güvenlik Mimarisi
 
-Bu uygulama, kurumsal Azure DevOps Server 2022 on-premise kurulumlarına güvenli mobil erişim sağlar. Uygulama, MDM (Mobile Device Management) sistemleri ile entegre edilerek kurumsal güvenlik politikalarına uyumlu hale getirilir.
+Bu uygulama, kurumsal AzureDevOps on-premise kurulumlarına güvenli mobil erişim sağlar. Uygulama, MDM (Mobile Device Management) sistemleri ile entegre edilerek kurumsal güvenlik politikalarına uyumlu hale getirilir.
 
 ### Güvenlik Katmanları
 
@@ -259,7 +259,7 @@ Bu uygulama, kurumsal Azure DevOps Server 2022 on-premise kurulumlarına güvenl
 
 - Tüm API çağrıları HTTPS üzerinden yapılır
 - Minimum TLS Versiyonu: TLS 1.2+
-- API versiyonu: 7.0 (Azure DevOps Server 2022)
+- API versiyonu: 7.0 (AzureDevOps)
 
 ## Güvenlik Açıkları ve Önlemler
 
@@ -291,7 +291,7 @@ Periyodik kontroller:
 
 const String _infrastructureContent = '''# Altyapı ve Dağıtım Dokümantasyonu
 
-**Uygulama:** Azure DevOps Server 2022 Mobile App
+**Uygulama:** AzureDevOps Mobile App
 **Geliştirici:** Alpay Bilgiç
 **Versiyon:** 1.0.0
 
@@ -299,7 +299,7 @@ const String _infrastructureContent = '''# Altyapı ve Dağıtım Dokümantasyon
 
 ### Azure DevOps Server
 
-- Azure DevOps Server 2022 veya üzeri
+- AzureDevOps veya üzeri
 - API Versiyonu: 7.0
 - HTTPS erişimi (TLS 1.2+)
 
@@ -392,7 +392,7 @@ const String _infrastructureContent = '''# Altyapı ve Dağıtım Dokümantasyon
 
 const String _mdmContent = '''# MDM Entegrasyon Kılavuzu
 
-**Uygulama:** Azure DevOps Server 2022 Mobile App
+**Uygulama:** AzureDevOps Mobile App
 **Geliştirici:** Alpay Bilgiç
 **Versiyon:** 1.0.0
 
@@ -511,7 +511,7 @@ const String _mdmContent = '''# MDM Entegrasyon Kılavuzu
 
 const String _marketContent = '''# Market Özelliği Kullanım Kılavuzu
 
-**Uygulama:** Azure DevOps Server 2022 Mobile App
+**Uygulama:** AzureDevOps Mobile App
 **Geliştirici:** Alpay Bilgiç
 **Versiyon:** 1.0.25+
 
@@ -704,14 +704,14 @@ Market özelliği ile ilgili sorunlar için:
 - IIS sorunları: Sistem yöneticisi ile iletişime geçin
 ''';
 
-const String _overviewContent = '''# Azure DevOps Server 2022 Mobile App
+const String _overviewContent = '''# AzureDevOps Mobile App
 
 **Geliştirici:** Alpay Bilgiç
 **Versiyon:** 1.0.0
 
 ## Genel Bakış
 
-Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişim sağlar. Kurumsal MDM (Mobile Device Management) sistemleri ile entegre edilerek güvenli bir şekilde dağıtılabilir.
+Bu uygulama, AzureDevOps on-premise kurulumları için mobil erişim sağlar. Kurumsal MDM (Mobile Device Management) sistemleri ile entegre edilerek güvenli bir şekilde dağıtılabilir.
 
 ## Özellikler
 
@@ -727,7 +727,7 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
 ## Sistem Gereksinimleri
 
 ### Azure DevOps Server
-- Azure DevOps Server 2022 veya üzeri
+- AzureDevOps veya üzeri
 - API Versiyonu: 7.0
 - HTTPS erişimi (TLS 1.2+)
 

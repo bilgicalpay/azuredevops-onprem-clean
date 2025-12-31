@@ -13,6 +13,11 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'dart:io';
+import 'dart:typed_data';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/work_item_service.dart';
@@ -53,6 +58,11 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
   // Attachments data structure
   List<Map<String, dynamic>> _attachments = []; // Each attachment: {'name': '', 'url': '', 'size': 0}
   bool _isUploadingAttachment = false;
+  
+  // Identity (Assigned To) data
+  List<Identity> _identities = [];
+  bool _isLoadingIdentities = false;
+  String? _selectedAssignedToDescriptor;
 
   @override
   void initState() {
@@ -249,6 +259,19 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
         }
       }
       
+      // Initialize Assigned To field
+      final assignedToValue = detailedItem.allFields?['System.AssignedTo'];
+      if (assignedToValue != null) {
+        // Try to extract descriptor or display name
+        if (assignedToValue is Map) {
+          _selectedAssignedToDescriptor = assignedToValue['descriptor']?.toString() ?? 
+                                          assignedToValue['uniqueName']?.toString() ??
+                                          assignedToValue['displayName']?.toString();
+        } else if (assignedToValue is String && assignedToValue.isNotEmpty) {
+          _selectedAssignedToDescriptor = assignedToValue;
+        }
+      }
+      
       // Load comments
       _loadComments();
       
@@ -260,6 +283,37 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
     // Load related work items after all other data is loaded
     debugPrint('🔄 [UI] Calling _loadRelatedWorkItems from _loadWorkItemDetails');
     _loadRelatedWorkItems();
+  }
+
+  /// Load identities for Assigned To field
+  Future<void> _loadIdentities() async {
+    setState(() => _isLoadingIdentities = true);
+    
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final storage = Provider.of<StorageService>(context, listen: false);
+      final token = await authService.getAuthToken();
+      
+      if (token == null || _detailedWorkItem == null) {
+        setState(() => _isLoadingIdentities = false);
+        return;
+      }
+      
+      final identities = await _workItemService.getIdentities(
+        serverUrl: authService.serverUrl!,
+        token: token,
+        collection: storage.getCollection(),
+        project: _detailedWorkItem!.project,
+      );
+      
+      setState(() {
+        _identities = identities;
+        _isLoadingIdentities = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading identities: $e');
+      setState(() => _isLoadingIdentities = false);
+    }
   }
 
   /// Load comments
@@ -655,6 +709,26 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
       }
     }
 
+    // Update Assigned To field if changed
+    if (_selectedAssignedToDescriptor != null && _detailedWorkItem != null && _identities.isNotEmpty) {
+      try {
+        final selectedIdentity = _identities.firstWhere(
+          (id) => id.descriptor == _selectedAssignedToDescriptor || id.uniqueName == _selectedAssignedToDescriptor,
+        );
+        final currentAssignedTo = _detailedWorkItem!.assignedTo ?? '';
+        
+        if (selectedIdentity.displayName != currentAssignedTo) {
+          // For identity fields, we need to use the display name
+          updates.add({
+            'path': '/fields/System.AssignedTo',
+            'value': selectedIdentity.displayName, // Azure DevOps accepts display name
+          });
+        }
+      } catch (e) {
+        debugPrint('Error updating Assigned To: $e');
+      }
+    }
+    
     // Update combo box fields, boolean fields, and date fields
     for (var entry in _comboBoxValues.entries) {
       final fieldDef = _fieldDefinitions[entry.key];
@@ -837,8 +911,8 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                               const SizedBox(height: 16),
                               _buildInfoRow('Type', _detailedWorkItem!.type),
                               _buildInfoRow('ID', _detailedWorkItem!.id.toString()),
-                              if (_detailedWorkItem!.assignedTo != null)
-                                _buildInfoRow('Assigned To', _detailedWorkItem!.assignedTo!),
+                              // Assigned To field - editable if identity field
+                              _buildAssignedToField(),
                               if (_detailedWorkItem!.rev != null)
                                 _buildInfoRow('Revision', _detailedWorkItem!.rev.toString()),
                             ],
@@ -1006,11 +1080,12 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                     if (entry.value != null && entry.value!.isNotEmpty) {
                                       selectedDate = DateTime.tryParse(entry.value!);
                                     }
+                                    final isReadOnly = fieldDef?.isReadOnly ?? false;
                                     
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 16.0),
                                       child: InkWell(
-                                        onTap: () async {
+                                        onTap: isReadOnly ? null : () async {
                                           final picked = await showDatePicker(
                                             context: context,
                                             initialDate: selectedDate ?? DateTime.now(),
@@ -1029,6 +1104,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                           labelText: fieldDef?.name ?? entry.key,
                                           border: const OutlineInputBorder(),
                                             suffixIcon: const Icon(Icons.calendar_today),
+                                            enabled: !isReadOnly,
                                           ),
                                           child: Text(
                                             selectedDate != null
@@ -1048,6 +1124,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                       fieldType.contains('picklist') ||
                                       (fieldDef?.isComboBox ?? false)) {
                                     // Dropdown for selectbox/combobox/picklist
+                                    final isReadOnly = fieldDef?.isReadOnly ?? false;
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 16.0),
                                     child: DropdownButtonFormField<String>(
@@ -1055,6 +1132,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                       decoration: InputDecoration(
                                         labelText: fieldDef?.name ?? entry.key,
                                         border: const OutlineInputBorder(),
+                                        enabled: !isReadOnly,
                                       ),
                                       items: allowedValues.map((value) {
                                         return DropdownMenuItem(
@@ -1062,7 +1140,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                           child: Text(value),
                                         );
                                       }).toList(),
-                                      onChanged: (value) {
+                                      onChanged: isReadOnly ? null : (value) {
                                         setState(() {
                                           _comboBoxValues[entry.key] = value;
                                           });
@@ -1072,6 +1150,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                   }
                                   
                                   // Fallback to text field if no allowed values and not date/boolean
+                                  final isReadOnly = fieldDef?.isReadOnly ?? false;
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 16.0),
                                     child: TextFormField(
@@ -1080,7 +1159,8 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                         labelText: fieldDef?.name ?? entry.key,
                                         border: const OutlineInputBorder(),
                                       ),
-                                      onChanged: (value) {
+                                      readOnly: isReadOnly,
+                                      onChanged: isReadOnly ? null : (value) {
                                         setState(() {
                                           _comboBoxValues[entry.key] = value.isEmpty ? null : value;
                                         });
@@ -1105,6 +1185,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                                     fieldDef?.name.toLowerCase().contains('multiple') == true ||
                                                     entry.key.toLowerCase().contains('multiple') == true;
                                   
+                                  final isReadOnly = fieldDef?.isReadOnly ?? false;
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 16.0),
                                     child: TextFormField(
@@ -1115,6 +1196,8 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                         border: const OutlineInputBorder(),
                                         alignLabelWithHint: isTextArea,
                                       ),
+                                      readOnly: isReadOnly,
+                                      enabled: !isReadOnly,
                                     ),
                                   );
                                 }),
@@ -1317,41 +1400,7 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                                     leading: const Icon(Icons.attach_file),
                                     title: Text(name),
                                     subtitle: sizeText.isNotEmpty ? Text(sizeText) : null,
-                                    onTap: url != null ? () async {
-                                      // Open attachment URL
-                                      final authService = Provider.of<AuthService>(context, listen: false);
-                                      final storage = Provider.of<StorageService>(context, listen: false);
-                                      final token = await authService.getAuthToken();
-                                      
-                                      if (token != null) {
-                                        // Download and open file
-                                        try {
-                                          final cleanUrl = authService.serverUrl!.endsWith('/') 
-                                              ? authService.serverUrl!.substring(0, authService.serverUrl!.length - 1) 
-                                              : authService.serverUrl!;
-                                          
-                                          final baseUrl = storage.getCollection() != null && storage.getCollection()!.isNotEmpty
-                                              ? '$cleanUrl/${storage.getCollection()}'
-                                              : cleanUrl;
-                                          
-                                          // Construct full URL with auth
-                                          final fullUrl = url.startsWith('http') ? url : '$baseUrl$url';
-                                          
-                                          // Use url_launcher to open the file
-                                          // Note: This requires proper authentication headers
-                                          debugPrint('🔗 [Attachments] Opening attachment: $fullUrl');
-                                          // For now, just show a message
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Dosya açılıyor: $name')),
-                                          );
-                                        } catch (e) {
-                                          debugPrint('❌ [Attachments] Error opening attachment: $e');
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Dosya açılamadı: $e')),
-                                          );
-                                        }
-                                      }
-                                    } : null,
+                                    onTap: url != null ? () => _openAttachment(url, name, context) : null,
                                   );
                                 }),
                             ],
@@ -1361,6 +1410,174 @@ class _WorkItemDetailScreenState extends State<WorkItemDetailScreen> {
                     ],
                   ),
                 ),
+    );
+  }
+
+  /// Open attachment file (download and open)
+  Future<void> _openAttachment(String attachmentUrl, String fileName, BuildContext context) async {
+    try {
+      // Show loading indicator
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Dosya indiriliyor: $fileName')),
+        );
+      }
+
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final storage = Provider.of<StorageService>(context, listen: false);
+      final token = await authService.getAuthToken();
+      
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      // Download attachment
+      final fileData = await _workItemService.downloadAttachment(
+        attachmentUrl: attachmentUrl,
+        token: token,
+        serverUrl: authService.serverUrl,
+        collection: storage.getCollection(),
+      );
+
+      if (fileData == null) {
+        throw Exception('File download failed');
+      }
+
+      // Get temporary directory
+      final tempDir = await getTemporaryDirectory();
+      final safeFileName = fileName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+      final filePath = path.join(tempDir.path, safeFileName);
+
+      // Write file to temporary directory
+      final file = File(filePath);
+      await file.writeAsBytes(fileData);
+
+      debugPrint('✅ [Attachments] File saved to: $filePath');
+
+      // Check if it's an image
+      final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+      final isImage = imageExtensions.any((ext) => fileName.toLowerCase().endsWith(ext.toLowerCase()));
+
+      if (isImage && context.mounted) {
+        // Show image in dialog
+        showDialog(
+          context: context,
+          builder: (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: Stack(
+              children: [
+                Center(
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Image.file(file),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black54,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else if (context.mounted) {
+        // Open file with system default app
+        final uri = Uri.file(filePath);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          throw Exception('Cannot open file: $fileName');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Attachments] Error opening attachment: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Dosya açılamadı: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Widget _buildAssignedToField() {
+    final assignedToFieldDef = _fieldDefinitions['System.AssignedTo'];
+    final canEdit = assignedToFieldDef?.isIdentity == true && !(assignedToFieldDef?.isReadOnly ?? false);
+    final currentValue = _detailedWorkItem!.assignedTo ?? '';
+    
+    if (!canEdit) {
+      return _buildInfoRow('Assigned To', currentValue.isEmpty ? 'Unassigned' : currentValue);
+    }
+    
+    // Find current identity from list
+    Identity? currentIdentity;
+    if (_selectedAssignedToDescriptor != null && _identities.isNotEmpty) {
+      try {
+        currentIdentity = _identities.firstWhere(
+          (id) => id.descriptor == _selectedAssignedToDescriptor || 
+                  id.displayName == currentValue ||
+                  id.uniqueName == _selectedAssignedToDescriptor,
+        );
+      } catch (e) {
+        // If not found, try to find by display name
+        try {
+          currentIdentity = _identities.firstWhere(
+            (id) => id.displayName == currentValue,
+          );
+        } catch (e2) {
+          currentIdentity = null;
+        }
+      }
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: DropdownButtonFormField<Identity>(
+        value: currentIdentity,
+        decoration: const InputDecoration(
+          labelText: 'Assigned To',
+          border: OutlineInputBorder(),
+        ),
+        items: [
+          const DropdownMenuItem<Identity>(
+            value: null,
+            child: Text('Unassigned'),
+          ),
+          ..._identities.map((identity) {
+            return DropdownMenuItem<Identity>(
+              value: identity,
+              child: Text(identity.displayName),
+            );
+          }),
+        ],
+        onChanged: _isLoadingIdentities ? null : (Identity? identity) {
+          setState(() {
+            _selectedAssignedToDescriptor = identity?.descriptor ?? identity?.uniqueName;
+            if (identity != null && _detailedWorkItem != null) {
+              // Update assignedTo in allFields if available
+              if (_detailedWorkItem!.allFields != null) {
+                _detailedWorkItem!.allFields!['System.AssignedTo'] = identity.displayName;
+              }
+              // Also update the assignedTo property
+              _detailedWorkItem = WorkItem(
+                id: _detailedWorkItem!.id,
+                title: _detailedWorkItem!.title,
+                type: _detailedWorkItem!.type,
+                state: _detailedWorkItem!.state,
+                assignedTo: identity.displayName,
+              );
+            }
+          });
+        },
+        isExpanded: true,
+      ),
     );
   }
 

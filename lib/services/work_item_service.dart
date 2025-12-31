@@ -1,6 +1,6 @@
 /// Work Item servisi
 /// 
-/// Azure DevOps Server 2022 API'si ile work item'ları yönetir.
+/// AzureDevOps API'si ile work item'ları yönetir.
 /// Work item listeleme, detay görüntüleme, güncelleme, query çalıştırma
 /// ve ilişkili work item'ları getirme işlemlerini gerçekleştirir.
 /// 
@@ -9,6 +9,7 @@ library;
 
 import 'dart:convert' show base64, utf8;
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'certificate_pinning_service.dart';
@@ -1357,7 +1358,7 @@ class WorkItemService {
   }
 
   /// Get related work items grouped by relation type (Child, Related, Parent)
-  /// Based on Azure DevOps Server 2022 REST API documentation
+  /// Based on AzureDevOps REST API documentation
   Future<Map<String, List<RelatedWorkItem>>> getRelatedWorkItemsGrouped({
     required String serverUrl,
     required String token,
@@ -1763,11 +1764,13 @@ class WorkItemService {
               final fieldType = fieldData['type'] as String? ?? '';
               final isReadOnly = fieldData['readOnly'] as bool? ?? false;
               final isLocked = fieldData['locked'] as bool? ?? false;
-              final isIdentity = fieldData['identity'] as bool? ?? false;
+              final isIdentityField = fieldData['identity'] as bool? ?? false;
               final isQueryable = fieldData['queryable'] as bool? ?? true;
               
-              // Check if field is hidden: read-only, locked, identity, or not queryable
-              final isHidden = isReadOnly || isLocked || isIdentity || !isQueryable;
+              // Check if field is hidden: only not queryable fields are hidden
+              // Note: Read-only, locked, and identity fields are shown but may be read-only
+              // Identity fields (like Assigned To) should be shown and editable
+              final isHidden = !isQueryable;
               
               // Check if it's a combo box: has allowed values and is string/picklist type
               final isComboBox = allowedValues.isNotEmpty && 
@@ -1783,6 +1786,8 @@ class WorkItemService {
                 allowedValues: allowedValues,
                 isComboBox: isComboBox,
                 isHidden: isHidden,
+                isReadOnly: isReadOnly || isLocked,
+                isIdentity: isIdentityField,
               );
             }
             
@@ -1805,7 +1810,7 @@ class WorkItemService {
   }
 
   /// Get work item comments
-  /// Azure DevOps Server 2022 may use history or comments endpoint
+  /// AzureDevOps may use history or comments endpoint
   Future<List<WorkItemComment>> getWorkItemComments({
     required String serverUrl,
     required String token,
@@ -1920,7 +1925,7 @@ class WorkItemService {
   }
 
   /// Add comment to work item
-  /// Azure DevOps Server 2022 uses work item history/updates for comments
+  /// AzureDevOps uses work item history/updates for comments
   Future<bool> addWorkItemComment({
     required String serverUrl,
     required String token,
@@ -2073,6 +2078,52 @@ class WorkItemService {
     }
   }
   
+  /// Download attachment file from Azure DevOps
+  Future<Uint8List?> downloadAttachment({
+    required String attachmentUrl,
+    required String token,
+    String? serverUrl,
+    String? collection,
+  }) async {
+    try {
+      final cleanUrl = serverUrl?.endsWith('/') == true 
+          ? serverUrl!.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      // Construct full URL if relative
+      String fullUrl = attachmentUrl;
+      if (!attachmentUrl.startsWith('http')) {
+        final baseUrl = (collection != null && collection.isNotEmpty && cleanUrl != null)
+            ? '$cleanUrl/$collection'
+            : cleanUrl ?? '';
+        fullUrl = '$baseUrl$attachmentUrl';
+      }
+      
+      debugPrint('⬇️ [ATTACHMENT] Downloading from: $fullUrl');
+      
+      final response = await _dio.get(
+        fullUrl,
+        options: Options(
+          headers: {
+            'Authorization': 'Basic ${_encodeToken(token)}',
+          },
+          responseType: ResponseType.bytes,
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        debugPrint('✅ [ATTACHMENT] Downloaded successfully (${(response.data as List<int>).length} bytes)');
+        return Uint8List.fromList(response.data as List<int>);
+      } else {
+        debugPrint('❌ [ATTACHMENT] Download failed with status: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ [ATTACHMENT] Download error: $e');
+      return null;
+    }
+  }
+
   /// Attach uploaded file to work item
   Future<bool> attachFileToWorkItem({
     required String serverUrl,
@@ -2226,6 +2277,199 @@ class WorkItemService {
       return null;
     }
   }
+
+  /// Get list of identities (users) for identity field assignment
+  /// Returns list of identity display names
+  Future<List<Identity>> getIdentities({
+    required String serverUrl,
+    required String token,
+    String? collection,
+    String? project,
+    String? filter, // Optional filter for search
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      // Try Identity API endpoints
+      List<String> endpoints = [];
+      
+      if (project != null && project.isNotEmpty) {
+        if (collection != null && collection.isNotEmpty) {
+          endpoints.add('$cleanUrl/$collection/$project/_apis/identity/readscopeids?api-version=7.0');
+        }
+        endpoints.add('$cleanUrl/$project/_apis/identity/readscopeids?api-version=7.0');
+      }
+      
+      // For identity search, use Graph API (Azure DevOps Services) or Identity API (Server)
+      // Try Graph API first (Azure DevOps Services)
+      String searchUrl = filter != null && filter.isNotEmpty
+          ? '$baseUrl/_apis/graph/users?api-version=7.0-preview.1&subjectTypes=vssgp,User&scopeDescriptor=&filter=${Uri.encodeComponent(filter)}'
+          : '$baseUrl/_apis/graph/users?api-version=7.0-preview.1&subjectTypes=vssgp,User&scopeDescriptor=';
+      
+      try {
+        final response = await _dio.get(
+          searchUrl,
+          options: Options(
+            headers: {
+              'Authorization': 'Basic ${_encodeToken(token)}',
+              'Content-Type': 'application/json',
+            },
+            validateStatus: (status) => status! < 500,
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          final identities = <Identity>[];
+          final value = response.data['value'] as List?;
+          if (value != null) {
+            for (var item in value) {
+              identities.add(Identity.fromJson(item));
+            }
+          }
+          debugPrint('✅ [WorkItemService] Loaded ${identities.length} identities from Graph API');
+          return identities;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [WorkItemService] Graph API failed, trying Identity API: $e');
+      }
+
+      // Fallback: Try Identity API (for Azure DevOps Server)
+      // Get current user's identity to search from
+      String? userDescriptor;
+      try {
+        final profileUrl = '$baseUrl/_apis/profile/profiles/me?api-version=7.0-preview';
+        final profileResponse = await _dio.get(
+          profileUrl,
+          options: Options(
+            headers: {
+              'Authorization': 'Basic ${_encodeToken(token)}',
+              'Content-Type': 'application/json',
+            },
+            validateStatus: (status) => status! < 500,
+          ),
+        );
+        
+        if (profileResponse.statusCode == 200) {
+          userDescriptor = profileResponse.data['coreAttributes']?['Descriptor']?['value'] as String?;
+        }
+      } catch (e) {
+        debugPrint('⚠️ [WorkItemService] Failed to get user descriptor: $e');
+      }
+
+      // If we have user descriptor, try to get identities
+      if (userDescriptor != null) {
+        final identityUrl = '$baseUrl/_apis/identities?descriptors=$userDescriptor&api-version=7.0';
+        try {
+          final response = await _dio.get(
+            identityUrl,
+            options: Options(
+              headers: {
+                'Authorization': 'Basic ${_encodeToken(token)}',
+                'Content-Type': 'application/json',
+              },
+              validateStatus: (status) => status! < 500,
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            final identities = <Identity>[];
+            final value = response.data['value'] as List?;
+            if (value != null) {
+              for (var item in value) {
+                identities.add(Identity.fromJson(item));
+              }
+            }
+            debugPrint('✅ [WorkItemService] Loaded ${identities.length} identities from Identity API');
+            return identities;
+          }
+        } catch (e) {
+          debugPrint('⚠️ [WorkItemService] Identity API failed: $e');
+        }
+      }
+
+      return [];
+    } catch (e, stackTrace) {
+      debugPrint('❌ [WorkItemService] Get identities error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return [];
+    }
+  }
+
+  /// Get list of iterations (sprints) for a project
+  Future<List<Iteration>> getIterations({
+    required String serverUrl,
+    required String token,
+    required String project,
+    String? collection,
+    String? team, // Optional team name
+  }) async {
+    try {
+      final cleanUrl = serverUrl.endsWith('/') 
+          ? serverUrl.substring(0, serverUrl.length - 1) 
+          : serverUrl;
+      
+      final baseUrl = collection != null && collection.isNotEmpty
+          ? '$cleanUrl/$collection'
+          : cleanUrl;
+
+      // Try multiple endpoints
+      List<String> endpoints = [];
+      
+      if (team != null && team.isNotEmpty) {
+        if (collection != null && collection.isNotEmpty) {
+          endpoints.add('$cleanUrl/$collection/$project/$team/_apis/work/teamsettings/iterations?api-version=7.0&\$timeframe=current');
+        }
+        endpoints.add('$cleanUrl/$project/$team/_apis/work/teamsettings/iterations?api-version=7.0&\$timeframe=current');
+      }
+      
+      if (collection != null && collection.isNotEmpty) {
+        endpoints.add('$cleanUrl/$collection/$project/_apis/work/teamsettings/iterations?api-version=7.0');
+      }
+      endpoints.add('$baseUrl/$project/_apis/work/teamsettings/iterations?api-version=7.0');
+
+      for (final url in endpoints) {
+        try {
+          final response = await _dio.get(
+            url,
+            options: Options(
+              headers: {
+                'Authorization': 'Basic ${_encodeToken(token)}',
+                'Content-Type': 'application/json',
+              },
+              validateStatus: (status) => status! < 500,
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            final iterations = <Iteration>[];
+            final value = response.data['value'] as List?;
+            if (value != null) {
+              for (var item in value) {
+                iterations.add(Iteration.fromJson(item));
+              }
+            }
+            debugPrint('✅ [WorkItemService] Loaded ${iterations.length} iterations from: $url');
+            return iterations;
+          }
+        } catch (e) {
+          debugPrint('⚠️ [WorkItemService] Failed to get iterations from $url: $e');
+          continue;
+        }
+      }
+
+      return [];
+    } catch (e, stackTrace) {
+      debugPrint('❌ [WorkItemService] Get iterations error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return [];
+    }
+  }
 }
 
 class WorkItem {
@@ -2294,6 +2538,8 @@ class FieldDefinition {
   final List<String> allowedValues;
   final bool isComboBox;
   final bool isHidden;
+  final bool isReadOnly;
+  final bool isIdentity; // Identity field (like Assigned To)
 
   FieldDefinition({
     required this.referenceName,
@@ -2302,7 +2548,90 @@ class FieldDefinition {
     required this.allowedValues,
     required this.isComboBox,
     this.isHidden = false,
+    this.isReadOnly = false,
+    this.isIdentity = false,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'referenceName': referenceName,
+      'name': name,
+      'type': type,
+      'allowedValues': allowedValues,
+      'isComboBox': isComboBox,
+      'isHidden': isHidden,
+      'isReadOnly': isReadOnly,
+      'isIdentity': isIdentity,
+    };
+  }
+
+  factory FieldDefinition.fromJson(Map<String, dynamic> json) {
+    return FieldDefinition(
+      referenceName: json['referenceName'] as String,
+      name: json['name'] as String,
+      type: json['type'] as String,
+      allowedValues: (json['allowedValues'] as List?)?.cast<String>() ?? [],
+      isComboBox: json['isComboBox'] as bool? ?? false,
+      isHidden: json['isHidden'] as bool? ?? false,
+      isReadOnly: json['isReadOnly'] as bool? ?? false,
+      isIdentity: json['isIdentity'] as bool? ?? false,
+    );
+  }
+}
+
+/// Identity model for user assignment
+class Identity {
+  final String descriptor;
+  final String displayName;
+  final String? uniqueName;
+  final String? mailAddress;
+
+  Identity({
+    required this.descriptor,
+    required this.displayName,
+    this.uniqueName,
+    this.mailAddress,
+  });
+
+  factory Identity.fromJson(Map<String, dynamic> json) {
+    return Identity(
+      descriptor: json['descriptor'] as String? ?? json['principalName'] as String? ?? '',
+      displayName: json['displayName'] as String? ?? json['displayName'] as String? ?? '',
+      uniqueName: json['uniqueName'] as String? ?? json['principalName'] as String?,
+      mailAddress: json['mailAddress'] as String? ?? json['mailAddress'] as String?,
+    );
+  }
+}
+
+/// Iteration (Sprint) model
+class Iteration {
+  final String id;
+  final String name;
+  final String? path;
+  final DateTime? startDate;
+  final DateTime? finishDate;
+
+  Iteration({
+    required this.id,
+    required this.name,
+    this.path,
+    this.startDate,
+    this.finishDate,
+  });
+
+  factory Iteration.fromJson(Map<String, dynamic> json) {
+    return Iteration(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      path: json['path'] as String?,
+      startDate: json['attributes']?['startDate'] != null
+          ? DateTime.tryParse(json['attributes']['startDate'] as String)
+          : null,
+      finishDate: json['attributes']?['finishDate'] != null
+          ? DateTime.tryParse(json['attributes']['finishDate'] as String)
+          : null,
+    );
+  }
 }
 
 class RelatedWorkItem {

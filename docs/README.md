@@ -1,4 +1,4 @@
-# Azure DevOps Server 2022 Mobile App - Dokümantasyon
+# AzureDevOps Mobile App - Dokümantasyon
 
 **Geliştirici:** Alpay Bilgiç  
 **Versiyon:** 1.2.0+76  
@@ -6,7 +6,7 @@
 
 ## Genel Bakış
 
-Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişim sağlar. Kurumsal MDM (Mobile Device Management) sistemleri ile entegre edilerek güvenli bir şekilde dağıtılabilir.
+Bu uygulama, AzureDevOps on-premise kurulumları için mobil erişim sağlar. Kurumsal MDM (Mobile Device Management) sistemleri ile entegre edilerek güvenli bir şekilde dağıtılabilir.
 
 ## Özellikler
 
@@ -86,7 +86,7 @@ Bu uygulama, Azure DevOps Server 2022 on-premise kurulumları için mobil erişi
 
 ### Azure DevOps Server
 
-- Azure DevOps Server 2022 veya üzeri
+- AzureDevOps veya üzeri
 - API Versiyonu: 7.0
 - HTTPS erişimi (TLS 1.2+)
 

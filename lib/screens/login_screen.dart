@@ -43,8 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final authService = Provider.of<AuthService>(context, listen: false);
     
     // Demo için default değerler
-    const String defaultServerUrl = 'https://devops.higgscloud.com/Dev';
-    const String defaultToken = 's6znafrrzv35ns24nxpzayw7dt2ro2zn6yaoyp5f7mls23ceq5dq';
+    const String defaultServerUrl = 'https://dev.azure.com/hygieia-devops';
+    const String defaultToken = 'AI9TJm5RCCifo7r0YeyoMAHZuXxuUS6vAQxQyVpRsklnr5C9wSx0JQQJ99BLACAAAAAAAAAAAAASAZDO1YxI';
     
     // Eğer storage'da server URL veya token yoksa, default değerleri yükle
     final currentServerUrl = authService.serverUrl;
@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const Text(
-                'Azure DevOps Server 2022',
+                'AzureDevOps',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),

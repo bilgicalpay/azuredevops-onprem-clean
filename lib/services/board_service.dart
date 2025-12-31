@@ -1,6 +1,6 @@
 /// Board servisi
 /// 
-/// Azure DevOps Server 2022 API'si ile board'ları yönetir.
+/// AzureDevOps API'si ile board'ları yönetir.
 /// Board listeleme ve detay görüntüleme işlemlerini gerçekleştirir.
 /// 
 /// @author Alpay Bilgiç
